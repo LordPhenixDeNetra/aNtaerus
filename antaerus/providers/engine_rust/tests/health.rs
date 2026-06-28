@@ -7,7 +7,12 @@ async fn health_endpoint_returns_engine_identity() {
     let app = build_router(Settings::from_env());
 
     let response = app
-        .oneshot(Request::builder().uri("/health").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::builder()
+                .uri("/health")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
 
@@ -19,7 +24,12 @@ async fn capabilities_endpoint_is_available() {
     let app = build_router(Settings::from_env());
 
     let response = app
-        .oneshot(Request::builder().uri("/capabilities").body(Body::empty()).unwrap())
+        .oneshot(
+            Request::builder()
+                .uri("/capabilities")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
 

@@ -19,15 +19,24 @@ const statusIcons = {
   offline: WifiOff,
 };
 
-export default function ServiceStatusCard({ service, capabilities }: ServiceStatusCardProps) {
+export default function ServiceStatusCard({
+  service,
+  capabilities,
+}: ServiceStatusCardProps) {
   const Icon = statusIcons[service.status];
 
   return (
-    <article className={`rounded-3xl border p-6 shadow-2xl shadow-slate-950/30 ${statusStyles[service.status]}`}>
+    <article
+      className={`rounded-3xl border p-6 shadow-2xl shadow-slate-950/30 ${statusStyles[service.status]}`}
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-[0.28em] text-slate-300">{service.name}</p>
-          <h3 className="mt-3 text-lg font-semibold text-white">{service.url}</h3>
+          <p className="font-mono text-xs uppercase tracking-[0.28em] text-slate-300">
+            {service.name}
+          </p>
+          <h3 className="mt-3 text-lg font-semibold text-white">
+            {service.url}
+          </h3>
         </div>
         <div className="rounded-2xl border border-white/10 bg-slate-950/40 p-3">
           <Icon className="h-5 w-5" />
@@ -49,10 +58,14 @@ export default function ServiceStatusCard({ service, capabilities }: ServiceStat
         </div>
       </div>
 
-      <p className="mt-5 text-sm text-slate-300">{service.details ?? "Aucun détail supplémentaire."}</p>
+      <p className="mt-5 text-sm text-slate-300">
+        {service.details ?? "Aucun détail supplémentaire."}
+      </p>
 
       <div className="mt-5 border-t border-white/10 pt-4">
-        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-slate-400">Capacités</p>
+        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-slate-400">
+          Capacités
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {(capabilities?.capabilities ?? []).map((capability) => (
             <span
@@ -62,7 +75,9 @@ export default function ServiceStatusCard({ service, capabilities }: ServiceStat
               {capability}
             </span>
           ))}
-          {!capabilities && <span className="text-xs text-slate-400">Non déclarées</span>}
+          {!capabilities && (
+            <span className="text-xs text-slate-400">Non déclarées</span>
+          )}
         </div>
       </div>
     </article>

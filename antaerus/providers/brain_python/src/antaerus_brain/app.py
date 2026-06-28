@@ -7,6 +7,7 @@ from antaerus_brain.config import get_settings
 
 settings = get_settings()
 
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title="aNtaerus Brain",

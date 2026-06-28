@@ -1,0 +1,12 @@
+[importlinter]
+root_packages =
+    antaerus
+    antaerus_brain
+
+[importlinter:contract:kernel-independant]
+name = Le kernel Python ne doit pas dépendre du brain Python
+type = forbidden
+source_modules =
+    antaerus.kernel
+forbidden_modules =
+    antaerus_brain

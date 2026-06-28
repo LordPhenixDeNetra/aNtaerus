@@ -24,8 +24,7 @@ impl Settings {
             port,
             api_secret: SecretString::new(
                 env::var("ANTAERUS_ENGINE_API_SECRET")
-                    .unwrap_or_else(|_| "development-secret".to_string())
-                    .into(),
+                    .unwrap_or_else(|_| "development-secret".to_string()),
             ),
         }
     }

@@ -1,0 +1,131 @@
+version: "3"
+
+tasks:
+  lint:
+    desc: Run all lint checks
+    deps:
+      - lint:web
+      - lint:python
+      - lint:go
+      - lint:rust
+
+  typecheck:
+    desc: Run all type checks
+    deps:
+      - typecheck:web
+      - typecheck:python
+
+  test:
+    desc: Run all tests
+    deps:
+      - test:web
+      - test:python
+      - test:go
+      - test:rust
+      - test:smoke
+
+  build:
+    desc: Run all builds
+    deps:
+      - build:web
+      - build:go
+      - build:rust
+
+  lint:web:
+    dir: antaerus/interfaces/web
+    cmds:
+      - npm run lint
+      - npm run format:check
+
+  typecheck:web:
+    dir: antaerus/interfaces/web
+    cmds:
+      - npm run check
+
+  test:web:
+    dir: antaerus/interfaces/web
+    cmds:
+      - npm run test
+
+  build:web:
+    dir: antaerus/interfaces/web
+    cmds:
+      - npm run build
+
+  lint:python:
+    dir: antaerus/providers/brain_python
+    cmds:
+      - python -m ruff check src tests ../../kernel
+      - python -m ruff format --check src tests ../../kernel
+      - python run_import_linter.py
+
+  typecheck:python:
+    dir: antaerus/providers/brain_python
+    cmds:
+      - python -m mypy src ../../kernel
+
+  test:python:
+    dir: antaerus/providers/brain_python
+    cmds:
+      - python -m pytest -m "not integration"
+      - python -m pytest
+
+  lint:go:
+    dir: antaerus
+    cmds:
+      - golangci-lint run
+
+  test:go:
+    dir: antaerus
+    cmds:
+      - go test ./interfaces/gateway_go/...
+
+  build:go:
+    dir: antaerus
+    cmds:
+      - go build ./interfaces/gateway_go/cmd/gateway
+
+  lint:rust:
+    dir: antaerus/providers/engine_rust
+    cmds:
+      - cargo fmt --check
+      - cargo clippy --all-targets --all-features -- -D warnings
+      - cargo check
+
+  test:rust:
+    dir: antaerus/providers/engine_rust
+    cmds:
+      - cargo test
+
+  build:rust:
+    dir: antaerus/providers/engine_rust
+    cmds:
+      - cargo build
+
+  test:smoke:
+    desc: Run smoke validation scripts
+    deps:
+      - smoke:brain
+      - smoke:engine
+      - smoke:gateway
+      - smoke:web
+
+  smoke:brain:
+    dir: antaerus
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File .\scripts\validation\smoke-brain.ps1
+
+  smoke:engine:
+    dir: antaerus
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File .\scripts\validation\smoke-engine.ps1
+
+  smoke:gateway:
+    dir: antaerus
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File .\scripts\validation\smoke-gateway.ps1
+
+  smoke:web:
+    dir: antaerus
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File .\scripts\validation\smoke-web.ps1

@@ -34,10 +34,10 @@ type SystemStatus struct {
 }
 
 type ServiceClient struct {
-	Name            string
-	Runtime         string
-	BaseURL         string
-	HealthPath      string
+	Name             string
+	Runtime          string
+	BaseURL          string
+	HealthPath       string
 	CapabilitiesPath string
 }
 
@@ -61,7 +61,7 @@ func FetchHealth(ctx context.Context, client *http.Client, service ServiceClient
 	if err != nil {
 		return offlineHealth(service, err)
 	}
-	defer response.Body.Close()
+	defer closeBody(response)
 
 	var payload ServiceHealth
 	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
@@ -81,7 +81,7 @@ func FetchCapabilities(ctx context.Context, client *http.Client, service Service
 	if err != nil {
 		return offlineCapabilities(service)
 	}
-	defer response.Body.Close()
+	defer closeBody(response)
 
 	var payload ServiceCapabilities
 	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
@@ -110,5 +110,13 @@ func offlineCapabilities(service ServiceClient) ServiceCapabilities {
 		Runtime:      service.Runtime,
 		Capabilities: []string{},
 	}
+}
+
+func closeBody(response *http.Response) {
+	if response == nil || response.Body == nil {
+		return
+	}
+
+	_ = response.Body.Close()
 }
 

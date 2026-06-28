@@ -2,7 +2,6 @@ from fastapi.testclient import TestClient
 
 from antaerus_brain.app import app
 
-
 client = TestClient(app)
 
 

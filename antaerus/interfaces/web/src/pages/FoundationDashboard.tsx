@@ -7,7 +7,10 @@ import { fetchSystemStatus, type SystemStatus } from "@/lib/api";
 const endpoints = [
   { path: "/health", description: "Santé du gateway" },
   { path: "/api/v1/system/services", description: "Liste des services connus" },
-  { path: "/api/v1/system/status", description: "Statut agrégé pour le dashboard" },
+  {
+    path: "/api/v1/system/status",
+    description: "Statut agrégé pour le dashboard",
+  },
 ];
 
 export default function FoundationDashboard() {
@@ -35,7 +38,9 @@ export default function FoundationDashboard() {
   }, []);
 
   const totalHealthy = useMemo(
-    () => status?.services.filter((service) => service.status === "healthy").length ?? 0,
+    () =>
+      status?.services.filter((service) => service.status === "healthy")
+        .length ?? 0,
     [status],
   );
 
@@ -45,13 +50,18 @@ export default function FoundationDashboard() {
         <section className="overflow-hidden rounded-[32px] border border-cyan-400/20 bg-slate-950/70 p-8 shadow-2xl shadow-cyan-950/20 backdrop-blur">
           <div className="grid gap-8 lg:grid-cols-[1.3fr_0.9fr]">
             <div>
-              <p className="font-mono text-xs uppercase tracking-[0.35em] text-cyan-300">Foundation Dashboard</p>
+              <p className="font-mono text-xs uppercase tracking-[0.35em] text-cyan-300">
+                Foundation Dashboard
+              </p>
               <h1 className="mt-4 max-w-2xl text-4xl font-semibold tracking-tight text-white">
-                aNtaerus pose sa base d&apos;exécution polyglotte, observable et extensible.
+                aNtaerus pose sa base d&apos;exécution polyglotte, observable et
+                extensible.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">
-                Cette interface supervise la première itération d&apos;ingénierie: `web`, `gateway_go`,
-                `brain_python` et `engine_rust`, connectés via contrats JSON et orchestration hybride.
+                Cette interface supervise la première itération
+                d&apos;ingénierie: `web`, `gateway_go`, `brain_python` et
+                `engine_rust`, connectés via contrats JSON et orchestration
+                hybride.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">
@@ -70,9 +80,21 @@ export default function FoundationDashboard() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-1">
-              <MetricCard icon={Network} label="Services sains" value={`${totalHealthy}/4`} />
-              <MetricCard icon={Cpu} label="Environnement" value={status?.environment ?? "indisponible"} />
-              <MetricCard icon={Activity} label="Produit" value={status?.product ?? "aNtaerus"} />
+              <MetricCard
+                icon={Network}
+                label="Services sains"
+                value={`${totalHealthy}/4`}
+              />
+              <MetricCard
+                icon={Cpu}
+                label="Environnement"
+                value={status?.environment ?? "indisponible"}
+              />
+              <MetricCard
+                icon={Activity}
+                label="Produit"
+                value={status?.product ?? "aNtaerus"}
+              />
             </div>
           </div>
         </section>
@@ -87,37 +109,63 @@ export default function FoundationDashboard() {
           <div className="grid gap-6 md:grid-cols-2">
             {loading && !status
               ? Array.from({ length: 4 }, (_, index) => (
-                  <div key={index} className="h-72 animate-pulse rounded-3xl border border-white/10 bg-white/5" />
+                  <div
+                    key={index}
+                    className="h-72 animate-pulse rounded-3xl border border-white/10 bg-white/5"
+                  />
                 ))
               : status?.services.map((service) => (
                   <ServiceStatusCard
                     key={service.name}
                     service={service}
-                    capabilities={status.capabilities.find((item) => item.name === service.name)}
+                    capabilities={status.capabilities.find(
+                      (item) => item.name === service.name,
+                    )}
                   />
                 ))}
           </div>
 
           <aside className="space-y-6">
             <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6 backdrop-blur">
-              <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-400">Endpoints Fondamentaux</p>
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-400">
+                Endpoints Fondamentaux
+              </p>
               <div className="mt-5 space-y-4">
                 {endpoints.map((endpoint) => (
-                  <div key={endpoint.path} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="font-mono text-sm text-cyan-200">{endpoint.path}</p>
-                    <p className="mt-2 text-sm text-slate-300">{endpoint.description}</p>
+                  <div
+                    key={endpoint.path}
+                    className="rounded-2xl border border-white/10 bg-white/5 p-4"
+                  >
+                    <p className="font-mono text-sm text-cyan-200">
+                      {endpoint.path}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-300">
+                      {endpoint.description}
+                    </p>
                   </div>
                 ))}
               </div>
             </section>
 
             <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6 backdrop-blur">
-              <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-400">Couches Présentes</p>
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-slate-400">
+                Couches Présentes
+              </p>
               <ul className="mt-5 space-y-3 text-sm text-slate-300">
-                <li>`web/` supervise l&apos;état agrégé et expose la base UI.</li>
-                <li>`gateway_go/` orchestre les appels de santé et unifie les réponses.</li>
-                <li>`brain_python/` réserve le futur cerveau LLM et mémoire.</li>
-                <li>`engine_rust/` réserve le futur moteur temps réel, audio et sandbox.</li>
+                <li>
+                  `web/` supervise l&apos;état agrégé et expose la base UI.
+                </li>
+                <li>
+                  `gateway_go/` orchestre les appels de santé et unifie les
+                  réponses.
+                </li>
+                <li>
+                  `brain_python/` réserve le futur cerveau LLM et mémoire.
+                </li>
+                <li>
+                  `engine_rust/` réserve le futur moteur temps réel, audio et
+                  sandbox.
+                </li>
               </ul>
             </section>
           </aside>
@@ -141,7 +189,9 @@ function MetricCard({ icon: Icon, label, value }: MetricCardProps) {
           <Icon className="h-4 w-4 text-cyan-200" />
         </div>
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">{label}</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-slate-400">
+            {label}
+          </p>
           <p className="mt-2 text-lg font-semibold text-white">{value}</p>
         </div>
       </div>

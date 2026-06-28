@@ -1,0 +1,38 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-json
+
+  - repo: local
+    hooks:
+      - id: python-ruff-check
+        name: python-ruff-check
+        entry: python -m ruff check antaerus/providers/brain_python/src antaerus/providers/brain_python/tests antaerus/kernel
+        language: system
+        pass_filenames: false
+        files: ^(antaerus/providers/brain_python/|antaerus/kernel/)
+
+      - id: python-ruff-format-check
+        name: python-ruff-format-check
+        entry: python -m ruff format --check antaerus/providers/brain_python/src antaerus/providers/brain_python/tests antaerus/kernel
+        language: system
+        pass_filenames: false
+        files: ^(antaerus/providers/brain_python/|antaerus/kernel/)
+
+      - id: python-import-linter
+        name: python-import-linter
+        entry: python antaerus/providers/brain_python/run_import_linter.py
+        language: system
+        pass_filenames: false
+        files: ^(antaerus/providers/brain_python/|antaerus/kernel/)
+
+      - id: web-prettier-check
+        name: web-prettier-check
+        entry: npm --prefix antaerus/interfaces/web run format:check
+        language: system
+        pass_filenames: false
+        files: ^antaerus/interfaces/web/

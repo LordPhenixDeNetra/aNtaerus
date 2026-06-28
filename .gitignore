@@ -5,16 +5,26 @@ Thumbs.db
 .trae/cache/
 
 node_modules/
+.npm/
+.pnpm-store/
+.yarn/
+.vite/
 dist/
 coverage/
 
 __pycache__/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .venv/
 *.pyc
 *.egg-info/
+.coverage
+htmlcov/
 
 target/
+bundle/
+memory_data/
 
 bin/
 *.exe
@@ -24,4 +34,7 @@ bin/
 
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.log

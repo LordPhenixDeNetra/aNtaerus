@@ -30,23 +30,25 @@
 - Les validations du layout strict ont été rejouées avec succès : `go test ./interfaces/gateway_go/...`, `python -m pytest`, `cargo test`, `npm run check`, `npm run build`, `npm run test`.
 
 ### M0.2 — CI/CD & Tooling
-- [ ] Initialiser repo Git avec `.gitignore` robuste (pas de secrets, pas de `memory_data/`, pas de `bundle/`)
-- [ ] Configurer GitHub Actions : lane rapide (push) + lane lourde (main + hebdo)
-- [ ] Intégrer `ruff` (Python lint/format)
-- [ ] Intégrer `import-linter` (Python : contrats de couches)
-- [ ] Intégrer `mypy` scopé (kernel + conformité Protocols)
-- [ ] Intégrer `golangci-lint` (Go)
-- [ ] Intégrer `clippy` + `cargo fmt` + `cargo check` (Rust)
-- [ ] Intégrer `eslint` + `prettier` (React/TypeScript)
-- [ ] Configurer pytest : suite unitaire (`-m "not integration"`) + suite complète
-- [ ] Créer `Makefile` ou `Taskfile` : `make test`, `make lint`, `make typecheck`, `make build`
-- [ ] Configurer `pre-commit` hooks
-- [ ] Créer `scripts/validation/` : smoke tests démarrage froid par service
+- [x] Initialiser repo Git avec `.gitignore` robuste (pas de secrets, pas de `memory_data/`, pas de `bundle/`)
+- [x] Configurer GitHub Actions : lane rapide (push) + lane lourde (main + hebdo)
+- [x] Intégrer `ruff` (Python lint/format)
+- [x] Intégrer `import-linter` (Python : contrats de couches)
+- [x] Intégrer `mypy` scopé (kernel + conformité Protocols)
+- [x] Intégrer `golangci-lint` (Go)
+- [x] Intégrer `clippy` + `cargo fmt` + `cargo check` (Rust)
+- [x] Intégrer `eslint` + `prettier` (React/TypeScript)
+- [x] Configurer pytest : suite unitaire (`-m "not integration"`) + suite complète
+- [x] Créer `Makefile` ou `Taskfile` : `make test`, `make lint`, `make typecheck`, `make build`
+- [x] Configurer `pre-commit` hooks
+- [x] Créer `scripts/validation/` : smoke tests démarrage froid par service
 
 État actuel :
-- Une CI fondation existe déjà dans `.github/workflows/ci.yml`, mais elle ne sépare pas encore lane rapide et lane lourde.
-- `eslint` est présent côté `antaerus/interfaces/web`, mais `prettier` n'est pas encore configuré.
-- Des tests existent pour `antaerus/interfaces/web`, `antaerus/interfaces/gateway_go`, `antaerus/providers/brain_python` et `antaerus/providers/engine_rust`, mais le niveau de tooling `M0.2` reste incomplet.
+- La CI est désormais séparée en lane rapide (`push` / `pull_request`) et lane lourde (`main` + hebdo) dans `.github/workflows/ci.yml`.
+- Le socle outillage est matérialisé par `Taskfile.yml`, `.pre-commit-config.yaml`, `.golangci.yml`, `antaerus/providers/brain_python/.importlinter` et `antaerus/interfaces/web/.prettierrc.json`.
+- Le `kernel` Python est packagé minimalement avec `antaerus/__init__.py`, `antaerus/kernel/__init__.py`, `antaerus/kernel/contracts/__init__.py` et `antaerus/kernel/settings/__init__.py` pour supporter `mypy` et `import-linter`.
+- Les smoke tests de démarrage froid existent désormais sous `antaerus/scripts/validation/` en `.ps1` et `.sh` pour `brain`, `gateway`, `engine` et `web`.
+- Validations rejouées avec succès : `golangci-lint run --config ../.golangci.yml`, `python -m ruff check`, `python run_import_linter.py`, `python -m mypy`, `python -m pytest -m "not integration"`, `python -m pytest`, `npm run lint`, `npm run format:check`, `npm run check`, `npm run build`, `npm run test`, `rustfmt --edition 2021 --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo check`, `cargo test` et les smoke tests PowerShell.
 
 ### M0.3 — Communication inter-services
 - [ ] Définir le schéma Protobuf pour gRPC Go ↔ Rust
