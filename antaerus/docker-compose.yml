@@ -1,0 +1,41 @@
+services:
+  brain_python:
+    image: python:3.11-slim
+    working_dir: /app/providers/brain_python
+    command: sh -c "pip install -e . && python bootstrap.py"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
+  engine_rust:
+    image: rust:1.78
+    working_dir: /app/providers/engine_rust
+    command: sh -c "cargo run"
+    volumes:
+      - .:/app
+    ports:
+      - "7000:7000"
+
+  gateway_go:
+    image: golang:1.22
+    working_dir: /app
+    command: sh -c "go run ./interfaces/gateway_go/cmd/gateway"
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - brain_python
+      - engine_rust
+
+  web:
+    image: node:20
+    working_dir: /app/interfaces/web
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - .:/app
+    ports:
+      - "5173:5173"
+    depends_on:
+      - gateway_go
