@@ -7,6 +7,7 @@ edition = "2021"
 axum = { version = "0.7", features = ["http1", "json"] }
 chrono = { version = "0.4", features = ["clock", "serde"] }
 prost = "0.13"
+ring = "0.17"
 secrecy = "0.8"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }

@@ -79,6 +79,7 @@ docker compose up --build
 - `antaerus/` : `go test ./interfaces/gateway_go/...`
 - `providers/brain_python/` : `python -m pytest`
 - `providers/engine_rust/` : `cargo test`
+- sécurité fondation : `task test:security`
 
 ## Commandes M0.3
 
@@ -94,6 +95,12 @@ docker compose up --build
 - stubs Go : `interfaces/gateway_go/internal/gen/enginepb/`
 - stub Rust consommé par le provider : `providers/engine_rust/src/gen/engine.rs`
 - schémas WebSocket : `kernel/schemas/websocket-client-message.schema.json` et `kernel/schemas/websocket-server-message.schema.json`
+
+## Commandes M0.4
+
+- valider les secrets : `task test:security`
+- script PowerShell anti-fuite : `powershell -ExecutionPolicy Bypass -File .\scripts\validation\test-secrets-no-leak.ps1`
+- documentation sécurité : `docs/security/SECRETS.md`
 
 ## Documents
 

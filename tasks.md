@@ -71,13 +71,22 @@
 - Validations rejouées avec succès : `go test ./engine/... ./interfaces/gateway_go/...`, `cargo check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test`, `npm run check` et `powershell -ExecutionPolicy Bypass -File .\scripts\validation\smoke-engine.ps1`.
 
 ### M0.4 — Sécurité fondamentale
-- [ ] Implémenter `SecretString` Go (marshal masqué)
-- [ ] Implémenter `SecretStr` Python (pydantic)
-- [ ] Implémenter `secrecy::SecretString` Rust
-- [ ] Écrire le test de mortalité : `test_secrets_no_leak` (grep `sk-`, `ntn_`, etc.)
-- [ ] Configurer chiffrement au repos Rust (`ring` AES-256-GCM)
-- [ ] Documenter : jamais de `os.Setenv` / `os.environ` mutation en runtime
-- [ ] Créer `docs/security/SECRETS.md`
+- [x] Implémenter `SecretString` Go (marshal masqué)
+- [x] Implémenter `SecretStr` Python (pydantic)
+- [x] Implémenter `secrecy::SecretString` Rust
+- [x] Écrire le test de mortalité : `test_secrets_no_leak` (grep `sk-`, `ntn_`, etc.)
+- [x] Configurer chiffrement au repos Rust (`ring` AES-256-GCM)
+- [x] Documenter : jamais de `os.Setenv` / `os.environ` mutation en runtime
+- [x] Créer `docs/security/SECRETS.md`
+
+État actuel :
+- Go : `antaerus/kernel/settings/config.go` masque désormais les secrets via `String()`, `GoString()`, `MarshalJSON()` et `MarshalText()` ; les tests associés sont dans `antaerus/kernel/settings/config_test.go`.
+- Python : `antaerus/kernel/settings/config.py` utilise un modèle `pydantic` figé avec `SecretStr`, `antaerus/providers/brain_python/src/antaerus_brain/config.py` conserve `SecretStr`, et les validations sont dans `antaerus/providers/brain_python/tests/test_secrets.py`.
+- Rust : `antaerus/providers/engine_rust/src/config.rs` continue d'utiliser `secrecy::SecretString`, et la primitive AES-256-GCM réutilisable est implémentée dans `antaerus/providers/engine_rust/src/crypto.rs` avec tests dans `antaerus/providers/engine_rust/tests/crypto.rs` et `antaerus/providers/engine_rust/tests/secrets.rs`.
+- Anti-fuite : `antaerus/providers/brain_python/tests/test_secrets_no_leak.py` scanne les fichiers texte du dépôt avec des motifs ciblés (`sk-...`, `ntn_...`) et des exclusions de caches/artefacts ; scripts de validation ajoutés dans `antaerus/scripts/validation/test-secrets-no-leak.ps1` et `.sh`.
+- Documentation : `antaerus/docs/security/SECRETS.md` formalise le typage des secrets, la règle d'immuabilité runtime et les exceptions de tooling (`run_import_linter.py`, `tools/proto_codegen/src/main.rs`).
+- Outillage : `Taskfile.yml` expose `test:security`, mais la commande `task` n'était pas disponible dans le shell local de validation ; les contrôles ont donc été rejoués directement via les commandes sous-jacentes.
+- Validations exécutées avec succès : `go test ./kernel/settings/...`, `python -m pytest tests/test_secrets.py tests/test_secrets_no_leak.py -q`, `powershell -ExecutionPolicy Bypass -File .\scripts\validation\test-secrets-no-leak.ps1`, `cargo check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test`.
 
 ---
 

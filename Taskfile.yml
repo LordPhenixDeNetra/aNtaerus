@@ -25,6 +25,7 @@ tasks:
       - test:python
       - test:go
       - test:rust
+      - test:security
       - test:smoke
 
   build:
@@ -89,6 +90,14 @@ tasks:
     cmds:
       - python -m pytest -m "not integration"
       - python -m pytest
+
+  test:security:
+    desc: Run foundational secret safety checks
+    dir: antaerus
+    cmds:
+      - go test ./kernel/settings/...
+      - powershell -ExecutionPolicy Bypass -File .\scripts\validation\test-secrets-no-leak.ps1
+      - cargo test --test crypto --test secrets
 
   lint:go:
     dir: antaerus

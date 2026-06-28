@@ -1,11 +1,33 @@
 package settings
 
-import "github.com/spf13/viper"
+import (
+	"encoding/json"
+
+	"github.com/spf13/viper"
+)
 
 type SecretString string
 
+const maskedSecretValue = "***"
+
 func (s SecretString) String() string {
-	return "***"
+	return maskedSecretValue
+}
+
+func (s SecretString) GoString() string {
+	return maskedSecretValue
+}
+
+func (s SecretString) MarshalJSON() ([]byte, error) {
+	return json.Marshal(maskedSecretValue)
+}
+
+func (s SecretString) MarshalText() ([]byte, error) {
+	return []byte(maskedSecretValue), nil
+}
+
+func (s SecretString) Value() string {
+	return string(s)
 }
 
 type FoundationSettings struct {
