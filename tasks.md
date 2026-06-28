@@ -51,18 +51,24 @@
 - Validations rejouées avec succès : `golangci-lint run --config ../.golangci.yml`, `python -m ruff check`, `python run_import_linter.py`, `python -m mypy`, `python -m pytest -m "not integration"`, `python -m pytest`, `npm run lint`, `npm run format:check`, `npm run check`, `npm run build`, `npm run test`, `rustfmt --edition 2021 --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo check`, `cargo test` et les smoke tests PowerShell.
 
 ### M0.3 — Communication inter-services
-- [ ] Définir le schéma Protobuf pour gRPC Go ↔ Rust
-- [ ] Générer les stubs Go (`protoc-gen-go`)
-- [ ] Générer les stubs Rust (`tonic-build`)
+- [x] Définir le schéma Protobuf pour gRPC Go ↔ Rust
+- [x] Générer les stubs Go (`protoc-gen-go`)
+- [x] Générer les stubs Rust (`tonic-build`)
 - [x] Définir le format JSON pour HTTP Go ↔ Python
-- [ ] Définir le format JSON pour WebSocket Go ↔ React
-- [ ] Implémenter le bus d'événements interne Go (channels + goroutines)
-- [ ] Tester la latence Go ↔ Rust (< 10ms)
-- [ ] Tester la latence Go ↔ Python (< 50ms)
+- [x] Définir le format JSON pour WebSocket Go ↔ React
+- [x] Implémenter le bus d'événements interne Go (channels + goroutines)
+- [x] Tester la latence Go ↔ Rust (< 10ms)
+- [x] Tester la latence Go ↔ Python (< 50ms)
 
 État actuel :
 - Le format JSON HTTP Go ↔ Python est matérialisé par `antaerus/interfaces/gateway_go/internal/clients/python_client.go`, `antaerus/providers/brain_python/src/antaerus_brain/api/health.py` et les schémas `antaerus/kernel/schemas/*.json`.
-- Les formats gRPC et WebSocket métier restent à concevoir.
+- Le contrat gRPC de fondation est défini dans `antaerus/kernel/proto/engine.proto` avec `Ping`, `GetHealth` et `GetCapabilities`.
+- Les stubs Go sont matérialisés dans `antaerus/interfaces/gateway_go/internal/gen/enginepb/` et consommés par `antaerus/interfaces/gateway_go/internal/clients/engine_grpc_client.go`.
+- Le provider Rust expose désormais un listener gRPC de fondation via `antaerus/providers/engine_rust/src/grpc_service.rs` en s'appuyant sur `antaerus/providers/engine_rust/src/gen/engine.rs`.
+- Le format WebSocket Go ↔ React est matérialisé dans `antaerus/kernel/schemas/websocket-client-message.schema.json`, `antaerus/kernel/schemas/websocket-server-message.schema.json`, `antaerus/interfaces/web/src/lib/ws.ts` et `antaerus/interfaces/gateway_go/internal/contracts/websocket.go`.
+- Le bus d'événements Go est implémenté dans `antaerus/engine/events/bus.go` avec tests dans `antaerus/engine/events/bus_test.go`.
+- Benchmarks locaux validés : Go ↔ Python `2.31608ms` via `antaerus/scripts/validation/bench-go-python-latency.ps1` et Go ↔ Rust `834.768µs` via `antaerus/scripts/validation/bench-go-rust-latency.ps1`.
+- Validations rejouées avec succès : `go test ./engine/... ./interfaces/gateway_go/...`, `cargo check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test`, `npm run check` et `powershell -ExecutionPolicy Bypass -File .\scripts\validation\smoke-engine.ps1`.
 
 ### M0.4 — Sécurité fondamentale
 - [ ] Implémenter `SecretString` Go (marshal masqué)

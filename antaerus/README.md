@@ -80,6 +80,21 @@ docker compose up --build
 - `providers/brain_python/` : `python -m pytest`
 - `providers/engine_rust/` : `cargo test`
 
+## Commandes M0.3
+
+- générer les stubs Go : `task generate:proto:go`
+- générer les stubs Rust : `task generate:proto:rust`
+- lancer tous les benches locaux : `task bench:latency`
+- bench Go ↔ Python : `powershell -ExecutionPolicy Bypass -File .\scripts\validation\bench-go-python-latency.ps1`
+- bench Go ↔ Rust : `powershell -ExecutionPolicy Bypass -File .\scripts\validation\bench-go-rust-latency.ps1`
+
+## Artifacts M0.3
+
+- proto partagé : `kernel/proto/engine.proto`
+- stubs Go : `interfaces/gateway_go/internal/gen/enginepb/`
+- stub Rust consommé par le provider : `providers/engine_rust/src/gen/engine.rs`
+- schémas WebSocket : `kernel/schemas/websocket-client-message.schema.json` et `kernel/schemas/websocket-server-message.schema.json`
+
 ## Documents
 
 - [PRD fondation](file:///n:/OneDrive%20-%20Universit%C3%A9%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/.trae/documents/antaerus-prd-fondation.md)

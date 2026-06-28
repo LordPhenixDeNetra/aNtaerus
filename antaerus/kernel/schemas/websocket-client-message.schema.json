@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://antaerus.local/contracts/websocket-client-message.schema.json",
+  "title": "WebSocket Client Message",
+  "type": "object",
+  "required": ["type", "timestamp", "payload"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": [
+        "chat.message",
+        "voice.start",
+        "voice.stop",
+        "voice.barge_in",
+        "mission.cancel"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "oneOf": [
+        {
+          "title": "chat.message",
+          "required": ["sessionId", "message"],
+          "properties": {
+            "sessionId": { "type": "string" },
+            "message": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "voice.start",
+          "required": ["sessionId"],
+          "properties": {
+            "sessionId": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "voice.stop",
+          "required": ["sessionId"],
+          "properties": {
+            "sessionId": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "voice.barge_in",
+          "required": ["sessionId"],
+          "properties": {
+            "sessionId": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "mission.cancel",
+          "required": ["missionId"],
+          "properties": {
+            "missionId": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}

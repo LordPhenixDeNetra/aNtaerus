@@ -6,9 +6,11 @@ edition = "2021"
 [dependencies]
 axum = { version = "0.7", features = ["http1", "json"] }
 chrono = { version = "0.4", features = ["clock", "serde"] }
+prost = "0.13"
 secrecy = "0.8"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
+tonic = { version = "0.12", default-features = false, features = ["codegen", "prost", "server"] }
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }

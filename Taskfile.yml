@@ -1,5 +1,8 @@
 version: "3"
 
+vars:
+  PROTOC_BIN: '{{default "protoc" .PROTOC_BIN}}'
+
 tasks:
   lint:
     desc: Run all lint checks
@@ -30,6 +33,23 @@ tasks:
       - build:web
       - build:go
       - build:rust
+
+  generate:proto:
+    desc: Generate protobuf artifacts for Go and Rust
+    deps:
+      - generate:proto:go
+      - generate:proto:rust
+
+  generate:proto:go:
+    desc: Generate Go protobuf stubs
+    cmds:
+      - '{{.PROTOC_BIN}} --proto_path=antaerus/kernel/proto --go_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/enginepb --go-grpc_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/enginepb antaerus/kernel/proto/engine.proto'
+
+  generate:proto:rust:
+    desc: Generate Rust gRPC stubs with tonic-build helper
+    dir: antaerus/providers/engine_rust
+    cmds:
+      - cargo run --manifest-path tools/proto_codegen/Cargo.toml
 
   lint:web:
     dir: antaerus/interfaces/web
@@ -101,6 +121,24 @@ tasks:
     dir: antaerus/providers/engine_rust
     cmds:
       - cargo build
+
+  bench:latency:
+    desc: Run local latency budgets
+    deps:
+      - bench:latency:python
+      - bench:latency:rust
+
+  bench:latency:python:
+    desc: Run the Go to Python latency budget
+    dir: antaerus
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File .\scripts\validation\bench-go-python-latency.ps1
+
+  bench:latency:rust:
+    desc: Run the Go to Rust latency budget
+    dir: antaerus
+    cmds:
+      - powershell -ExecutionPolicy Bypass -File .\scripts\validation\bench-go-rust-latency.ps1
 
   test:smoke:
     desc: Run smoke validation scripts

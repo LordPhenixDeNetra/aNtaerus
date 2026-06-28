@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package antaerus.kernel.engine.v1;
+
+option go_package = "antaerus/interfaces/gateway_go/internal/gen/enginepb;enginepb";
+
+service EngineRuntime {
+  rpc Ping(PingRequest) returns (PingResponse);
+  rpc GetHealth(HealthRequest) returns (HealthResponse);
+  rpc GetCapabilities(CapabilitiesRequest) returns (CapabilitiesResponse);
+}
+
+message PingRequest {
+  string request_id = 1;
+  int64 sent_at_unix_nano = 2;
+}
+
+message PingResponse {
+  string request_id = 1;
+  int64 sent_at_unix_nano = 2;
+  int64 received_at_unix_nano = 3;
+}
+
+message HealthRequest {}
+
+message HealthResponse {
+  string name = 1;
+  string status = 2;
+  string version = 3;
+  uint32 port = 4;
+  string url = 5;
+  string checked_at = 6;
+  string details = 7;
+}
+
+message CapabilitiesRequest {}
+
+message CapabilitiesResponse {
+  string name = 1;
+  string version = 2;
+  string runtime = 3;
+  repeated string capabilities = 4;
+}
