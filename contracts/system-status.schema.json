@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://antaerus.local/contracts/system-status.schema.json",
+  "title": "SystemStatus",
+  "type": "object",
+  "required": ["product", "phase", "environment", "services", "capabilities"],
+  "properties": {
+    "product": {
+      "type": "string",
+      "const": "aNtaerus"
+    },
+    "phase": {
+      "type": "string",
+      "const": "foundation"
+    },
+    "environment": {
+      "type": "string"
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "$ref": "service-health.schema.json"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "$ref": "service-capabilities.schema.json"
+      }
+    }
+  },
+  "additionalProperties": false
+}
