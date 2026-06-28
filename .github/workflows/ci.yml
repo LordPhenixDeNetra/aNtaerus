@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web
+        working-directory: antaerus/interfaces/web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,19 +24,19 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: gateway_go
+        working-directory: antaerus
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: "1.22"
-      - run: go test ./...
+      - run: go test ./interfaces/gateway_go/...
 
   brain:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: brain_python
+        working-directory: antaerus/providers/brain_python
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -49,7 +49,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: engine_rust
+        working-directory: antaerus/providers/engine_rust
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable

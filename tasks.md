@@ -12,17 +12,22 @@
 ## Phase M0 — Fondation (3 semaines)
 
 ### M0.1 — Architecture & Bootstrap
-- [ ] Définir la structure de dossiers `antaerus/` avec les 4 couches (L0-L3)
-- [ ] Créer `kernel/` (L0) : `contracts.go`, `contracts.rs`, `contracts.py`, `schemas/`, `events/`, `errors/`, `paths/`
-- [ ] Implémenter `settings/` L0 : config immuable Go (Viper), `SecretStr` Python (pydantic), `secrecy` Rust
-- [ ] Créer `permissions/` L0 : rôles, autonomie niveaux 0-5
-- [ ] Créer `approval/` L0 : gate composite (risque × catégorie × budget)
-- [ ] Créer `notifications/` L0 : bus d'événements pub/sub cross-langage
-- [ ] Écrire `bootstrap.go` : composition root unique (instancie ~30 objets, câble le bus)
-- [ ] Écrire `bootstrap.py` : composition root Python (mirror Go)
-- [ ] Écrire `bootstrap.rs` : composition root Rust (mirror Go)
-- [ ] Définir les Protocols/Interfaces entre couches (Go interfaces, Rust traits, Python Protocols)
-- [ ] **Règle critique** : zéro fichier hors package `antaerus/` (pas de `config/` racine, pas de `main.py` racine)
+- [x] Définir la structure de dossiers `antaerus/` avec les 4 couches (L0-L3)
+- [x] Créer `kernel/` (L0) : `contracts.go`, `contracts.rs`, `contracts.py`, `schemas/`, `events/`, `errors/`, `paths/`
+- [x] Implémenter `settings/` L0 : config immuable Go (Viper), `SecretStr` Python (pydantic), `secrecy` Rust
+- [x] Créer `permissions/` L0 : rôles, autonomie niveaux 0-5
+- [x] Créer `approval/` L0 : gate composite (risque × catégorie × budget)
+- [x] Créer `notifications/` L0 : bus d'événements pub/sub cross-langage
+- [x] Écrire `bootstrap.go` : composition root unique (instancie ~30 objets, câble le bus)
+- [x] Écrire `bootstrap.py` : composition root Python (mirror Go)
+- [x] Écrire `bootstrap.rs` : composition root Rust (mirror Go)
+- [x] Définir les Protocols/Interfaces entre couches (Go interfaces, Rust traits, Python Protocols)
+- [x] **Règle critique** : zéro fichier hors package `antaerus/` (pas de `config/` racine, pas de `main.py` racine)
+
+État actuel :
+- La structure stricte est matérialisée sous `antaerus/kernel`, `antaerus/providers`, `antaerus/engine` et `antaerus/interfaces`.
+- Les doublons techniques racine `web/`, `gateway_go/`, `brain_python/` et `engine_rust/` ont été supprimés pour tenir la règle de structure.
+- Les validations du layout strict ont été rejouées avec succès : `go test ./interfaces/gateway_go/...`, `python -m pytest`, `cargo test`, `npm run check`, `npm run build`, `npm run test`.
 
 ### M0.2 — CI/CD & Tooling
 - [ ] Initialiser repo Git avec `.gitignore` robuste (pas de secrets, pas de `memory_data/`, pas de `bundle/`)
@@ -40,8 +45,8 @@
 
 État actuel :
 - Une CI fondation existe déjà dans `.github/workflows/ci.yml`, mais elle ne sépare pas encore lane rapide et lane lourde.
-- `eslint` est présent côté `web/`, mais `prettier` n'est pas encore configuré.
-- Des tests existent pour `web/`, `gateway_go/`, `brain_python/` et `engine_rust`, mais le niveau de tooling `M0.2` reste incomplet.
+- `eslint` est présent côté `antaerus/interfaces/web`, mais `prettier` n'est pas encore configuré.
+- Des tests existent pour `antaerus/interfaces/web`, `antaerus/interfaces/gateway_go`, `antaerus/providers/brain_python` et `antaerus/providers/engine_rust`, mais le niveau de tooling `M0.2` reste incomplet.
 
 ### M0.3 — Communication inter-services
 - [ ] Définir le schéma Protobuf pour gRPC Go ↔ Rust
@@ -54,7 +59,7 @@
 - [ ] Tester la latence Go ↔ Python (< 50ms)
 
 État actuel :
-- Le format JSON HTTP Go ↔ Python est matérialisé par `gateway_go/internal/clients/python_client.go`, `brain_python/src/antaerus_brain/api/health.py` et les schémas `contracts/*.json`.
+- Le format JSON HTTP Go ↔ Python est matérialisé par `antaerus/interfaces/gateway_go/internal/clients/python_client.go`, `antaerus/providers/brain_python/src/antaerus_brain/api/health.py` et les schémas `antaerus/kernel/schemas/*.json`.
 - Les formats gRPC et WebSocket métier restent à concevoir.
 
 ### M0.4 — Sécurité fondamentale
@@ -81,7 +86,7 @@
 - [ ] Implémenter `gateway/config.go` : struct config immuable, validation
 
 État actuel :
-- Une première porte d'entrée Go existe déjà via `gateway_go/cmd/gateway/main.go` et `gateway_go/internal/system/handlers.go`, mais elle reste inférieure au périmètre `M1.1`.
+- Une première porte d'entrée Go existe déjà via `antaerus/interfaces/gateway_go/cmd/gateway/main.go` et `antaerus/interfaces/gateway_go/internal/system/handlers.go`, mais elle reste inférieure au périmètre `M1.1`.
 
 ### M1.2 — Python Brain (LLM + Mémoire basique)
 - [ ] Implémenter `brain_python/llm/factory.py` : factory LLM (Anthropic, OpenAI, Mistral, Ollama)
@@ -96,7 +101,7 @@
 - [ ] Exposer FastAPI interne (localhost uniquement) : routes `/llm/`, `/memory/`
 
 État actuel :
-- Un service FastAPI minimal est déjà présent dans `brain_python/src/antaerus_brain/app.py`, avec des endpoints de santé et de capacités uniquement.
+- Un service FastAPI minimal est déjà présent dans `antaerus/providers/brain_python/src/antaerus_brain/app.py`, avec des endpoints de santé et de capacités uniquement.
 
 ### M1.3 — React + Vite (UI Core)
 - [x] Initialiser projet Vite + React + TypeScript
@@ -113,7 +118,7 @@
 - [ ] Configurer build statique pour servir par Go
 
 État actuel :
-- Le projet `web/` est initialisé en `React + Vite + TypeScript`, avec un dashboard de fondation au lieu de l'UI chat finale.
+- Le projet `antaerus/interfaces/web/` est initialisé en `React + Vite + TypeScript`, avec un dashboard de fondation au lieu de l'UI chat finale.
 - `zustand` est installé mais pas encore réellement exploité comme couche de state management métier.
 
 ### M1.4 — Intégration texte
