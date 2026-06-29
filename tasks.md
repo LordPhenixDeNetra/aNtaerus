@@ -373,7 +373,7 @@
 - [ ] Audit mypy : 0 erreur kernel
 
 ### M9.2 — Documentation
-- [ ] `README.md` : présentation, installation, démarrage rapide
+- [x] `README.md` : présentation, installation, démarrage rapide
 - [ ] `docs/architecture/CDC.md` : contrat de développement complet
 - [ ] `docs/architecture/EVENTS.md` : bus d'événements, messages
 - [ ] `docs/architecture/API.md` : spécification API REST + WebSocket
@@ -420,9 +420,9 @@
 ### Community (futur)
 - [ ] Créer Discord server
 - [ ] Créer GitHub Discussions
-- [ ] Rédiger CONTRIBUTING.md
-- [ ] Rédiger CODE_OF_CONDUCT.md
-- [ ] Choisir licence (MIT / Apache 2.0 / dual)
+- [x] Rédiger CONTRIBUTING.md
+- [x] Rédiger CODE_OF_CONDUCT.md
+- [x] Choisir licence (MIT / Apache 2.0 / dual)
 
 ---
 
