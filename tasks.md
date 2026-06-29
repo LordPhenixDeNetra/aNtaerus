@@ -114,19 +114,24 @@
 - La validation Go du lot complet `M1.1` a été rejouée avec succès via `go mod tidy` puis `go test ./interfaces/gateway_go/...`.
 
 ### M1.2 — Python Brain (LLM + Mémoire basique)
-- [ ] Implémenter `brain_python/llm/factory.py` : factory LLM (Anthropic, OpenAI, Mistral, Ollama)
-- [ ] Implémenter `brain_python/llm/api.py` : client API cloud
-- [ ] Implémenter `brain_python/llm/local.py` : client Ollama local
-- [ ] Implémenter `brain_python/llm/streaming.py` : streaming SSE vers Go
-- [ ] Implémenter `brain_python/memory/kernel.py` : SQLite source de vérité
-- [ ] Implémenter `brain_python/memory/schemas.py` : tables `events`, `facts`, `fact_observations`, `fact_relations`
-- [ ] Implémenter `brain_python/memory/ingest.py` : extraction facts basique (regex + heuristiques)
-- [ ] Implémenter `brain_python/memory/mirror.py` : génération Markdown unidirectionnelle
-- [ ] Implémenter `brain_python/memory/search.py` : recherche textuelle basique
-- [ ] Exposer FastAPI interne (localhost uniquement) : routes `/llm/`, `/memory/`
+- [x] Implémenter `brain_python/llm/factory.py` : factory LLM (Anthropic, OpenAI, Mistral, Ollama)
+- [x] Implémenter `brain_python/llm/api.py` : client API cloud
+- [x] Implémenter `brain_python/llm/local.py` : client Ollama local
+- [x] Implémenter `brain_python/llm/streaming.py` : streaming SSE vers Go
+- [x] Implémenter `brain_python/memory/kernel.py` : SQLite source de vérité
+- [x] Implémenter `brain_python/memory/schemas.py` : tables `events`, `facts`, `fact_observations`, `fact_relations`
+- [x] Implémenter `brain_python/memory/ingest.py` : extraction facts basique (regex + heuristiques)
+- [x] Implémenter `brain_python/memory/mirror.py` : génération Markdown unidirectionnelle
+- [x] Implémenter `brain_python/memory/search.py` : recherche textuelle basique
+- [x] Exposer FastAPI interne (localhost uniquement) : routes `/llm/`, `/memory/`
 
 État actuel :
-- Un service FastAPI minimal est déjà présent dans `antaerus/providers/brain_python/src/antaerus_brain/app.py`, avec des endpoints de santé et de capacités uniquement.
+- Le service FastAPI `antaerus/providers/brain_python/src/antaerus_brain/app.py` monte désormais les routeurs `health`, `llm` et `memory`, transformant le brain en API interne texte + mémoire exploitable.
+- La configuration runtime du brain est étendue dans `antaerus/providers/brain_python/src/antaerus_brain/config.py` avec provider par défaut, clés cloud `SecretStr`, modèles par provider, timeout LLM et chemins mémoire (`antaerus/memory_data/antaerus_memory.db`, `antaerus/memory_data/topics/`).
+- Le package `antaerus/providers/brain_python/src/antaerus_brain/llm/` matérialise une factory multi-provider (`anthropic`, `openai`, `mistral`, `ollama`), un client cloud via `litellm`, un client local Ollama via `httpx` et un adaptateur `SSE`.
+- Le package `antaerus/providers/brain_python/src/antaerus_brain/memory/` matérialise le noyau SQLite, le schéma `events/facts/fact_observations/fact_relations`, l'ingestion heuristique, la recherche textuelle et le mirror Markdown unidirectionnel.
+- Les routes internes exposées couvrent `GET /llm/providers`, `POST /llm/chat`, `POST /llm/stream`, `GET /memory/facts`, `POST /memory/facts`, `POST /memory/ingest` et `POST /memory/mirror`, tandis que `/internal/capabilities` annonce désormais `llm-routing`, `llm-streaming-sse`, `memory-kernel`, `memory-search` et `memory-mirror`.
+- La validation du lot `M1.2` a été rejouée avec succès via `python -m mypy src tests`, `python -m pytest tests` et `python -m ruff check .` depuis `antaerus/providers/brain_python/`.
 
 ### M1.3 — React + Vite (UI Core)
 - [x] Initialiser projet Vite + React + TypeScript

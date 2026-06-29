@@ -1,12 +1,16 @@
 from fastapi.testclient import TestClient
 
-from antaerus_brain.app import app
+from antaerus_brain.app import create_app
+from antaerus_brain.config import get_settings
 
-client = TestClient(app)
+
+def _client() -> TestClient:
+    get_settings.cache_clear()
+    return TestClient(create_app())
 
 
 def test_health_endpoint_returns_expected_shape() -> None:
-    response = client.get("/health")
+    response = _client().get("/health")
 
     assert response.status_code == 200
     payload = response.json()
@@ -16,9 +20,11 @@ def test_health_endpoint_returns_expected_shape() -> None:
 
 
 def test_capabilities_endpoint_returns_python_runtime() -> None:
-    response = client.get("/internal/capabilities")
+    response = _client().get("/internal/capabilities")
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["runtime"] == "python"
     assert "healthcheck" in payload["capabilities"]
+    assert "llm-routing" in payload["capabilities"]
+    assert "memory-kernel" in payload["capabilities"]

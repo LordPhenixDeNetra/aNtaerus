@@ -33,7 +33,10 @@ def capabilities() -> dict[str, object]:
         "capabilities": [
             "healthcheck",
             "capability-reporting",
-            "llm-slot-reserved",
-            "memory-slot-reserved",
+            "llm-routing",
+            "llm-streaming-sse",
+            "memory-kernel",
+            "memory-search",
+            "memory-mirror",
         ],
     }
