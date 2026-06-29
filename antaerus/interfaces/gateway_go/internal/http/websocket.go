@@ -20,6 +20,7 @@ type Hub struct {
 	config        config.Config
 	authenticator Authenticator
 	rateLimiter   *RateLimiter
+	brainChat     clients.BrainChatClient
 	healthService system.HealthService
 	upgrader      websocket.Upgrader
 	register      chan *Client
@@ -43,12 +44,14 @@ func NewHub(
 	cfg config.Config,
 	authenticator Authenticator,
 	rateLimiter *RateLimiter,
+	brainChat clients.BrainChatClient,
 	healthService system.HealthService,
 ) *Hub {
 	return &Hub{
 		config:        cfg,
 		authenticator: authenticator,
 		rateLimiter:   rateLimiter,
+		brainChat:     brainChat,
 		healthService: healthService,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(*http.Request) bool { return true },
@@ -194,10 +197,7 @@ func (client *Client) handleMessage(message contracts.ClientMessage) {
 			return
 		}
 
-		client.enqueue(serverMessage(contracts.ServerMessageChatComplete, contracts.ChatCompletePayload{
-			SessionID: payload.SessionID,
-			Message:   "Transport WebSocket operationnel. Le brain texte sera branche au lot suivant.",
-		}))
+		client.handleChatMessage(payload)
 	case contracts.ClientMessageVoiceStart, contracts.ClientMessageVoiceStop, contracts.ClientMessageBargeIn:
 		client.enqueue(alertMessage("info", "Voice transport placeholder active. Le pipeline voix n'est pas encore branche."))
 	case contracts.ClientMessageCancel:
@@ -213,6 +213,37 @@ func (client *Client) handleMessage(message contracts.ClientMessage) {
 		}))
 	default:
 		client.enqueue(alertMessage("error", "Unsupported WebSocket message type"))
+	}
+}
+
+func (client *Client) handleChatMessage(payload contracts.ChatMessagePayload) {
+	err := client.hub.brainChat.StreamSession(
+		context.Background(),
+		clients.BrainSessionStreamRequest{
+			SessionID: payload.SessionID,
+			Message:   payload.Message,
+		},
+		func(event clients.BrainStreamEvent) error {
+			switch event.Event {
+			case "token":
+				client.enqueue(serverMessage(contracts.ServerMessageChatToken, contracts.ChatTokenPayload{
+					SessionID: payload.SessionID,
+					Token:     stringValue(event.Data["text"]),
+				}))
+			case "complete":
+				client.enqueue(serverMessage(contracts.ServerMessageChatComplete, contracts.ChatCompletePayload{
+					SessionID: payload.SessionID,
+					Message:   stringValue(event.Data["text"]),
+				}))
+			case "error":
+				client.enqueue(alertMessage("error", stringValue(event.Data["message"])))
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		client.enqueue(alertMessage("error", fmt.Sprintf("Brain chat stream failed: %v", err)))
 	}
 }
 
@@ -259,4 +290,9 @@ func convertServiceHealth(services []clients.ServiceHealth) []contracts.ServiceH
 	}
 
 	return converted
+}
+
+func stringValue(value any) string {
+	text, _ := value.(string)
+	return text
 }

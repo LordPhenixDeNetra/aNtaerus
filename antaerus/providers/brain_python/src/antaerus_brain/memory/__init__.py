@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class FactInput(BaseModel):
@@ -31,3 +33,33 @@ class MirrorResult(BaseModel):
 
 class SearchResponse(BaseModel):
     facts: list[FactRecord]
+
+
+ChatRole = Literal["system", "user", "assistant"]
+
+
+class ChatSessionRecord(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    session_id: str
+    provider: str | None = None
+    created_at: str
+    updated_at: str
+
+
+class ChatMessageRecord(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    session_id: str = Field(alias="sessionId")
+    role: ChatRole
+    content: str
+    provider: str | None = None
+    created_at: str = Field(alias="createdAt")
+
+
+class ChatHistoryResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    session_id: str = Field(alias="sessionId")
+    messages: list[ChatMessageRecord]

@@ -4,10 +4,10 @@
 
 ## Phase Courante
 
-Cette livraison met en place une base exécutable :
-- `interfaces/web/` : dashboard de fondation
-- `interfaces/gateway_go/` : agrégation d'état et API système
-- `providers/brain_python/` : service Python minimal
+Cette livraison met en place une base exécutable avec premier chat texte intégré :
+- `interfaces/web/` : UI texte React avec `Chat`, `Setup`, JWT de dev et historique de session
+- `interfaces/gateway_go/` : agrégation d'état, API système, WebSocket, historique de chat et dev token
+- `providers/brain_python/` : service Python session-aware avec streaming LLM et persistance SQLite
 - `providers/engine_rust/` : service Rust minimal
 - `kernel/` : contrats, settings, permissions, approval, notifications
 - `engine/` : bootstrap d'orchestration
@@ -83,6 +83,11 @@ docker compose up --build
 - gateway : `http://localhost:8080`
 - brain : `http://localhost:8000`
 - engine : `http://localhost:7000`
+- gateway health : `http://localhost:8080/health`
+- gateway dev token : `POST http://localhost:8080/api/v1/auth/dev-token`
+- gateway session history : `GET http://localhost:8080/api/v1/chat/sessions/{session_id}`
+- brain session stream : `POST http://localhost:8000/llm/session-stream`
+- brain session history : `GET http://localhost:8000/memory/chat/sessions/{session_id}`
 
 ## Vérification
 
@@ -91,6 +96,7 @@ docker compose up --build
 - `providers/brain_python/` : `python -m pytest`
 - `providers/engine_rust/` : `cargo test`
 - sécurité fondation : `task test:security`
+- smoke texte `M1.4` : `powershell -ExecutionPolicy Bypass -File .\scripts\validation\smoke-text-chat.ps1`
 
 ## Commandes M0.3
 
@@ -117,3 +123,19 @@ docker compose up --build
 
 - [PRD fondation](file:///n:/OneDrive%20-%20Universit%C3%A9%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/.trae/documents/antaerus-prd-fondation.md)
 - [Architecture technique](file:///n:/OneDrive%20-%20Universit%C3%A9%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/.trae/documents/antaerus-architecture-technique.md)
+
+## Flux Texte M1.4
+
+Le flux texte intégré fonctionne désormais ainsi :
+
+- `React` ouvre `GET /api/v1/ws?token=<jwt>`
+- le gateway Go relaie `chat.message` vers `POST /llm/session-stream`
+- le brain Python stream les événements `token`, `complete`, `error`
+- le gateway retransmet `chat.token` puis `chat.complete`
+- l'historique d'une session est relu via `GET /api/v1/chat/sessions/{session_id}`
+
+Prérequis locaux pour un smoke réel :
+
+- gateway Go démarré ;
+- brain Python démarré ;
+- provider LLM joignable par le brain, par défaut `Ollama` sur `http://localhost:11434`.

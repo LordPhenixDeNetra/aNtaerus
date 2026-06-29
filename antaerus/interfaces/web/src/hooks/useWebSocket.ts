@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
+import { fetchDevToken } from "@/lib/api";
 import {
   buildWebSocketUrl,
   createChatMessageEnvelope,
@@ -10,6 +11,7 @@ import { useAppStore } from "@/store/useAppStore";
 export function useWebSocket(sessionId: string) {
   const config = useAppStore((state) => state.config);
   const connectionState = useAppStore((state) => state.connectionState);
+  const updateConfig = useAppStore((state) => state.updateConfig);
   const setConnectionState = useAppStore((state) => state.setConnectionState);
   const setLastError = useAppStore((state) => state.setLastError);
   const appendAssistantChunk = useAppStore((state) => state.appendAssistantChunk);
@@ -18,6 +20,22 @@ export function useWebSocket(sessionId: string) {
   );
   const setHeartbeat = useAppStore((state) => state.setHeartbeat);
   const socketRef = useRef<WebSocket | null>(null);
+
+  const ensureDevToken = useCallback(async () => {
+    if (config.websocketDevToken.trim()) {
+      return config.websocketDevToken;
+    }
+
+    const subject = config.displayName.trim() || "web-dev-user";
+    const response = await fetchDevToken(config.gatewayBaseUrl, subject);
+    updateConfig({ websocketDevToken: response.token });
+    return response.token;
+  }, [
+    config.displayName,
+    config.gatewayBaseUrl,
+    config.websocketDevToken,
+    updateConfig,
+  ]);
 
   const disconnect = useCallback(() => {
     if (socketRef.current) {
@@ -29,12 +47,6 @@ export function useWebSocket(sessionId: string) {
   }, [setConnectionState]);
 
   const connect = useCallback(async (): Promise<boolean> => {
-    if (!config.websocketDevToken.trim()) {
-      setLastError("Ajoutez un jeton WebSocket de dev dans Setup avant de vous connecter.");
-      setConnectionState("error");
-      return false;
-    }
-
     if (socketRef.current?.readyState === WebSocket.OPEN) {
       return true;
     }
@@ -46,8 +58,19 @@ export function useWebSocket(sessionId: string) {
     setConnectionState("connecting");
     setLastError(null);
 
+    let token = "";
+    try {
+      token = await ensureDevToken();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Impossible de générer un jeton de développement.";
+      setLastError(message);
+      setConnectionState("error");
+      return false;
+    }
+
     const socket = new WebSocket(
-      buildWebSocketUrl(config.gatewayBaseUrl, config.websocketDevToken),
+      buildWebSocketUrl(config.gatewayBaseUrl, token),
     );
     socketRef.current = socket;
 
@@ -100,7 +123,7 @@ export function useWebSocket(sessionId: string) {
   }, [
     appendAssistantChunk,
     config.gatewayBaseUrl,
-    config.websocketDevToken,
+    ensureDevToken,
     finalizeAssistantMessage,
     setConnectionState,
     setHeartbeat,
@@ -132,6 +155,7 @@ export function useWebSocket(sessionId: string) {
   return {
     connect,
     disconnect,
+    ensureDevToken,
     sendChatMessage,
     connectionState,
   };

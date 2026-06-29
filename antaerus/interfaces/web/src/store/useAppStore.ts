@@ -25,6 +25,7 @@ type AppState = {
   updateConfig: (patch: Partial<LocalSetupConfig>) => void;
   setSessionId: (sessionId: string) => void;
   clearMessages: () => void;
+  replaceMessages: (messages: ChatMessage[]) => void;
   addMessage: (message: ChatMessage) => void;
   addUserMessage: (content: string, transport: ChatTransportMode) => void;
   appendAssistantChunk: (chunk: string, transport: ChatTransportMode) => void;
@@ -60,6 +61,7 @@ export const useAppStore = create<AppState>((set) => ({
     })),
   setSessionId: (sessionId) => set(() => ({ sessionId })),
   clearMessages: () => set(() => ({ messages: [] })),
+  replaceMessages: (messages) => set(() => ({ messages })),
   addMessage: (message) =>
     set((state) => ({
       messages: [...state.messages, message],

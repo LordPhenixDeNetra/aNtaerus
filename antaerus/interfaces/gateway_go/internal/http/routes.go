@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"antaerus/interfaces/gateway_go/internal/clients"
 	"antaerus/interfaces/gateway_go/internal/config"
 	"antaerus/interfaces/gateway_go/internal/system"
 )
@@ -18,15 +19,20 @@ var webDistDirCandidates = []string{
 
 func NewMux(cfg config.Config, handlers system.Handlers) *http.ServeMux {
 	mux := http.NewServeMux()
-	healthService := system.NewHealthService(cfg, nil)
+	healthHTTPClient := &http.Client{Timeout: cfg.RequestTimeout}
+	chatHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
+	healthService := system.NewHealthService(cfg, healthHTTPClient)
 	authenticator := NewAuthenticator(cfg)
 	rateLimiter := NewRateLimiter(cfg)
-	hub := NewHub(cfg, authenticator, rateLimiter, healthService)
+	brainChat := clients.NewBrainChatClient(chatHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
+	hub := NewHub(cfg, authenticator, rateLimiter, brainChat, healthService)
 
 	mux.HandleFunc("/health", handlers.HandleHealth)
 	mux.HandleFunc("/api/v1/health", handlers.HandleAggregatedHealth)
 	mux.HandleFunc("/api/v1/system/services", handlers.HandleServices)
 	mux.HandleFunc("/api/v1/system/status", handlers.HandleSystemStatus)
+	mux.HandleFunc("/api/v1/auth/dev-token", NewDevTokenHandler(cfg, authenticator))
+	mux.HandleFunc("/api/v1/chat/sessions/", NewChatHistoryHandler(brainChat))
 	mux.HandleFunc("/api/v1/ws", hub.ServeWS)
 
 	if staticHandler := newFrontendStaticHandler(); staticHandler != nil {

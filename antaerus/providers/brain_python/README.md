@@ -1,6 +1,6 @@
 # aNtaerus Brain
 
-Service Python interne du monorepo `aNtaerus` pour le traitement texte et la mémoire basique.
+Service Python interne du monorepo `aNtaerus` pour le traitement texte, le streaming LLM et la mémoire conversationnelle.
 
 ## Rôle
 
@@ -10,6 +10,8 @@ Le service `brain_python` fournit :
 - un endpoint de génération synchrone ;
 - un endpoint de streaming `SSE` ;
 - un noyau mémoire SQLite minimal ;
+- un service de chat session-aware pour `M1.4` ;
+- un historique conversationnel persistant par `sessionId` ;
 - une ingestion heuristique de facts ;
 - un mirror Markdown unidirectionnel de la mémoire.
 
@@ -56,7 +58,9 @@ Routes exposées :
 - `GET /llm/providers`
 - `POST /llm/chat`
 - `POST /llm/stream`
+- `POST /llm/session-stream`
 - `GET /memory/facts`
+- `GET /memory/chat/sessions/{session_id}`
 - `POST /memory/facts`
 - `POST /memory/ingest`
 - `POST /memory/mirror`
@@ -66,6 +70,14 @@ Le streaming retourne un flux `text/event-stream` avec les événements normalis
 - `token`
 - `complete`
 - `error`
+
+Le endpoint `POST /llm/session-stream` :
+
+- reçoit `sessionId`, `message` et `provider` optionnel ;
+- recharge le contexte conversationnel de la session ;
+- persiste le message utilisateur ;
+- stream les tokens du provider LLM ;
+- persiste le message assistant final.
 
 ## Stockage mémoire
 
@@ -80,6 +92,26 @@ Le schéma minimal couvre :
 - `facts`
 - `fact_observations`
 - `fact_relations`
+- `chat_sessions`
+- `chat_messages`
+
+Les tables conversationnelles `chat_sessions` et `chat_messages` servent de source de vérité pour l'historique du chat texte intégré.
+
+## Intégration M1.4
+
+Le gateway Go consomme ce service via :
+
+- `POST /llm/session-stream` pour le streaming conversationnel ;
+- `GET /memory/chat/sessions/{session_id}` pour recharger l'historique d'une session.
+
+Le flux nominal côté backend est :
+
+- chargement ou création de session ;
+- ajout du message utilisateur ;
+- reconstruction de `GenerationRequest.messages` depuis l'historique ;
+- génération streamée ;
+- persistance du message assistant ;
+- retour de l'historique ordonné à la demande du gateway.
 
 ## Développement local
 
@@ -102,3 +134,5 @@ python -m mypy src tests
 python -m pytest tests
 python -m ruff check .
 ```
+
+Pour un smoke `M1.4` complet, le provider LLM configuré doit être joignable. Par défaut, le brain attend `Ollama` sur `http://localhost:11434`.

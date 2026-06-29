@@ -60,3 +60,34 @@ def test_llm_stream_endpoint_returns_sse(monkeypatch) -> None:
     assert response.status_code == 200
     assert "event: token" in payload
     assert "event: complete" in payload
+
+
+def test_llm_session_stream_endpoint_returns_session_aware_sse(tmp_path, monkeypatch) -> None:
+    class FakeClient:
+        provider_name = "ollama"
+
+        def stream(self, request):
+            async def generator():
+                yield StreamingEvent(event="token", data={"text": "Bon"})
+                yield StreamingEvent(event="complete", data={"text": "Bonjour"})
+
+            return generator()
+
+    monkeypatch.setenv("ANTAERUS_BRAIN_MEMORY_DB_PATH", str(tmp_path / "antaerus_memory.db"))
+    monkeypatch.setattr(
+        "antaerus_brain.chat.create_llm_client",
+        lambda settings, provider=None: FakeClient(),
+    )
+    get_settings.cache_clear()
+    client = TestClient(create_app())
+
+    with client.stream(
+        "POST",
+        "/llm/session-stream",
+        json={"sessionId": "session-1", "message": "Bonjour"},
+    ) as response:
+        payload = b"".join(response.iter_bytes()).decode("utf-8")
+
+    assert response.status_code == 200
+    assert "event: token" in payload
+    assert '"sessionId": "session-1"' in payload

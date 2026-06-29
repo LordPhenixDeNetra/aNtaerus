@@ -80,4 +80,34 @@ describe("useWebSocket", () => {
     expect(payload.payload.sessionId).toBe("session-1");
     expect(payload.payload.message).toBe("Bonjour");
   });
+
+  it("génère un JWT de développement si absent", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ token: "generated-token" }),
+      }),
+    );
+    useAppStore.setState({
+      config: {
+        ...DEFAULT_SETUP_CONFIG,
+        gatewayBaseUrl: "http://localhost:8080",
+        websocketDevToken: "",
+      },
+      sessionId: "session-1",
+      messages: [],
+      connectionState: "idle",
+      lastError: null,
+      lastHeartbeat: [],
+    });
+
+    const { result } = renderHook(() => useWebSocket("session-1"));
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    expect(useAppStore.getState().config.websocketDevToken).toBe("generated-token");
+  });
 });

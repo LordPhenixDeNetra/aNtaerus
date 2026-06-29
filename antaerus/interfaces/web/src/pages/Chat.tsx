@@ -5,10 +5,15 @@ import { useEffect } from "react";
 
 import MessageBubble from "@/components/MessageBubble";
 import MessageInput from "@/components/MessageInput";
-import { fetchBrainProviders, fetchSystemStatus } from "@/lib/api";
+import {
+  fetchBrainProviders,
+  fetchChatSessionHistory,
+  fetchSystemStatus,
+} from "@/lib/api";
 import { useChatStream } from "@/hooks/useChatStream";
 import { useSession } from "@/hooks/useSession";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { fromHistoryMessage } from "@/lib/chat";
 import { useAppStore } from "@/store/useAppStore";
 
 const queryOptions = {
@@ -25,7 +30,8 @@ export default function Chat() {
   const lastHeartbeat = useAppStore((state) => state.lastHeartbeat);
   const addUserMessage = useAppStore((state) => state.addUserMessage);
   const clearMessages = useAppStore((state) => state.clearMessages);
-  const { connectionState, connect, disconnect, sendChatMessage } =
+  const replaceMessages = useAppStore((state) => state.replaceMessages);
+  const { connectionState, connect, disconnect, ensureDevToken, sendChatMessage } =
     useWebSocket(sessionId);
   const { isStreaming, streamPrompt } = useChatStream();
 
@@ -36,12 +42,27 @@ export default function Chat() {
     enabled: config.chatTransport === "sse-dev",
     retry: false,
   });
+  const historyQuery = useQuery({
+    queryKey: ["chat-history", config.gatewayBaseUrl, sessionId],
+    queryFn: () => fetchChatSessionHistory(config.gatewayBaseUrl, sessionId),
+    enabled: Boolean(sessionId),
+  });
 
   useEffect(() => {
-    if (config.chatTransport === "ws" && config.websocketDevToken.trim()) {
+    if (!historyQuery.data?.messages) {
+      return;
+    }
+
+    replaceMessages(
+      historyQuery.data.messages.map((message) => fromHistoryMessage(message)),
+    );
+  }, [historyQuery.data, replaceMessages]);
+
+  useEffect(() => {
+    if (config.chatTransport === "ws") {
       void connect();
     }
-  }, [config.chatTransport, config.websocketDevToken, connect]);
+  }, [config.chatTransport, connect]);
 
   const handleSend = async (content: string) => {
     addUserMessage(content, config.chatTransport);
@@ -110,6 +131,13 @@ export default function Chat() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => void ensureDevToken()}
+                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200"
+                >
+                  Générer JWT dev
+                </button>
+                <button
+                  type="button"
                   onClick={() => disconnect()}
                   className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200"
                 >
@@ -136,6 +164,11 @@ export default function Chat() {
             )}
 
             <div className="flex-1 space-y-4 overflow-y-auto pr-2">
+              {historyQuery.isLoading && (
+                <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-400">
+                  Chargement de l&apos;historique de session...
+                </div>
+              )}
               {messages.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-white/10 bg-white/5 px-6 py-10 text-center text-sm text-slate-400">
                   Envoyez un premier message pour initialiser la conversation.
@@ -172,6 +205,7 @@ export default function Chat() {
               <div className="mt-5 space-y-3 text-sm text-slate-300">
                 <p>Services visibles : {statusQuery.data?.services.length ?? 0}</p>
                 <p>Heartbeat WS : {lastHeartbeat.length}</p>
+                <p>Messages persistés : {historyQuery.data?.messages?.length ?? 0}</p>
                 <p>
                   Provider défaut local :{" "}
                   <span className="font-mono text-cyan-200">

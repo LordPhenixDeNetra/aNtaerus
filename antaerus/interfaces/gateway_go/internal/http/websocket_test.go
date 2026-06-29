@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -29,6 +30,17 @@ func TestWebSocketRejectsMissingToken(t *testing.T) {
 
 func TestWebSocketHandlesChatMessage(t *testing.T) {
 	cfg := websocketTestConfig()
+	brainServer := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path != "/llm/session-stream" {
+			t.Fatalf("unexpected brain path %s", request.URL.Path)
+		}
+
+		writer.Header().Set("Content-Type", "text/event-stream")
+		_, _ = writer.Write([]byte("event: token\ndata: {\"text\":\"Bon\",\"sessionId\":\"session-1\"}\n\n"))
+		_, _ = writer.Write([]byte("event: complete\ndata: {\"text\":\"Bonjour\",\"sessionId\":\"session-1\"}\n\n"))
+	}))
+	defer brainServer.Close()
+	cfg.BrainBaseURL = brainServer.URL
 	server := newWebSocketTestServer(t, cfg)
 	defer server.Close()
 
@@ -58,9 +70,17 @@ func TestWebSocketHandlesChatMessage(t *testing.T) {
 		t.Fatalf("expected chat message write to succeed, got error: %v", err)
 	}
 
+	var tokenResponse contracts.ServerMessage
+	if err := connection.ReadJSON(&tokenResponse); err != nil {
+		t.Fatalf("expected token response, got error: %v", err)
+	}
+	if tokenResponse.Type != string(contracts.ServerMessageChatToken) {
+		t.Fatalf("expected chat.token, got %q", tokenResponse.Type)
+	}
+
 	var response contracts.ServerMessage
 	if err := connection.ReadJSON(&response); err != nil {
-		t.Fatalf("expected chat response, got error: %v", err)
+		t.Fatalf("expected chat complete response, got error: %v", err)
 	}
 
 	if response.Type != string(contracts.ServerMessageChatComplete) {

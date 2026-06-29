@@ -2,8 +2,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from antaerus_brain.chat import SessionChatService
 from antaerus_brain.config import get_settings
-from antaerus_brain.memory import FactInput, IngestRequest, MirrorResult, SearchResponse
+from antaerus_brain.memory import (
+    ChatHistoryResponse,
+    FactInput,
+    IngestRequest,
+    MirrorResult,
+    SearchResponse,
+)
 from antaerus_brain.memory.ingest import extract_facts
 from antaerus_brain.memory.kernel import MemoryKernel
 from antaerus_brain.memory.mirror import generate_markdown_mirror
@@ -55,3 +62,10 @@ async def mirror_memory() -> MirrorResult:
     await kernel.initialize()
     generated_files = await generate_markdown_mirror(kernel, settings.memory_topics_dir)
     return MirrorResult(generated_files=[str(path) for path in generated_files])
+
+
+@router.get("/chat/sessions/{session_id}", response_model=ChatHistoryResponse)
+async def get_chat_session_history(session_id: str) -> ChatHistoryResponse:
+    settings = get_settings()
+    service = SessionChatService(settings, MemoryKernel(settings.memory_db_path))
+    return await service.get_session_history(session_id)

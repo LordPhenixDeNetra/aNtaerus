@@ -3,11 +3,21 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import aiosqlite
 
-from antaerus_brain.memory import FactInput, FactRecord
+from antaerus_brain.memory import (
+    ChatMessageRecord,
+    ChatRole,
+    ChatSessionRecord,
+    FactInput,
+    FactRecord,
+)
 from antaerus_brain.memory.schemas import SCHEMA_STATEMENTS
+
+if TYPE_CHECKING:
+    from antaerus_brain.llm import ChatMessage
 
 
 class MemoryKernel:
@@ -33,6 +43,126 @@ class MemoryKernel:
             await connection.commit()
 
         return event_id
+
+    async def ensure_chat_session(
+        self,
+        session_id: str,
+        provider: str | None = None,
+    ) -> ChatSessionRecord:
+        timestamp = _utcnow()
+
+        async with aiosqlite.connect(self.database_path) as connection:
+            connection.row_factory = aiosqlite.Row
+            cursor = await connection.execute(
+                """
+                SELECT session_id, provider, created_at, updated_at
+                FROM chat_sessions
+                WHERE session_id = ?
+                """,
+                (session_id,),
+            )
+            existing = await cursor.fetchone()
+
+            if existing:
+                next_provider = provider or existing["provider"]
+                await connection.execute(
+                    """
+                    UPDATE chat_sessions
+                    SET provider = ?, updated_at = ?
+                    WHERE session_id = ?
+                    """,
+                    (next_provider, timestamp, session_id),
+                )
+            else:
+                await connection.execute(
+                    """
+                    INSERT INTO chat_sessions (session_id, provider, created_at, updated_at)
+                    VALUES (?, ?, ?, ?)
+                    """,
+                    (session_id, provider, timestamp, timestamp),
+                )
+            await connection.commit()
+
+            cursor = await connection.execute(
+                """
+                SELECT session_id, provider, created_at, updated_at
+                FROM chat_sessions
+                WHERE session_id = ?
+                """,
+                (session_id,),
+            )
+            row = await cursor.fetchone()
+
+        if row is None:
+            raise KeyError(f"Session {session_id} not found")
+
+        return _row_to_chat_session(row)
+
+    async def append_chat_message(
+        self,
+        session_id: str,
+        role: ChatRole,
+        content: str,
+        provider: str | None = None,
+    ) -> ChatMessageRecord:
+        await self.ensure_chat_session(session_id, provider=provider)
+        message_id = str(uuid.uuid4())
+        timestamp = _utcnow()
+
+        async with aiosqlite.connect(self.database_path) as connection:
+            connection.row_factory = aiosqlite.Row
+            await connection.execute(
+                """
+                INSERT INTO chat_messages (id, session_id, role, content, provider, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (message_id, session_id, role, content, provider, timestamp),
+            )
+            await connection.execute(
+                """
+                UPDATE chat_sessions
+                SET updated_at = ?, provider = COALESCE(?, provider)
+                WHERE session_id = ?
+                """,
+                (timestamp, provider, session_id),
+            )
+            await connection.commit()
+            cursor = await connection.execute(
+                """
+                SELECT id, session_id, role, content, provider, created_at
+                FROM chat_messages
+                WHERE id = ?
+                """,
+                (message_id,),
+            )
+            row = await cursor.fetchone()
+
+        if row is None:
+            raise KeyError(f"Chat message {message_id} not found")
+
+        return _row_to_chat_message(row)
+
+    async def list_chat_messages(self, session_id: str) -> list[ChatMessageRecord]:
+        async with aiosqlite.connect(self.database_path) as connection:
+            connection.row_factory = aiosqlite.Row
+            cursor = await connection.execute(
+                """
+                SELECT id, session_id, role, content, provider, created_at
+                FROM chat_messages
+                WHERE session_id = ?
+                ORDER BY created_at ASC
+                """,
+                (session_id,),
+            )
+            rows = await cursor.fetchall()
+
+        return [_row_to_chat_message(row) for row in rows]
+
+    async def build_generation_messages(self, session_id: str) -> list["ChatMessage"]:
+        from antaerus_brain.llm import ChatMessage
+
+        records = await self.list_chat_messages(session_id)
+        return [ChatMessage(role=record.role, content=record.content) for record in records]
 
     async def upsert_fact(self, fact: FactInput) -> FactRecord:
         fact_id = fact.fact_id or str(uuid.uuid4())
@@ -177,6 +307,26 @@ def _row_to_fact(row: aiosqlite.Row) -> FactRecord:
         status=row["status"],
         created_at=row["created_at"],
         updated_at=row["updated_at"],
+    )
+
+
+def _row_to_chat_session(row: aiosqlite.Row) -> ChatSessionRecord:
+    return ChatSessionRecord(
+        session_id=row["session_id"],
+        provider=row["provider"],
+        created_at=row["created_at"],
+        updated_at=row["updated_at"],
+    )
+
+
+def _row_to_chat_message(row: aiosqlite.Row) -> ChatMessageRecord:
+    return ChatMessageRecord(
+        id=row["id"],
+        sessionId=row["session_id"],
+        role=row["role"],
+        content=row["content"],
+        provider=row["provider"],
+        createdAt=row["created_at"],
     )
 
 

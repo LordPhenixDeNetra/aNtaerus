@@ -158,10 +158,18 @@
 - Les validations ont été rejouées avec succès via `npm run lint`, `npm run check`, `npm run test`, `npm run build` dans `antaerus/interfaces/web/` et `go test ./interfaces/gateway_go/...` dans `antaerus/`.
 
 ### M1.4 — Intégration texte
-- [ ] Connecter React → Go WebSocket → Python LLM → Go → React (streaming)
-- [ ] Persister historique chat dans SQLite
+- [x] Connecter React → Go WebSocket → Python LLM → Go → React (streaming)
+- [x] Persister historique chat dans SQLite
 - [ ] Tester end-to-end : envoi message → réponse LLM → affichage (< 2s)
-- [ ] Tester multi-session : 2 sessions simultanées, contexte isolé
+- [x] Tester multi-session : 2 sessions simultanées, contexte isolé
+
+État actuel :
+- Le flux texte intégré est désormais matérialisé entre `antaerus/interfaces/web/src/pages/Chat.tsx`, `antaerus/interfaces/web/src/hooks/useWebSocket.ts`, `antaerus/interfaces/gateway_go/internal/http/websocket.go`, `antaerus/interfaces/gateway_go/internal/clients/brain_chat_client.go` et `antaerus/providers/brain_python/src/antaerus_brain/chat.py`, avec streaming `chat.token` puis `chat.complete`.
+- L'historique conversationnel est persisté dans le SQLite du brain via `chat_sessions` et `chat_messages`, exposé par `GET /memory/chat/sessions/{session_id}` côté Python puis `GET /api/v1/chat/sessions/{session_id}` côté Go.
+- Le gateway expose aussi `POST /api/v1/auth/dev-token` pour générer un JWT de développement consommé par l'UI `Chat` et `Setup`.
+- Les validations automatisées rejouées avec succès sont : `python -m ruff check .`, `python -m mypy src tests`, `python -m pytest tests`, `go test ./interfaces/gateway_go/...`, `npm run lint`, `npm run check`, `npm run test`, `npm run build`.
+- Le smoke `M1.4` est maintenant exécutable via `powershell -ExecutionPolicy Bypass -File .\scripts\validation\smoke-text-chat.ps1` et `bash ./scripts/validation/smoke-text-chat.sh`, avec un client Go corrigé pour ne plus importer de package `internal`.
+- La preuve end-to-end `< 2s` reste conditionnée à la disponibilité d'un provider LLM local joignable ; dans l'environnement courant, le smoke échoue sur `All connection attempts failed` car l'endpoint Ollama local `http://127.0.0.1:11434` n'est pas disponible.
 
 ---
 
@@ -436,3 +444,6 @@
 ---
 
 **Total : ~200+ tâches détaillées sur 7-8 mois**
+
+
+75 507 90 60

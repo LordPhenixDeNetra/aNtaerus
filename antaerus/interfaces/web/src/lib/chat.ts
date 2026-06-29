@@ -1,4 +1,5 @@
 import type { ChatTransportMode } from "@/lib/setup";
+import type { ChatHistoryMessage } from "@/lib/api";
 
 export type ChatRole = "user" | "assistant" | "system";
 
@@ -30,4 +31,18 @@ export function createChatMessage(
     createdAt: new Date().toISOString(),
     transport,
   } satisfies ChatMessage;
+}
+
+export function fromHistoryMessage(
+  message: ChatHistoryMessage,
+  transport: ChatTransportMode = "ws",
+): ChatMessage {
+  return {
+    id: message.id,
+    role: message.role,
+    content: message.content,
+    status: "complete",
+    createdAt: message.createdAt,
+    transport,
+  };
 }

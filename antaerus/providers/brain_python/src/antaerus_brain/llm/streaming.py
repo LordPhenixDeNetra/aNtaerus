@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import AsyncIterator
+from typing import cast
 
 from antaerus_brain.llm import GenerationRequest, LLMClient, StreamingEvent
 
@@ -12,8 +13,13 @@ def format_sse_event(event: StreamingEvent) -> bytes:
 
 
 async def sse_event_stream(
-    client: LLMClient,
-    request: GenerationRequest,
+    client_or_stream: LLMClient | AsyncIterator[StreamingEvent],
+    request: GenerationRequest | None = None,
 ) -> AsyncIterator[bytes]:
-    async for event in client.stream(request):
+    if request is None:
+        stream = cast(AsyncIterator[StreamingEvent], client_or_stream)
+    else:
+        stream = cast(LLMClient, client_or_stream).stream(request)
+
+    async for event in stream:
         yield format_sse_event(event)

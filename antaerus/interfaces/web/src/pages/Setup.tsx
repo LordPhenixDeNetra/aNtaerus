@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import ApiKeyInput from "@/components/ApiKeyInput";
+import { fetchDevToken } from "@/lib/api";
 import type { ProviderName } from "@/lib/setup";
 import { useAppStore } from "@/store/useAppStore";
 
@@ -15,6 +17,7 @@ const providerOptions: ProviderName[] = [
 export default function Setup() {
   const config = useAppStore((state) => state.config);
   const updateConfig = useAppStore((state) => state.updateConfig);
+  const [tokenStatus, setTokenStatus] = useState<string | null>(null);
 
   return (
     <main className="min-h-screen px-6 py-8 text-slate-100">
@@ -135,6 +138,27 @@ export default function Setup() {
                 placeholder="Collez ici un JWT de développement"
                 onChange={(value) => updateConfig({ websocketDevToken: value })}
               />
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    const subject = config.displayName.trim() || "web-dev-user";
+                    const response = await fetchDevToken(config.gatewayBaseUrl, subject);
+                    updateConfig({ websocketDevToken: response.token });
+                    setTokenStatus("JWT de développement généré avec succès.");
+                  } catch (error) {
+                    setTokenStatus(
+                      error instanceof Error
+                        ? error.message
+                        : "Impossible de générer le JWT de développement.",
+                    );
+                  }
+                }}
+                className="rounded-full border border-cyan-400/40 bg-cyan-400/10 px-4 py-2 text-sm font-medium text-cyan-100"
+              >
+                Générer un JWT de dev
+              </button>
+              {tokenStatus && <p className="text-sm text-slate-400">{tokenStatus}</p>}
             </div>
           </article>
         </section>

@@ -25,6 +25,25 @@ SCHEMA_STATEMENTS = [
     )
     """,
     """
+    CREATE TABLE IF NOT EXISTS chat_sessions (
+        session_id TEXT PRIMARY KEY,
+        provider TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS chat_messages (
+        id TEXT PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        provider TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(session_id) REFERENCES chat_sessions(session_id)
+    )
+    """,
+    """
     CREATE TABLE IF NOT EXISTS fact_observations (
         id TEXT PRIMARY KEY,
         fact_id TEXT NOT NULL,
@@ -44,6 +63,10 @@ SCHEMA_STATEMENTS = [
         FOREIGN KEY(fact_id) REFERENCES facts(id),
         FOREIGN KEY(related_fact_id) REFERENCES facts(id)
     )
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS idx_chat_messages_session_created
+    ON chat_messages(session_id, created_at)
     """,
     "CREATE INDEX IF NOT EXISTS idx_facts_category ON facts(category)",
     "CREATE INDEX IF NOT EXISTS idx_facts_subject ON facts(subject)",

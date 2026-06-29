@@ -3,9 +3,12 @@
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import App from "@/App";
+import Chat from "@/pages/Chat";
+import { DEFAULT_SETUP_CONFIG } from "@/lib/setup";
+import { useAppStore } from "@/store/useAppStore";
 
 class MockWebSocket {
   static OPEN = 1;
@@ -20,9 +23,8 @@ class MockWebSocket {
   send() {}
 }
 
-describe("App", () => {
+describe("Chat", () => {
   beforeEach(() => {
-    window.localStorage.clear();
     vi.stubGlobal("WebSocket", MockWebSocket);
     vi.stubGlobal(
       "fetch",
@@ -35,42 +37,27 @@ describe("App", () => {
               product: "aNtaerus",
               phase: "foundation",
               environment: "test",
-              services: [
-                {
-                  name: "gateway_go",
-                  status: "healthy",
-                  version: "0.1.0",
-                  port: 8080,
-                  url: "http://localhost:8080",
-                  checkedAt: new Date().toISOString(),
-                },
-              ],
-              capabilities: [
-                {
-                  name: "gateway_go",
-                  version: "0.1.0",
-                  runtime: "go",
-                  capabilities: ["healthcheck"],
-                },
-              ],
+              services: [],
+              capabilities: [],
             }),
           });
         }
 
-        if (url.includes("/api/v1/chat/sessions/")) {
+        if (url.includes("/api/v1/chat/sessions/session-1")) {
           return Promise.resolve({
             ok: true,
             json: async () => ({
               sessionId: "session-1",
-              messages: [],
+              messages: [
+                {
+                  id: "msg-1",
+                  sessionId: "session-1",
+                  role: "assistant",
+                  content: "Historique persiste",
+                  createdAt: "2026-01-01T00:00:00Z",
+                },
+              ],
             }),
-          });
-        }
-
-        if (url.includes("/api/v1/auth/dev-token")) {
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ token: "jwt-dev-token" }),
           });
         }
 
@@ -80,19 +67,33 @@ describe("App", () => {
         });
       }),
     );
+
+    useAppStore.setState({
+      config: {
+        ...DEFAULT_SETUP_CONFIG,
+        gatewayBaseUrl: "http://localhost:8080",
+        websocketDevToken: "dev-token",
+        chatTransport: "ws",
+      },
+      sessionId: "session-1",
+      messages: [],
+      connectionState: "idle",
+      lastError: null,
+      lastHeartbeat: [],
+    });
   });
 
-  it("affiche la page de chat par défaut", async () => {
+  it("hydrate l'historique de la session active", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
-        <App />
+        <MemoryRouter>
+          <Chat />
+        </MemoryRouter>
       </QueryClientProvider>,
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Chat texte aNtaerus/i)).toBeInTheDocument();
+      expect(screen.getByText("Historique persiste")).toBeInTheDocument();
     });
-
-    expect(screen.getByRole("link", { name: /Setup/i })).toBeInTheDocument();
   });
 });
