@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"antaerus/interfaces/gateway_go/internal/config"
+	"antaerus/kernel/settings"
 )
 
 func TestHandleHealthReturnsGatewayHealth(t *testing.T) {
@@ -35,17 +36,28 @@ func TestHandleSystemStatusReturnsAggregatedPayload(t *testing.T) {
 
 func testHandlersConfig() config.Config {
 	return config.Config{
-		Environment:       "test",
-		Port:              8080,
-		Version:           "0.1.0",
-		WebURL:            "http://localhost:5173",
-		BrainBaseURL:      "http://127.0.0.1:1",
-		EngineHTTPURL:     "http://127.0.0.1:2",
-		EngineGRPCTarget:  "127.0.0.1:3",
-		RequestTimeout:    20 * time.Millisecond,
-		ReadHeaderTimeout: 20 * time.Millisecond,
-		ShutdownTimeout:   20 * time.Millisecond,
-		IdleTimeout:       20 * time.Millisecond,
-		WriteTimeout:      20 * time.Millisecond,
+		Environment:        "test",
+		Port:               8080,
+		Version:            "0.1.0",
+		WebURL:             "http://localhost:5173",
+		BrainBaseURL:       "http://127.0.0.1:1",
+		EngineHTTPURL:      "http://127.0.0.1:2",
+		EngineGRPCTarget:   "127.0.0.1:3",
+		RequestTimeout:     20 * time.Millisecond,
+		ReadHeaderTimeout:  20 * time.Millisecond,
+		ShutdownTimeout:    20 * time.Millisecond,
+		IdleTimeout:        20 * time.Millisecond,
+		WriteTimeout:       20 * time.Millisecond,
+		JWTSecret:          settings.SecretString("test-secret"),
+		JWTIssuer:          "test-issuer",
+		JWTAudience:        "test-audience",
+		JWTTokenTTL:        time.Hour,
+		WSHeartbeat:        time.Second,
+		HTTPRateLimitRPS:   5,
+		HTTPRateLimitBurst: 10,
+		WSConnectRateRPS:   2,
+		WSConnectBurst:     3,
+		WSMessageRateRPS:   10,
+		WSMessageBurst:     20,
 	}
 }

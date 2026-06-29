@@ -5,10 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"antaerus/interfaces/gateway_go/internal/clients"
-	"antaerus/interfaces/gateway_go/internal/config"
 	"antaerus/interfaces/gateway_go/internal/system"
 )
 
@@ -39,22 +37,11 @@ func TestNewMuxExposesAggregatedHealthRoute(t *testing.T) {
 	}))
 	defer engineServer.Close()
 
-	cfg := config.Config{
-		Environment:       "test",
-		Port:              8080,
-		Version:           "0.1.0",
-		WebURL:            "http://localhost:5173",
-		BrainBaseURL:      brainServer.URL,
-		EngineHTTPURL:     engineServer.URL,
-		EngineGRPCTarget:  "127.0.0.1:1",
-		RequestTimeout:    50 * time.Millisecond,
-		ReadHeaderTimeout: 50 * time.Millisecond,
-		ShutdownTimeout:   50 * time.Millisecond,
-		IdleTimeout:       50 * time.Millisecond,
-		WriteTimeout:      50 * time.Millisecond,
-	}
+	cfg := websocketTestConfig()
+	cfg.BrainBaseURL = brainServer.URL
+	cfg.EngineHTTPURL = engineServer.URL
 
-	mux := NewMux(system.NewHandlers(cfg))
+	mux := NewMux(cfg, system.NewHandlers(cfg))
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
 	recorder := httptest.NewRecorder()
 

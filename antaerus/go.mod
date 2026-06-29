@@ -3,7 +3,10 @@ module antaerus
 go 1.26.4
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/spf13/viper v1.21.0
+	golang.org/x/time v0.14.0
 	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.11
 )

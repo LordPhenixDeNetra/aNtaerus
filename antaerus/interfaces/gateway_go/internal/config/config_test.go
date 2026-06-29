@@ -15,6 +15,17 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 	t.Setenv("ANTAERUS_GATEWAY_SHUTDOWN_TIMEOUT_MS", "1200")
 	t.Setenv("ANTAERUS_GATEWAY_IDLE_TIMEOUT_MS", "900")
 	t.Setenv("ANTAERUS_GATEWAY_WRITE_TIMEOUT_MS", "950")
+	t.Setenv("ANTAERUS_GATEWAY_JWT_SECRET", "test-secret")
+	t.Setenv("ANTAERUS_GATEWAY_JWT_ISSUER", "test-issuer")
+	t.Setenv("ANTAERUS_GATEWAY_JWT_AUDIENCE", "test-audience")
+	t.Setenv("ANTAERUS_GATEWAY_JWT_TOKEN_TTL_MS", "1500")
+	t.Setenv("ANTAERUS_GATEWAY_WS_HEARTBEAT_INTERVAL_MS", "3000")
+	t.Setenv("ANTAERUS_GATEWAY_RATE_LIMIT_HTTP_RPS", "12.5")
+	t.Setenv("ANTAERUS_GATEWAY_RATE_LIMIT_HTTP_BURST", "25")
+	t.Setenv("ANTAERUS_GATEWAY_RATE_LIMIT_WS_CONNECT_RPS", "2.5")
+	t.Setenv("ANTAERUS_GATEWAY_RATE_LIMIT_WS_CONNECT_BURST", "6")
+	t.Setenv("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_RPS", "40")
+	t.Setenv("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_BURST", "80")
 	t.Setenv("ANTAERUS_GATEWAY_TLS_CERT_FILE", "")
 	t.Setenv("ANTAERUS_GATEWAY_TLS_KEY_FILE", "")
 
@@ -38,23 +49,42 @@ func TestLoadUsesEnvironmentOverrides(t *testing.T) {
 	if cfg.EngineGRPCTarget != "localhost:7003" {
 		t.Fatalf("expected grpc target override, got %q", cfg.EngineGRPCTarget)
 	}
+
+	if cfg.JWTSecret.Value() != "test-secret" {
+		t.Fatalf("expected JWT secret override, got %q", cfg.JWTSecret.Value())
+	}
+
+	if cfg.WSMessageBurst != 80 {
+		t.Fatalf("expected WebSocket message burst 80, got %d", cfg.WSMessageBurst)
+	}
 }
 
 func TestValidateRejectsIncompleteTLSConfiguration(t *testing.T) {
 	cfg := Config{
-		Environment:       "test",
-		Port:              8080,
-		Version:           "0.1.0",
-		WebURL:            "http://localhost:5173",
-		BrainBaseURL:      "http://localhost:8000",
-		EngineHTTPURL:     "http://localhost:7000",
-		EngineGRPCTarget:  "localhost:7001",
-		RequestTimeout:    2,
-		ReadHeaderTimeout: 2,
-		ShutdownTimeout:   2,
-		IdleTimeout:       2,
-		WriteTimeout:      2,
-		TLSCertFile:       "server.crt",
+		Environment:        "test",
+		Port:               8080,
+		Version:            "0.1.0",
+		WebURL:             "http://localhost:5173",
+		BrainBaseURL:       "http://localhost:8000",
+		EngineHTTPURL:      "http://localhost:7000",
+		EngineGRPCTarget:   "localhost:7001",
+		RequestTimeout:     2,
+		ReadHeaderTimeout:  2,
+		ShutdownTimeout:    2,
+		IdleTimeout:        2,
+		WriteTimeout:       2,
+		JWTSecret:          "secret",
+		JWTIssuer:          "issuer",
+		JWTAudience:        "audience",
+		JWTTokenTTL:        2,
+		WSHeartbeat:        2,
+		HTTPRateLimitRPS:   1,
+		HTTPRateLimitBurst: 1,
+		WSConnectRateRPS:   1,
+		WSConnectBurst:     1,
+		WSMessageRateRPS:   1,
+		WSMessageBurst:     1,
+		TLSCertFile:        "server.crt",
 	}
 
 	if err := cfg.Validate(); err == nil {
@@ -71,5 +101,36 @@ func TestGatewayURLUsesHTTPSWhenTLSIsConfigured(t *testing.T) {
 
 	if got := cfg.GatewayURL(); got != "https://localhost:8443" {
 		t.Fatalf("expected https gateway URL, got %q", got)
+	}
+}
+
+func TestValidateRejectsEmptyJWTSecret(t *testing.T) {
+	cfg := Config{
+		Environment:        "test",
+		Port:               8080,
+		Version:            "0.1.0",
+		WebURL:             "http://localhost:5173",
+		BrainBaseURL:       "http://localhost:8000",
+		EngineHTTPURL:      "http://localhost:7000",
+		EngineGRPCTarget:   "localhost:7001",
+		RequestTimeout:     2,
+		ReadHeaderTimeout:  2,
+		ShutdownTimeout:    2,
+		IdleTimeout:        2,
+		WriteTimeout:       2,
+		JWTIssuer:          "issuer",
+		JWTAudience:        "audience",
+		JWTTokenTTL:        2,
+		WSHeartbeat:        2,
+		HTTPRateLimitRPS:   1,
+		HTTPRateLimitBurst: 1,
+		WSConnectRateRPS:   1,
+		WSConnectBurst:     1,
+		WSMessageRateRPS:   1,
+		WSMessageBurst:     1,
+	}
+
+	if err := cfg.Validate(); err == nil {
+		t.Fatal("expected JWT secret validation error, got nil")
 	}
 }

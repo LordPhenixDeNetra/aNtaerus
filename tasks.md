@@ -95,9 +95,9 @@
 
 ### M1.1 — Go Gateway
 - [x] Implémenter `gateway/server.go` : HTTP/2 server avec TLS optionnel
-- [ ] Implémenter `gateway/websocket.go` : hub WebSocket, goroutine par client
-- [ ] Implémenter `gateway/auth.go` : JWT génération + validation
-- [ ] Implémenter `gateway/rate_limit.go` : rate limiting par IP / par user
+- [x] Implémenter `gateway/websocket.go` : hub WebSocket, goroutine par client
+- [x] Implémenter `gateway/auth.go` : JWT génération + validation
+- [x] Implémenter `gateway/rate_limit.go` : rate limiting par IP / par user
 - [x] Implémenter `gateway/router.go` : routing REST API v1
 - [x] Implémenter `gateway/health.go` : healthcheck Go + proxy Rust + Python
 - [x] Implémenter `gateway/http_client.go` : client HTTP vers Python brain
@@ -107,7 +107,11 @@
 - Le lot `Infra socle` est maintenant matérialisé via une configuration gateway chargée par `viper` avec validation, propagation d'erreurs de bootstrap et mode TLS optionnel dans `antaerus/interfaces/gateway_go/internal/config/config.go`, `antaerus/interfaces/gateway_go/app/bootstrap.go`, `antaerus/engine/bootstrap.go` et `antaerus/interfaces/gateway_go/cmd/gateway/main.go`.
 - Le routage REST v1 expose désormais `/health`, `/api/v1/health`, `/api/v1/system/services` et `/api/v1/system/status` dans `antaerus/interfaces/gateway_go/internal/http/routes.go`, avec agrégation extraite dans `antaerus/interfaces/gateway_go/internal/system/health.go`.
 - Le canal Rust du gateway suit maintenant la stratégie `gRPC primaire + HTTP secours` via `antaerus/interfaces/gateway_go/internal/clients/engine_runtime_client.go`, en s'appuyant sur `engine_grpc_client.go` et le fallback HTTP existant.
-- La validation Go du lot a été rejouée avec succès via `go test ./interfaces/gateway_go/...`.
+- Le gateway expose maintenant un transport temps réel `GET /api/v1/ws?token=<jwt>` via `antaerus/interfaces/gateway_go/internal/http/websocket.go`, avec hub, goroutine par client, heartbeat `health.heartbeat` et réponses placeholders structurées pour `chat.message`, `voice.*` et `mission.cancel`.
+- L'authentification JWT est matérialisée dans `antaerus/interfaces/gateway_go/internal/http/auth.go` pour REST (`Authorization: Bearer`) et WebSocket (query param `token`), avec claims minimaux `sub`, `role`, `iss`, `aud`, `iat`, `exp`.
+- Le rate limiting en mémoire HTTP + WebSocket est matérialisé dans `antaerus/interfaces/gateway_go/internal/http/rate_limit.go`, avec limitation des routes HTTP protégées, des handshakes WebSocket et des messages entrants.
+- Les dépendances `github.com/gorilla/websocket`, `github.com/golang-jwt/jwt/v5` et `golang.org/x/time` ont été intégrées au module Go du monorepo.
+- La validation Go du lot complet `M1.1` a été rejouée avec succès via `go mod tidy` puis `go test ./interfaces/gateway_go/...`.
 
 ### M1.2 — Python Brain (LLM + Mémoire basique)
 - [ ] Implémenter `brain_python/llm/factory.py` : factory LLM (Anthropic, OpenAI, Mistral, Ollama)

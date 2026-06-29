@@ -23,7 +23,7 @@ func NewServer(cfg config.Config) *http.Server {
 
 	return &http.Server{
 		Addr:              fmt.Sprintf(":%d", cfg.Port),
-		Handler:           NewMux(handlers),
+		Handler:           NewMux(cfg, handlers),
 		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
 		IdleTimeout:       cfg.IdleTimeout,
 		WriteTimeout:      cfg.WriteTimeout,

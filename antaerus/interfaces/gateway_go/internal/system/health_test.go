@@ -9,6 +9,7 @@ import (
 
 	"antaerus/interfaces/gateway_go/internal/clients"
 	"antaerus/interfaces/gateway_go/internal/config"
+	"antaerus/kernel/settings"
 )
 
 func TestAggregatedHealthUsesHTTPFallbackForEngine(t *testing.T) {
@@ -89,18 +90,29 @@ func TestAggregatedHealthBecomesDegradedWhenDependenciesAreOffline(t *testing.T)
 
 func testGatewayConfig(brainURL string, engineURL string) config.Config {
 	return config.Config{
-		Environment:       "test",
-		Port:              8080,
-		Version:           "0.1.0",
-		WebURL:            "http://localhost:5173",
-		BrainBaseURL:      brainURL,
-		EngineHTTPURL:     engineURL,
-		EngineGRPCTarget:  "127.0.0.1:1",
-		RequestTimeout:    50 * time.Millisecond,
-		ReadHeaderTimeout: 50 * time.Millisecond,
-		ShutdownTimeout:   50 * time.Millisecond,
-		IdleTimeout:       50 * time.Millisecond,
-		WriteTimeout:      50 * time.Millisecond,
+		Environment:        "test",
+		Port:               8080,
+		Version:            "0.1.0",
+		WebURL:             "http://localhost:5173",
+		BrainBaseURL:       brainURL,
+		EngineHTTPURL:      engineURL,
+		EngineGRPCTarget:   "127.0.0.1:1",
+		RequestTimeout:     50 * time.Millisecond,
+		ReadHeaderTimeout:  50 * time.Millisecond,
+		ShutdownTimeout:    50 * time.Millisecond,
+		IdleTimeout:        50 * time.Millisecond,
+		WriteTimeout:       50 * time.Millisecond,
+		JWTSecret:          settings.SecretString("test-secret"),
+		JWTIssuer:          "test-issuer",
+		JWTAudience:        "test-audience",
+		JWTTokenTTL:        time.Hour,
+		WSHeartbeat:        time.Second,
+		HTTPRateLimitRPS:   5,
+		HTTPRateLimitBurst: 10,
+		WSConnectRateRPS:   2,
+		WSConnectBurst:     3,
+		WSMessageRateRPS:   10,
+		WSMessageBurst:     20,
 	}
 }
 

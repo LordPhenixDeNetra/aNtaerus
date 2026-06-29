@@ -4,8 +4,6 @@ import (
 	"net/http"
 	"testing"
 	"time"
-
-	"antaerus/interfaces/gateway_go/internal/config"
 )
 
 func TestListenUsesPlainHTTPWhenTLSIsDisabled(t *testing.T) {
@@ -28,7 +26,7 @@ func TestListenUsesPlainHTTPWhenTLSIsDisabled(t *testing.T) {
 		return http.ErrServerClosed
 	}
 
-	err := Listen(&http.Server{}, config.Config{Port: 8080})
+	err := Listen(&http.Server{}, websocketTestConfig())
 	if err != nil {
 		t.Fatalf("expected nil error on server closed, got %v", err)
 	}
@@ -62,11 +60,12 @@ func TestListenUsesTLSWhenConfigured(t *testing.T) {
 		return http.ErrServerClosed
 	}
 
-	err := Listen(&http.Server{}, config.Config{
-		Port:        8443,
-		TLSCertFile: "server.crt",
-		TLSKeyFile:  "server.key",
-	})
+	cfg := websocketTestConfig()
+	cfg.Port = 8443
+	cfg.TLSCertFile = "server.crt"
+	cfg.TLSKeyFile = "server.key"
+
+	err := Listen(&http.Server{}, cfg)
 	if err != nil {
 		t.Fatalf("expected nil error on server closed, got %v", err)
 	}
@@ -81,20 +80,11 @@ func TestListenUsesTLSWhenConfigured(t *testing.T) {
 }
 
 func TestNewServerUsesConfiguredTimeouts(t *testing.T) {
-	cfg := config.Config{
-		Port:              8080,
-		Environment:       "test",
-		Version:           "0.1.0",
-		WebURL:            "http://localhost:5173",
-		BrainBaseURL:      "http://localhost:8000",
-		EngineHTTPURL:     "http://localhost:7000",
-		EngineGRPCTarget:  "127.0.0.1:1",
-		RequestTimeout:    50 * time.Millisecond,
-		ReadHeaderTimeout: 60 * time.Millisecond,
-		ShutdownTimeout:   70 * time.Millisecond,
-		IdleTimeout:       80 * time.Millisecond,
-		WriteTimeout:      90 * time.Millisecond,
-	}
+	cfg := websocketTestConfig()
+	cfg.ReadHeaderTimeout = 60 * time.Millisecond
+	cfg.ShutdownTimeout = 70 * time.Millisecond
+	cfg.IdleTimeout = 80 * time.Millisecond
+	cfg.WriteTimeout = 90 * time.Millisecond
 
 	server := NewServer(cfg)
 
