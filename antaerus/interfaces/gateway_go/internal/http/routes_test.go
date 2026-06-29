@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"antaerus/interfaces/gateway_go/internal/clients"
@@ -58,5 +60,46 @@ func TestNewMuxExposesAggregatedHealthRoute(t *testing.T) {
 
 	if payload.Product != "aNtaerus" {
 		t.Fatalf("expected product aNtaerus, got %q", payload.Product)
+	}
+}
+
+func TestNewMuxServesFrontendIndexForSPARoutes(t *testing.T) {
+	tempDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tempDir, "index.html"), []byte("<html>chat</html>"), 0o600); err != nil {
+		t.Fatalf("write index.html: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(tempDir, "app.js"), []byte("console.log('ok')"), 0o600); err != nil {
+		t.Fatalf("write app.js: %v", err)
+	}
+
+	previousCandidates := webDistDirCandidates
+	webDistDirCandidates = []string{tempDir}
+	t.Cleanup(func() {
+		webDistDirCandidates = previousCandidates
+	})
+
+	cfg := websocketTestConfig()
+	mux := NewMux(cfg, system.NewHandlers(cfg))
+
+	spaRequest := httptest.NewRequest(http.MethodGet, "/setup", nil)
+	spaRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(spaRecorder, spaRequest)
+
+	if spaRecorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 for SPA fallback, got %d", spaRecorder.Code)
+	}
+	if body := spaRecorder.Body.String(); body != "<html>chat</html>" {
+		t.Fatalf("expected index.html body, got %q", body)
+	}
+
+	assetRequest := httptest.NewRequest(http.MethodGet, "/app.js", nil)
+	assetRecorder := httptest.NewRecorder()
+	mux.ServeHTTP(assetRecorder, assetRequest)
+
+	if assetRecorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 for asset, got %d", assetRecorder.Code)
+	}
+	if body := assetRecorder.Body.String(); body != "console.log('ok')" {
+		t.Fatalf("expected asset body, got %q", body)
 	}
 }

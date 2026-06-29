@@ -23,6 +23,16 @@ export type SystemStatus = {
   capabilities: ServiceCapabilities[];
 };
 
+export type BrainProvider = {
+  name: string;
+  model: string;
+};
+
+export type BrainProvidersResponse = {
+  defaultProvider: string;
+  providers: BrainProvider[];
+};
+
 export async function fetchSystemStatus(): Promise<SystemStatus> {
   const response = await fetch("/api/v1/system/status");
 
@@ -31,4 +41,16 @@ export async function fetchSystemStatus(): Promise<SystemStatus> {
   }
 
   return response.json() as Promise<SystemStatus>;
+}
+
+export async function fetchBrainProviders(
+  brainBaseUrl: string,
+): Promise<BrainProvidersResponse> {
+  const response = await fetch(new URL("/llm/providers", brainBaseUrl));
+
+  if (!response.ok) {
+    throw new Error("Impossible de charger les providers du brain.");
+  }
+
+  return response.json() as Promise<BrainProvidersResponse>;
 }

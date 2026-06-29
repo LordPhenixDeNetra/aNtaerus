@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,6 +9,7 @@ import App from "@/App";
 
 describe("App", () => {
   beforeEach(() => {
+    window.localStorage.clear();
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -39,11 +41,17 @@ describe("App", () => {
     );
   });
 
-  it("affiche le dashboard de fondation", async () => {
-    render(<App />);
+  it("affiche la page de chat par défaut", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <App />
+      </QueryClientProvider>,
+    );
 
     await waitFor(() => {
-      expect(screen.getByText(/Foundation Dashboard/i)).toBeInTheDocument();
+      expect(screen.getByText(/Chat texte aNtaerus/i)).toBeInTheDocument();
     });
+
+    expect(screen.getByRole("link", { name: /Setup/i })).toBeInTheDocument();
   });
 });

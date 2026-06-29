@@ -104,3 +104,33 @@ export type WebSocketServerMessage =
   | Envelope<"system.alert", SystemAlertPayload>
   | Envelope<"proactive.notification", ProactiveNotificationPayload>
   | Envelope<"health.heartbeat", HealthHeartbeatPayload>;
+
+export function buildWebSocketUrl(baseUrl: string, token: string): string {
+  const normalizedBase = baseUrl.trim() || window.location.origin;
+  const url = new URL("/api/v1/ws", normalizedBase);
+  url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+  url.searchParams.set("token", token);
+  return url.toString();
+}
+
+export function createChatMessageEnvelope(
+  sessionId: string,
+  message: string,
+): WebSocketClientMessage {
+  return {
+    type: "chat.message",
+    timestamp: new Date().toISOString(),
+    payload: {
+      sessionId,
+      message,
+    },
+  };
+}
+
+export function parseWebSocketServerMessage(raw: string): WebSocketServerMessage | null {
+  try {
+    return JSON.parse(raw) as WebSocketServerMessage;
+  } catch {
+    return null;
+  }
+}

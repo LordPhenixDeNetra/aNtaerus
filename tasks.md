@@ -135,21 +135,27 @@
 
 ### M1.3 — React + Vite (UI Core)
 - [x] Initialiser projet Vite + React + TypeScript
-- [ ] Configurer Zustand (state management)
-- [ ] Configurer TanStack Query (cache server state)
-- [ ] Implémenter `pages/Chat.tsx` : interface conversation principale
-- [ ] Implémenter `components/MessageBubble.tsx` : bulles message (user / assistant)
-- [ ] Implémenter `components/MessageInput.tsx` : input avec envoi
-- [ ] Implémenter `hooks/useWebSocket.ts` : connexion WebSocket Go
-- [ ] Implémenter `hooks/useChatStream.ts` : streaming tokens SSE
-- [ ] Implémenter `hooks/useSession.ts` : gestion session ID
-- [ ] Implémenter `pages/Setup.tsx` : wizard configuration (clés API, identité)
-- [ ] Implémenter `components/ApiKeyInput.tsx` : input clé API avec masquage
-- [ ] Configurer build statique pour servir par Go
+- [x] Configurer Zustand (state management)
+- [x] Configurer TanStack Query (cache server state)
+- [x] Implémenter `pages/Chat.tsx` : interface conversation principale
+- [x] Implémenter `components/MessageBubble.tsx` : bulles message (user / assistant)
+- [x] Implémenter `components/MessageInput.tsx` : input avec envoi
+- [x] Implémenter `hooks/useWebSocket.ts` : connexion WebSocket Go
+- [x] Implémenter `hooks/useChatStream.ts` : streaming tokens SSE
+- [x] Implémenter `hooks/useSession.ts` : gestion session ID
+- [x] Implémenter `pages/Setup.tsx` : wizard configuration (clés API, identité)
+- [x] Implémenter `components/ApiKeyInput.tsx` : input clé API avec masquage
+- [x] Configurer build statique pour servir par Go
 
 État actuel :
-- Le projet `antaerus/interfaces/web/` est initialisé en `React + Vite + TypeScript`, avec un dashboard de fondation au lieu de l'UI chat finale.
-- `zustand` est installé mais pas encore réellement exploité comme couche de state management métier.
+- `antaerus/interfaces/web/` expose désormais une UI cœur avec routes `Chat`, `Setup` et `FoundationDashboard`, montée via `react-router-dom` dans `src/App.tsx` et `QueryClientProvider` dans `src/main.tsx`.
+- L'état métier frontend est matérialisé par `src/store/useAppStore.ts` avec persistance locale navigateur (`src/lib/storage.ts`) pour la configuration `Setup`, les messages, la session active et l'état de connexion.
+- Le chat texte principal est matérialisé dans `src/pages/Chat.tsx` avec `MessageBubble`, `MessageInput`, `useSession`, `useWebSocket` et `useChatStream`, en supportant un mode WebSocket Go avec JWT de dev local et un mode `SSE` direct vers `brain_python` pour le développement.
+- Le wizard `Setup` est matérialisé dans `src/pages/Setup.tsx` avec `ApiKeyInput`, stockage local des préférences (identité, provider, URLs locales, jeton WebSocket de dev, clés API locales) et aucun envoi serveur dans ce lot.
+- `TanStack Query` est intégré pour le cache server state, avec consommation de l'état système Go et des providers du brain quand le mode `sse-dev` est actif.
+- La build statique Vite est maintenant explicitement produite dans `antaerus/interfaces/web/dist/`, et le gateway Go sert cette build via `http.FileServer` avec fallback SPA dans `antaerus/interfaces/gateway_go/internal/http/routes.go`.
+- La couverture de tests `M1.3` inclut désormais le routage applicatif, `MessageBubble`, `MessageInput`, `ApiKeyInput`, `useSession`, `useWebSocket`, `useChatStream` et le fallback statique Go.
+- Les validations ont été rejouées avec succès via `npm run lint`, `npm run check`, `npm run test`, `npm run build` dans `antaerus/interfaces/web/` et `go test ./interfaces/gateway_go/...` dans `antaerus/`.
 
 ### M1.4 — Intégration texte
 - [ ] Connecter React → Go WebSocket → Python LLM → Go → React (streaming)
