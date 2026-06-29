@@ -43,11 +43,22 @@ antaerus/
 
 ```powershell
 cd antaerus
+./scripts/dev-all.ps1
+./scripts/stop-all.ps1
+```
+
+Ou, service par service :
+
+```powershell
+cd antaerus
 ./scripts/dev-brain.ps1
 ./scripts/dev-engine.ps1
 ./scripts/dev-gateway.ps1
 ./scripts/dev-web.ps1
 ```
+
+- `./scripts/dev-all.ps1` ouvre les 4 services en parallele, attend les ports applicatifs et enregistre les PID dans `%TEMP%\antaerus-dev-all-processes.json`.
+- `./scripts/stop-all.ps1` termine proprement les processus lances par `dev-all.ps1`.
 
 ### Unix
 

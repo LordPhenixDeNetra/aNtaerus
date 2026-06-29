@@ -48,6 +48,7 @@
 - Le socle outillage est matérialisé par `Taskfile.yml`, `.pre-commit-config.yaml`, `.golangci.yml`, `antaerus/providers/brain_python/.importlinter` et `antaerus/interfaces/web/.prettierrc.json`.
 - Le `kernel` Python est packagé minimalement avec `antaerus/__init__.py`, `antaerus/kernel/__init__.py`, `antaerus/kernel/contracts/__init__.py` et `antaerus/kernel/settings/__init__.py` pour supporter `mypy` et `import-linter`.
 - Les smoke tests de démarrage froid existent désormais sous `antaerus/scripts/validation/` en `.ps1` et `.sh` pour `brain`, `gateway`, `engine` et `web`.
+- Le démarrage natif Windows peut maintenant se faire en une seule commande via `antaerus/scripts/dev-all.ps1`, avec arrêt associé via `antaerus/scripts/stop-all.ps1` et suivi des PID dans `%TEMP%\antaerus-dev-all-processes.json`.
 - Validations rejouées avec succès : `golangci-lint run --config ../.golangci.yml`, `python -m ruff check`, `python run_import_linter.py`, `python -m mypy`, `python -m pytest -m "not integration"`, `python -m pytest`, `npm run lint`, `npm run format:check`, `npm run check`, `npm run build`, `npm run test`, `rustfmt --edition 2021 --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo check`, `cargo test` et les smoke tests PowerShell.
 
 ### M0.3 — Communication inter-services
