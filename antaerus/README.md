@@ -21,6 +21,14 @@ Cette livraison met en place une base exécutable avec premier chat texte intég
 - Rust stable
 - Docker Desktop (optionnel pour `docker-compose`)
 
+## Configuration
+
+- La configuration runtime de développement est centralisée dans `antaerus/.env`.
+- Copiez `antaerus/.env.example` vers `antaerus/.env`, puis adaptez les valeurs locales.
+- Le fichier `.env` réel reste ignoré par Git ; seul `.env.example` est versionné.
+- Le frontend Web ne lit pas ce `.env` pour ses préférences utilisateur : `Setup` continue à stocker ses valeurs dans le navigateur.
+- La structure `config/.env` décrite dans le CDC concerne la future phase bundle/release, pas le démarrage développeur actuel.
+
 ## Structure
 
 ```text
@@ -43,6 +51,7 @@ antaerus/
 
 ```powershell
 cd antaerus
+Copy-Item .env.example .env
 ./scripts/dev-all.ps1
 ./scripts/stop-all.ps1
 ```
@@ -51,6 +60,7 @@ Ou, service par service :
 
 ```powershell
 cd antaerus
+Copy-Item .env.example .env
 ./scripts/dev-brain.ps1
 ./scripts/dev-engine.ps1
 ./scripts/dev-gateway.ps1
@@ -64,6 +74,7 @@ cd antaerus
 
 ```bash
 cd antaerus
+cp .env.example .env
 ./scripts/dev-brain.sh
 ./scripts/dev-engine.sh
 ./scripts/dev-gateway.sh
@@ -74,6 +85,7 @@ cd antaerus
 
 ```bash
 cd antaerus
+cp .env.example .env
 docker compose up --build
 ```
 

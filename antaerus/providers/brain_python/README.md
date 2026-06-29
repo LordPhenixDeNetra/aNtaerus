@@ -28,6 +28,8 @@ Les providers cloud passent par `litellm`. `Ollama` est appelé via `httpx` sur 
 
 ## Configuration principale
 
+Le service charge automatiquement `antaerus/.env` au boot si ce fichier existe. Les variables déjà présentes dans l'environnement du shell gardent la priorité.
+
 Variables d'environnement utiles :
 
 - `ANTAERUS_BRAIN_PORT` : port HTTP du service. Défaut : `8000`
@@ -48,6 +50,13 @@ Variables d'environnement utiles :
 - `ANTAERUS_BRAIN_MEMORY_DEFAULT_LIMIT` : limite de recherche mémoire. Défaut : `25`
 
 Tous les secrets applicatifs restent typés avec `SecretStr`.
+
+### Emplacement recommandé
+
+- fichier réel local : `antaerus/.env`
+- modèle versionné : `antaerus/.env.example`
+
+Le brain ne nécessite donc pas de `.env` dédié dans `providers/brain_python/`.
 
 ## API interne
 
@@ -124,6 +133,7 @@ python -m pip install -e .[dev]
 Démarrage local :
 
 ```bash
+cp ../../.env.example ../../.env
 python -m antaerus_brain.app
 ```
 

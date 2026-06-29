@@ -5,6 +5,7 @@ from functools import lru_cache
 from os import getenv
 from pathlib import Path
 
+from dotenv import load_dotenv
 from pydantic import SecretStr
 
 
@@ -34,6 +35,10 @@ def _project_root() -> Path:
     return Path(__file__).resolve().parents[4]
 
 
+def _project_env_path() -> Path:
+    return _project_root() / ".env"
+
+
 def _default_memory_db_path() -> Path:
     return _project_root() / "memory_data" / "antaerus_memory.db"
 
@@ -50,14 +55,35 @@ def _require_supported_provider(provider: str) -> str:
     return normalized
 
 
+def _resolve_project_path(raw_value: str, fallback: Path) -> Path:
+    if not raw_value.strip():
+        return fallback
+
+    candidate = Path(raw_value)
+    if candidate.is_absolute():
+        return candidate
+
+    return _project_root() / candidate
+
+
+def _load_project_env() -> None:
+    load_dotenv(_project_env_path(), override=False)
+
+
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    _load_project_env()
+
     port = int(getenv("ANTAERUS_BRAIN_PORT", "8000"))
     llm_timeout_seconds = float(getenv("ANTAERUS_BRAIN_LLM_TIMEOUT_SECONDS", "30"))
     memory_default_limit = int(getenv("ANTAERUS_BRAIN_MEMORY_DEFAULT_LIMIT", "25"))
-    memory_db_path = Path(getenv("ANTAERUS_BRAIN_MEMORY_DB_PATH", str(_default_memory_db_path())))
-    memory_topics_dir = Path(
-        getenv("ANTAERUS_BRAIN_MEMORY_TOPICS_DIR", str(_default_memory_topics_dir()))
+    memory_db_path = _resolve_project_path(
+        getenv("ANTAERUS_BRAIN_MEMORY_DB_PATH", str(_default_memory_db_path())),
+        _default_memory_db_path(),
+    )
+    memory_topics_dir = _resolve_project_path(
+        getenv("ANTAERUS_BRAIN_MEMORY_TOPICS_DIR", str(_default_memory_topics_dir())),
+        _default_memory_topics_dir(),
     )
 
     settings = Settings(
@@ -97,5 +123,20 @@ def get_settings() -> Settings:
 
     if settings.memory_default_limit <= 0:
         raise ValueError("ANTAERUS_BRAIN_MEMORY_DEFAULT_LIMIT must be greater than zero")
+
+    if (
+        settings.default_provider == "anthropic"
+        and not settings.anthropic_api_key.get_secret_value()
+    ):
+        raise ValueError("ANTAERUS_ANTHROPIC_API_KEY must not be empty when provider is anthropic")
+
+    if settings.default_provider == "openai" and not settings.openai_api_key.get_secret_value():
+        raise ValueError("ANTAERUS_OPENAI_API_KEY must not be empty when provider is openai")
+
+    if settings.default_provider == "mistral" and not settings.mistral_api_key.get_secret_value():
+        raise ValueError("ANTAERUS_MISTRAL_API_KEY must not be empty when provider is mistral")
+
+    if settings.default_provider == "ollama" and settings.ollama_base_url.strip() == "":
+        raise ValueError("ANTAERUS_BRAIN_OLLAMA_BASE_URL must not be empty when provider is ollama")
 
     return settings

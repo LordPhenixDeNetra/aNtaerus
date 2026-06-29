@@ -307,7 +307,7 @@
 - [ ] Implémenter upload photo référence (reconnaissance faciale future)
 - [ ] Implémenter validation clés API (test call à chaque fournisseur)
 - [ ] Implémenter détection port occupé + auto-port
-- [ ] Créer `.env.example` documenté
+- [x] Créer `.env.example` documenté
 
 ### M6.3 — Bundle & Distribution
 - [ ] Écrire `scripts/release/build_bundle.ps1` (Windows)

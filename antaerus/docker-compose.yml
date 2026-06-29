@@ -3,6 +3,8 @@ services:
     image: python:3.11-slim
     working_dir: /app/providers/brain_python
     command: sh -c "pip install -e . && python bootstrap.py"
+    env_file:
+      - ./.env
     volumes:
       - .:/app
     ports:
@@ -12,6 +14,8 @@ services:
     image: rust:1.78
     working_dir: /app/providers/engine_rust
     command: sh -c "cargo run"
+    env_file:
+      - ./.env
     volumes:
       - .:/app
     ports:
@@ -21,6 +25,8 @@ services:
     image: golang:1.22
     working_dir: /app
     command: sh -c "go run ./interfaces/gateway_go/cmd/gateway"
+    env_file:
+      - ./.env
     volumes:
       - .:/app
     ports:

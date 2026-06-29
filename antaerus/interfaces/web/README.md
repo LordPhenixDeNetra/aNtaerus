@@ -51,6 +51,8 @@ Important :
 - le jeton WebSocket est traité comme un jeton de développement ;
 - l'UI peut désormais générer ou rafraîchir ce JWT via `POST /api/v1/auth/dev-token`.
 
+Le frontend ne lit pas `antaerus/.env` pour ces préférences utilisateur. Le `.env` central sert aux services backend ; `Setup` reste la source de vérité locale du navigateur.
+
 ## Modes de transport texte
 
 ### WebSocket Go
