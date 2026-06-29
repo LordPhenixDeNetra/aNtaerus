@@ -12,12 +12,14 @@ type Application struct {
 	Config config.Config
 }
 
-func NewApplication() Application {
-	cfg := config.Load()
+func NewApplication() (Application, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return Application{}, err
+	}
 
 	return Application{
 		Server: httpapi.NewServer(cfg),
 		Config: cfg,
-	}
+	}, nil
 }
-

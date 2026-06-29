@@ -16,6 +16,7 @@ type ServiceHealth struct {
 	URL       string `json:"url"`
 	CheckedAt string `json:"checkedAt"`
 	Details   string `json:"details,omitempty"`
+	Source    string `json:"source,omitempty"`
 }
 
 type ServiceCapabilities struct {
@@ -23,6 +24,14 @@ type ServiceCapabilities struct {
 	Version      string   `json:"version"`
 	Runtime      string   `json:"runtime"`
 	Capabilities []string `json:"capabilities"`
+	Source       string   `json:"source,omitempty"`
+}
+
+type AggregatedHealth struct {
+	Product     string          `json:"product"`
+	Environment string          `json:"environment"`
+	Status      string          `json:"status"`
+	Services    []ServiceHealth `json:"services"`
 }
 
 type SystemStatus struct {
@@ -42,6 +51,10 @@ type ServiceClient struct {
 }
 
 func NewPythonClient(baseURL string) ServiceClient {
+	return NewBrainClient(baseURL)
+}
+
+func NewBrainClient(baseURL string) ServiceClient {
 	return ServiceClient{
 		Name:             "brain_python",
 		Runtime:          "python",
@@ -51,7 +64,7 @@ func NewPythonClient(baseURL string) ServiceClient {
 	}
 }
 
-func FetchHealth(ctx context.Context, client *http.Client, service ServiceClient) ServiceHealth {
+func FetchHealth(ctx context.Context, client httpClient, service ServiceClient) ServiceHealth {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, service.BaseURL+service.HealthPath, nil)
 	if err != nil {
 		return offlineHealth(service, err)
@@ -63,15 +76,27 @@ func FetchHealth(ctx context.Context, client *http.Client, service ServiceClient
 	}
 	defer closeBody(response)
 
+	if response.StatusCode != http.StatusOK {
+		return offlineHealth(service, fmt.Errorf("unexpected status code %d", response.StatusCode))
+	}
+
 	var payload ServiceHealth
 	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
 		return offlineHealth(service, err)
 	}
 
+	if payload.Name == "" {
+		payload.Name = service.Name
+	}
+
+	if payload.Source == "" {
+		payload.Source = "http"
+	}
+
 	return payload
 }
 
-func FetchCapabilities(ctx context.Context, client *http.Client, service ServiceClient) ServiceCapabilities {
+func FetchCapabilities(ctx context.Context, client httpClient, service ServiceClient) ServiceCapabilities {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, service.BaseURL+service.CapabilitiesPath, nil)
 	if err != nil {
 		return offlineCapabilities(service)
@@ -83,9 +108,25 @@ func FetchCapabilities(ctx context.Context, client *http.Client, service Service
 	}
 	defer closeBody(response)
 
+	if response.StatusCode != http.StatusOK {
+		return offlineCapabilities(service)
+	}
+
 	var payload ServiceCapabilities
 	if err := json.NewDecoder(response.Body).Decode(&payload); err != nil {
 		return offlineCapabilities(service)
+	}
+
+	if payload.Name == "" {
+		payload.Name = service.Name
+	}
+
+	if payload.Runtime == "" {
+		payload.Runtime = service.Runtime
+	}
+
+	if payload.Source == "" {
+		payload.Source = "http"
 	}
 
 	return payload
@@ -100,6 +141,7 @@ func offlineHealth(service ServiceClient, err error) ServiceHealth {
 		URL:       service.BaseURL,
 		CheckedAt: time.Now().UTC().Format(time.RFC3339),
 		Details:   fmt.Sprintf("unreachable: %v", err),
+		Source:    "offline",
 	}
 }
 
@@ -109,6 +151,7 @@ func offlineCapabilities(service ServiceClient) ServiceCapabilities {
 		Version:      "unknown",
 		Runtime:      service.Runtime,
 		Capabilities: []string{},
+		Source:       "offline",
 	}
 }
 
@@ -119,4 +162,3 @@ func closeBody(response *http.Response) {
 
 	_ = response.Body.Close()
 }
-

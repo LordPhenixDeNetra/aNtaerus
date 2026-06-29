@@ -94,17 +94,20 @@
 ## Phase M1 — Core Texte (3 semaines)
 
 ### M1.1 — Go Gateway
-- [ ] Implémenter `gateway/server.go` : HTTP/2 server avec TLS optionnel
+- [x] Implémenter `gateway/server.go` : HTTP/2 server avec TLS optionnel
 - [ ] Implémenter `gateway/websocket.go` : hub WebSocket, goroutine par client
 - [ ] Implémenter `gateway/auth.go` : JWT génération + validation
 - [ ] Implémenter `gateway/rate_limit.go` : rate limiting par IP / par user
-- [ ] Implémenter `gateway/router.go` : routing REST API v1
-- [ ] Implémenter `gateway/health.go` : healthcheck Go + proxy Rust + Python
-- [ ] Implémenter `gateway/http_client.go` : client HTTP vers Python brain
-- [ ] Implémenter `gateway/config.go` : struct config immuable, validation
+- [x] Implémenter `gateway/router.go` : routing REST API v1
+- [x] Implémenter `gateway/health.go` : healthcheck Go + proxy Rust + Python
+- [x] Implémenter `gateway/http_client.go` : client HTTP vers Python brain
+- [x] Implémenter `gateway/config.go` : struct config immuable, validation
 
 État actuel :
-- Une première porte d'entrée Go existe déjà via `antaerus/interfaces/gateway_go/cmd/gateway/main.go` et `antaerus/interfaces/gateway_go/internal/system/handlers.go`, mais elle reste inférieure au périmètre `M1.1`.
+- Le lot `Infra socle` est maintenant matérialisé via une configuration gateway chargée par `viper` avec validation, propagation d'erreurs de bootstrap et mode TLS optionnel dans `antaerus/interfaces/gateway_go/internal/config/config.go`, `antaerus/interfaces/gateway_go/app/bootstrap.go`, `antaerus/engine/bootstrap.go` et `antaerus/interfaces/gateway_go/cmd/gateway/main.go`.
+- Le routage REST v1 expose désormais `/health`, `/api/v1/health`, `/api/v1/system/services` et `/api/v1/system/status` dans `antaerus/interfaces/gateway_go/internal/http/routes.go`, avec agrégation extraite dans `antaerus/interfaces/gateway_go/internal/system/health.go`.
+- Le canal Rust du gateway suit maintenant la stratégie `gRPC primaire + HTTP secours` via `antaerus/interfaces/gateway_go/internal/clients/engine_runtime_client.go`, en s'appuyant sur `engine_grpc_client.go` et le fallback HTTP existant.
+- La validation Go du lot a été rejouée avec succès via `go test ./interfaces/gateway_go/...`.
 
 ### M1.2 — Python Brain (LLM + Mémoire basique)
 - [ ] Implémenter `brain_python/llm/factory.py` : factory LLM (Anthropic, OpenAI, Mistral, Ollama)

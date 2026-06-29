@@ -1,6 +1,10 @@
 package clients
 
 func NewRustClient(baseURL string) ServiceClient {
+	return NewEngineHTTPClient(baseURL)
+}
+
+func NewEngineHTTPClient(baseURL string) ServiceClient {
 	return ServiceClient{
 		Name:             "engine_rust",
 		Runtime:          "rust",
@@ -9,4 +13,3 @@ func NewRustClient(baseURL string) ServiceClient {
 		CapabilitiesPath: "/capabilities",
 	}
 }
-

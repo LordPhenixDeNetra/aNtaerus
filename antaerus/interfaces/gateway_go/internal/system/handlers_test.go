@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"antaerus/interfaces/gateway_go/internal/config"
 )
 
 func TestHandleHealthReturnsGatewayHealth(t *testing.T) {
-	handlers := NewHandlers(config.Load())
+	handlers := NewHandlers(testHandlersConfig())
 	request := httptest.NewRequest(http.MethodGet, "/health", nil)
 	recorder := httptest.NewRecorder()
 
@@ -21,7 +22,7 @@ func TestHandleHealthReturnsGatewayHealth(t *testing.T) {
 }
 
 func TestHandleSystemStatusReturnsAggregatedPayload(t *testing.T) {
-	handlers := NewHandlers(config.Load())
+	handlers := NewHandlers(testHandlersConfig())
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/system/status", nil)
 	recorder := httptest.NewRecorder()
 
@@ -32,3 +33,19 @@ func TestHandleSystemStatusReturnsAggregatedPayload(t *testing.T) {
 	}
 }
 
+func testHandlersConfig() config.Config {
+	return config.Config{
+		Environment:       "test",
+		Port:              8080,
+		Version:           "0.1.0",
+		WebURL:            "http://localhost:5173",
+		BrainBaseURL:      "http://127.0.0.1:1",
+		EngineHTTPURL:     "http://127.0.0.1:2",
+		EngineGRPCTarget:  "127.0.0.1:3",
+		RequestTimeout:    20 * time.Millisecond,
+		ReadHeaderTimeout: 20 * time.Millisecond,
+		ShutdownTimeout:   20 * time.Millisecond,
+		IdleTimeout:       20 * time.Millisecond,
+		WriteTimeout:      20 * time.Millisecond,
+	}
+}

@@ -4,15 +4,18 @@ import (
 	"log"
 
 	"antaerus/engine"
+	httpapi "antaerus/interfaces/gateway_go/internal/http"
 )
 
 func main() {
 	bootstrap := engine.NewRuntimeBootstrap()
-	application := bootstrap.BuildGatewayApplication()
+	application, err := bootstrap.BuildGatewayApplication()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	log.Printf("starting gateway_go on :%d", application.Config.Port)
-	if err := application.Server.ListenAndServe(); err != nil {
+	if err := httpapi.Listen(application.Server, application.Config); err != nil {
 		log.Fatal(err)
 	}
 }
-

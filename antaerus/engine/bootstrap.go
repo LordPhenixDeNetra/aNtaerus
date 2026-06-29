@@ -15,7 +15,7 @@ func NewRuntimeBootstrap() RuntimeBootstrap {
 	}
 }
 
-func (bootstrap RuntimeBootstrap) BuildGatewayApplication() app.Application {
+func (bootstrap RuntimeBootstrap) BuildGatewayApplication() (app.Application, error) {
 	_ = bootstrap.Settings
 	return app.NewApplication()
 }
