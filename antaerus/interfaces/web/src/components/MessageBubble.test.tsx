@@ -23,4 +23,20 @@ describe("MessageBubble", () => {
     expect(screen.getByText("Bonjour")).toBeInTheDocument();
     expect(screen.getByText(/En cours/i)).toBeInTheDocument();
   });
+
+  it("rend le markdown basique", () => {
+    render(
+      <MessageBubble
+        message={createChatMessage(
+          "assistant",
+          "Je suis **aNtaerus**",
+          "ws",
+          "complete",
+        )}
+      />,
+    );
+
+    const strong = screen.getByText("aNtaerus");
+    expect(strong.tagName).toBe("STRONG");
+  });
 });
