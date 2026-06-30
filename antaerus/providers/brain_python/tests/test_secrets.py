@@ -11,7 +11,8 @@ def test_kernel_secretstr_masks_repr_and_json() -> None:
     assert "***" in settings.model_dump_json()
 
 
-def test_brain_secretstr_masks_repr_and_string() -> None:
+def test_brain_secretstr_masks_repr_and_string(monkeypatch) -> None:
+    monkeypatch.setenv("ANTAERUS_BRAIN_API_SECRET", "development-secret")
     get_settings.cache_clear()
     settings = get_settings()
 

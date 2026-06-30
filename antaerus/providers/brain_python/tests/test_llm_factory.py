@@ -86,6 +86,8 @@ def build_settings() -> Settings:
         port=8000,
         environment="test",
         api_secret=SecretStr("development-secret"),
+        assistant_name="aNtaerus",
+        assistant_system_prompt="",
         default_provider="ollama",
         anthropic_api_key=SecretStr("anthropic-key"),
         openai_api_key=SecretStr("openai-key"),

@@ -9,6 +9,7 @@ from antaerus_brain.llm import ProviderName, StreamingEvent
 from antaerus_brain.llm.factory import create_llm_client
 from antaerus_brain.memory import ChatHistoryResponse
 from antaerus_brain.memory.kernel import MemoryKernel
+from antaerus_brain.prompting import inject_system_prompt
 
 
 class SessionStreamRequest(BaseModel):
@@ -36,12 +37,16 @@ class SessionChatService:
 
         final_text = ""
         try:
-            async for event in client.stream(
-                request=self._generation_request(
+            generation_request = inject_system_prompt(
+                self.settings,
+                self._generation_request(
                     request.message,
                     generation_messages,
                     request.provider,
                 ),
+            )
+            async for event in client.stream(
+                request=generation_request,
             ):
                 data = dict(event.data)
                 data["sessionId"] = request.session_id

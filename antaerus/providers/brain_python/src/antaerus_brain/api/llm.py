@@ -9,6 +9,7 @@ from antaerus_brain.llm import CompletionResult, GenerationRequest
 from antaerus_brain.llm.factory import create_llm_client
 from antaerus_brain.llm.streaming import sse_event_stream
 from antaerus_brain.memory.kernel import MemoryKernel
+from antaerus_brain.prompting import inject_system_prompt
 
 router = APIRouter(prefix="/llm", tags=["llm"])
 
@@ -33,7 +34,7 @@ async def chat(request: GenerationRequest) -> CompletionResult:
     settings = get_settings()
     try:
         client = create_llm_client(settings, provider=request.provider)
-        return await client.complete(request)
+        return await client.complete(inject_system_prompt(settings, request))
     except (RuntimeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -43,7 +44,7 @@ async def stream_chat(request: GenerationRequest) -> StreamingResponse:
     settings = get_settings()
     try:
         client = create_llm_client(settings, provider=request.provider)
-        stream = sse_event_stream(client, request)
+        stream = sse_event_stream(client, inject_system_prompt(settings, request))
     except (RuntimeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

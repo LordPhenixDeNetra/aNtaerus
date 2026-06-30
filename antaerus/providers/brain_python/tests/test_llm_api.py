@@ -20,8 +20,11 @@ def test_llm_providers_endpoint_lists_all_supported_providers() -> None:
 
 
 def test_llm_chat_endpoint_returns_completion(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
     class FakeClient:
         async def complete(self, request):
+            captured["request"] = request
             return CompletionResult(
                 provider="ollama",
                 model="llama",
@@ -40,11 +43,19 @@ def test_llm_chat_endpoint_returns_completion(monkeypatch) -> None:
 
     assert response.status_code == 200
     assert response.json()["text"] == "Bonjour"
+    assert "request" in captured
+    llm_request = captured["request"]
+    assert llm_request.messages[0].role == "system"
+    assert "aNtaerus" in llm_request.messages[0].content
+    assert any(message.role == "user" for message in llm_request.messages)
 
 
 def test_llm_stream_endpoint_returns_sse(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
     class FakeClient:
         async def stream(self, request):
+            captured["request"] = request
             yield StreamingEvent(event="token", data={"text": "Bon"})
             yield StreamingEvent(event="complete", data={"text": "Bonjour"})
 
@@ -61,13 +72,22 @@ def test_llm_stream_endpoint_returns_sse(monkeypatch) -> None:
     assert response.status_code == 200
     assert "event: token" in payload
     assert "event: complete" in payload
+    assert "request" in captured
+    llm_request = captured["request"]
+    assert llm_request.messages[0].role == "system"
+    assert "aNtaerus" in llm_request.messages[0].content
+    assert any(message.role == "user" for message in llm_request.messages)
 
 
 def test_llm_session_stream_endpoint_returns_session_aware_sse(tmp_path, monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
     class FakeClient:
         provider_name = "ollama"
 
         def stream(self, request):
+            captured["request"] = request
+
             async def generator():
                 yield StreamingEvent(event="token", data={"text": "Bon"})
                 yield StreamingEvent(event="complete", data={"text": "Bonjour"})
@@ -92,3 +112,7 @@ def test_llm_session_stream_endpoint_returns_session_aware_sse(tmp_path, monkeyp
     assert response.status_code == 200
     assert "event: token" in payload
     assert '"sessionId": "session-1"' in payload
+    assert "request" in captured
+    llm_request = captured["request"]
+    assert llm_request.messages[0].role == "system"
+    assert "aNtaerus" in llm_request.messages[0].content

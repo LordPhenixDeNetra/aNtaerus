@@ -31,6 +31,8 @@ def test_session_chat_service_isolates_histories(tmp_path, monkeypatch) -> None:
         port=8000,
         environment="test",
         api_secret=SecretStr("secret"),
+        assistant_name="aNtaerus",
+        assistant_system_prompt="",
         default_provider="ollama",
         anthropic_api_key=SecretStr(""),
         openai_api_key=SecretStr(""),

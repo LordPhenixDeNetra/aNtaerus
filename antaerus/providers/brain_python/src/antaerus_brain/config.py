@@ -16,6 +16,8 @@ class Settings:
     port: int
     environment: str
     api_secret: SecretStr
+    assistant_name: str
+    assistant_system_prompt: str
     default_provider: str
     anthropic_api_key: SecretStr
     openai_api_key: SecretStr
@@ -94,6 +96,8 @@ def get_settings() -> Settings:
         port=port,
         environment=getenv("ANTAERUS_ENV", "development"),
         api_secret=SecretStr(getenv("ANTAERUS_BRAIN_API_SECRET", "development-secret")),
+        assistant_name=getenv("ANTAERUS_BRAIN_ASSISTANT_NAME", "aNtaerus"),
+        assistant_system_prompt=getenv("ANTAERUS_BRAIN_ASSISTANT_SYSTEM_PROMPT", ""),
         default_provider=_require_supported_provider(
             getenv("ANTAERUS_BRAIN_DEFAULT_PROVIDER", "ollama")
         ),
