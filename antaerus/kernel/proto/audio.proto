@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package antaerus.kernel.audio.v1;
+
+service AudioRuntime {
+  rpc StartVoiceSession(StartVoiceSessionRequest) returns (stream VoiceEvent);
+  rpc StopVoiceSession(StopVoiceSessionRequest) returns (StopVoiceSessionResponse);
+  rpc Speak(SpeakRequest) returns (SpeakResponse);
+}
+
+message StartVoiceSessionRequest {
+  string session_id = 1;
+  string language = 2;
+}
+
+message StopVoiceSessionRequest {
+  string session_id = 1;
+}
+
+message StopVoiceSessionResponse {
+  string session_id = 1;
+  bool stopped = 2;
+}
+
+message SpeakRequest {
+  string session_id = 1;
+  string text = 2;
+}
+
+message SpeakResponse {
+  string session_id = 1;
+  bool accepted = 2;
+}
+
+message VoiceEvent {
+  string session_id = 1;
+
+  oneof payload {
+    VadEvent vad = 2;
+    TranscriptEvent transcript = 3;
+    SystemEvent system = 4;
+  }
+}
+
+message VadEvent {
+  bool speaking = 1;
+}
+
+message TranscriptEvent {
+  string text = 1;
+  bool is_final = 2;
+}
+
+message SystemEvent {
+  string level = 1;
+  string message = 2;
+}
+

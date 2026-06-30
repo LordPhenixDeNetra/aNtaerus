@@ -7,11 +7,15 @@ use tonic::{transport::Server, Request, Response, Status};
 
 use crate::{
     config::Settings,
-    grpc::enginepb::{
-        engine_runtime_server::{EngineRuntime, EngineRuntimeServer},
-        CapabilitiesRequest, CapabilitiesResponse, HealthRequest, HealthResponse, PingRequest,
-        PingResponse,
+    grpc::{
+        audiopb::audio_runtime_server::AudioRuntimeServer,
+        enginepb::{
+            engine_runtime_server::{EngineRuntime, EngineRuntimeServer},
+            CapabilitiesRequest, CapabilitiesResponse, HealthRequest, HealthResponse, PingRequest,
+            PingResponse,
+        },
     },
+    protocol::server::AudioRuntimeService,
     state::{build_capabilities, build_health},
 };
 
@@ -84,9 +88,11 @@ impl EngineRuntime for EngineRuntimeService {
 pub async fn run(settings: Settings) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let address: SocketAddr = format!("0.0.0.0:{}", settings.grpc_port).parse()?;
     let service = EngineRuntimeService::new(settings);
+    let audio_service = AudioRuntimeService::new(service.settings.clone());
 
     Server::builder()
         .add_service(EngineRuntimeServer::new(service))
+        .add_service(AudioRuntimeServer::new(audio_service))
         .serve(address)
         .await?;
 

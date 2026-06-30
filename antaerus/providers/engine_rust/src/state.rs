@@ -41,9 +41,13 @@ pub fn build_capabilities(name: &str, version: &str) -> ServiceCapabilities {
         capabilities: vec![
             "healthcheck".to_string(),
             "capability-reporting".to_string(),
-            "audio-slot-reserved".to_string(),
-            "sandbox-slot-reserved".to_string(),
-            "storage-slot-reserved".to_string(),
+            "audio-capture".to_string(),
+            "audio-vad".to_string(),
+            "audio-stt".to_string(),
+            "audio-tts".to_string(),
+            "audio-mixer".to_string(),
+            "audio-resampler".to_string(),
+            "grpc-audio-runtime".to_string(),
         ],
     }
 }

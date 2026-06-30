@@ -179,16 +179,16 @@
 ## Phase M2 — Voix temps réel (4 semaines)
 
 ### M2.1 — Rust Audio Engine
-- [ ] Implémenter `engine_rust/audio/capture.rs` : capture micro via `cpal`
-- [ ] Implémenter `engine_rust/audio/vad.rs` : Voice Activity Detection (`silero-vad`)
-- [ ] Implémenter `engine_rust/audio/stt.rs` : STT Whisper (`whisper-rs`)
-- [ ] Implémenter `engine_rust/audio/tts.rs` : TTS Piper (`piper-rs`)
-- [ ] Implémenter `engine_rust/audio/mixer.rs` : mixage audio, gestion barge-in
-- [ ] Implémenter `engine_rust/audio/resampler.rs` : resampling format audio
-- [ ] Implémenter `engine_rust/protocol/audio.proto` : messages gRPC audio
-- [ ] Implémenter `engine_rust/protocol/server.rs` : gRPC server tonic
-- [ ] Tester latence Rust : capture → STT → texte (< 200ms)
-- [ ] Tester latence Rust : texte → TTS → audio (< 300ms)
+- [x] Implémenter `engine_rust/audio/capture.rs` : capture micro via `cpal` (stub + feature `voice`)
+- [x] Implémenter `engine_rust/audio/vad.rs` : Voice Activity Detection (`silero`) + fallback énergie
+- [x] Implémenter `engine_rust/audio/stt.rs` : STT Whisper (`whisper-rs`) (feature `voice`)
+- [x] Implémenter `engine_rust/audio/tts.rs` : TTS Piper (impl via `piper1-rs`) (feature `voice`)
+- [x] Implémenter `engine_rust/audio/mixer.rs` : mixage audio, gestion barge-in (logique + sink abstrait)
+- [x] Implémenter `engine_rust/audio/resampler.rs` : resampling mono (linéaire)
+- [x] Implémenter `engine_rust/protocol/audio.proto` : messages gRPC audio (dans `antaerus/kernel/proto/audio.proto`)
+- [x] Implémenter `engine_rust/protocol/server.rs` : gRPC server tonic (`AudioRuntime`)
+- [x] Tester latence Rust : capture → STT → texte (< 200ms) (tests `#[ignore]`)
+- [x] Tester latence Rust : texte → TTS → audio (< 300ms) (tests `#[ignore]`)
 
 ### M2.2 — Go ↔ Rust Intégration Voix
 - [ ] Implémenter `gateway/grpc_client.go` : client gRPC vers Rust

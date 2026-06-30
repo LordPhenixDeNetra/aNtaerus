@@ -1,7 +1,9 @@
 pub mod bootstrap;
+pub mod audio;
 pub mod config;
 pub mod crypto;
 pub mod grpc;
 pub mod grpc_service;
 pub mod http;
+pub mod protocol;
 pub mod state;

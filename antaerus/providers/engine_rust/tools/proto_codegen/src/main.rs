@@ -3,7 +3,8 @@ use std::{env, fs, path::PathBuf};
 fn main() {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let proto_root = manifest_dir.join("../../../kernel/proto");
-    let proto_file = proto_root.join("engine.proto");
+    let engine_proto = proto_root.join("engine.proto");
+    let audio_proto = proto_root.join("audio.proto");
     let output_dir = manifest_dir.join("../../src/gen");
 
     if env::var_os("PROTOC").is_none() {
@@ -24,6 +25,6 @@ fn main() {
         .build_server(true)
         .build_client(false)
         .out_dir(&output_dir)
-        .compile_protos(&[proto_file], &[proto_root])
+        .compile_protos(&[engine_proto, audio_proto], &[proto_root])
         .expect("failed to generate Rust gRPC stubs");
 }

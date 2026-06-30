@@ -3,7 +3,20 @@ name = "engine_rust"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+voice = [
+  "dep:cpal",
+  "dep:piper1-rs",
+  "dep:silero",
+  "dep:whisper-rs",
+]
+
 [dependencies]
+cpal = { version = "0.15", optional = true }
+piper1-rs = { version = "0.1", optional = true }
+silero = { version = "0.4", optional = true }
+tokio-stream = "0.1"
+whisper-rs = { version = "=0.15.1", optional = true }
 axum = { version = "0.7", features = ["http1", "json"] }
 chrono = { version = "0.4", features = ["clock", "serde"] }
 prost = "0.13"
@@ -12,6 +25,7 @@ secrecy = "0.8"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
 tonic = { version = "0.12", default-features = false, features = ["codegen", "prost", "server"] }
+thiserror = "2"
 
 [dev-dependencies]
 tower = { version = "0.5", features = ["util"] }
