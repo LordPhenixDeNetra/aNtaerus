@@ -211,10 +211,7 @@ export default function Chat() {
                 statusLabel: voice.statusLabel,
                 disabled: !voice.isVoiceAvailable || connectionState === "connecting",
                 canBargeIn: voice.canBargeIn,
-                onPrimaryAction:
-                  voice.voiceSessionActive || voice.voiceMode === "speaking"
-                    ? voice.stopVoice
-                    : voice.startVoice,
+                onPrimaryAction: voice.handlePrimaryAction,
                 onBargeIn: voice.bargeIn,
               }}
             />

@@ -23,10 +23,10 @@ pub struct VadDetector {
 }
 
 impl VadDetector {
-    pub fn new(model_path: Option<&Path>, threshold: f32) -> Result<Self, AudioError> {
+    pub fn new(_model_path: Option<&Path>, threshold: f32) -> Result<Self, AudioError> {
         #[cfg(feature = "voice")]
         {
-            if let Some(model_path) = model_path {
+            if let Some(model_path) = _model_path {
                 let session = Session::from_file(model_path)
                     .map_err(|err| AudioError::Other(err.to_string()))?;
                 let options = SpeechOptions::default();
@@ -106,4 +106,3 @@ fn rms_energy(chunk: &[f32]) -> f32 {
     let sum = chunk.iter().map(|v| v * v).sum::<f32>();
     (sum / chunk.len() as f32).sqrt()
 }
-

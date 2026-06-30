@@ -55,7 +55,7 @@ impl AudioRuntimeService {
     async fn start_session_task(
         &self,
         session_id: String,
-        language: String,
+        _language: String,
         mut stop: oneshot::Receiver<()>,
         sender: mpsc::Sender<Result<VoiceEvent, Status>>,
     ) {

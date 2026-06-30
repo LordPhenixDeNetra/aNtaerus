@@ -5,6 +5,7 @@ use super::AudioError;
 #[cfg(feature = "voice")]
 use piper1_rs::Piper;
 
+#[cfg_attr(not(feature = "voice"), allow(dead_code))]
 pub struct TextToSpeech {
     model_path: String,
     config_path: Option<String>,
@@ -75,4 +76,3 @@ impl TextToSpeech {
         }
     }
 }
-

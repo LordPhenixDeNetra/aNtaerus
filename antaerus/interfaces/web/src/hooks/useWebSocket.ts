@@ -26,10 +26,25 @@ export function useWebSocket(sessionId: string) {
   const setVoiceSessionActive = useAppStore((state) => state.setVoiceSessionActive);
   const setVoiceTranscript = useAppStore((state) => state.setVoiceTranscript);
   const setVoiceVADState = useAppStore((state) => state.setVoiceVADState);
-  const voiceSessionActive = useAppStore((state) => state.voiceSessionActive);
-  const voiceMode = useAppStore((state) => state.voiceMode);
   const resetVoiceState = useAppStore((state) => state.resetVoiceState);
   const socketRef = useRef<WebSocket | null>(null);
+  const connectPromiseRef = useRef<Promise<boolean> | null>(null);
+
+  const shouldResetVoiceState = useCallback((message: string) => {
+    const normalized = message.toLowerCase();
+    return (
+      normalized.includes("no active voice session") ||
+      normalized.includes("voice control failed") ||
+      normalized.includes("voice runtime stream failed") ||
+      normalized.includes("voice synthesis failed") ||
+      normalized.includes("voice brain stream failed") ||
+      normalized.includes("voice feature is disabled") ||
+      normalized.includes("missing antaerus_engine") ||
+      normalized.includes("capture error") ||
+      normalized.includes("stt init error") ||
+      normalized.includes("tts init error")
+    );
+  }, []);
 
   const ensureDevToken = useCallback(async () => {
     if (config.websocketDevToken.trim()) {
@@ -52,6 +67,7 @@ export function useWebSocket(sessionId: string) {
       socketRef.current.close();
       socketRef.current = null;
     }
+    connectPromiseRef.current = null;
 
     setConnectionState("idle");
     resetVoiceState();
@@ -63,7 +79,7 @@ export function useWebSocket(sessionId: string) {
     }
 
     if (socketRef.current?.readyState === WebSocket.CONNECTING) {
-      return false;
+      return connectPromiseRef.current ?? false;
     }
 
     setConnectionState("connecting");
@@ -85,11 +101,12 @@ export function useWebSocket(sessionId: string) {
     );
     socketRef.current = socket;
 
-    return new Promise<boolean>((resolve) => {
+    const connectPromise = new Promise<boolean>((resolve) => {
       socket.addEventListener(
         "open",
         () => {
           setConnectionState("connected");
+          connectPromiseRef.current = null;
           resolve(true);
         },
         { once: true },
@@ -100,6 +117,7 @@ export function useWebSocket(sessionId: string) {
         () => {
           setConnectionState("error");
           setLastError("Connexion WebSocket impossible.");
+          connectPromiseRef.current = null;
           resolve(false);
         },
         { once: true },
@@ -107,6 +125,7 @@ export function useWebSocket(sessionId: string) {
 
       socket.addEventListener("close", () => {
         socketRef.current = null;
+        connectPromiseRef.current = null;
         setConnectionState("idle");
         resetVoiceState();
       });
@@ -120,25 +139,31 @@ export function useWebSocket(sessionId: string) {
         switch (message.type) {
           case "chat.token":
             appendAssistantChunk(message.payload.token, "ws");
-            if (voiceSessionActive) {
+            if (useAppStore.getState().voiceSessionActive) {
               setVoiceMode("speaking");
             }
             break;
           case "chat.complete":
             finalizeAssistantMessage(message.payload.message, "ws");
-            setVoiceMode(voiceSessionActive ? "listening" : "idle");
+            setVoiceMode(useAppStore.getState().voiceSessionActive ? "listening" : "idle");
             break;
           case "voice.transcript":
             setVoiceTranscript(message.payload.transcript);
             break;
           case "voice.vad_state":
             setVoiceVADState(message.payload.state);
-            if (voiceSessionActive && voiceMode !== "speaking") {
+            if (
+              useAppStore.getState().voiceSessionActive &&
+              useAppStore.getState().voiceMode !== "speaking"
+            ) {
               setVoiceMode("listening");
             }
             break;
           case "system.alert":
             setLastError(message.payload.message);
+            if (shouldResetVoiceState(message.payload.message)) {
+              resetVoiceState();
+            }
             break;
           case "health.heartbeat":
             setHeartbeat(message.payload.services);
@@ -148,20 +173,21 @@ export function useWebSocket(sessionId: string) {
         }
       });
     });
+    connectPromiseRef.current = connectPromise;
+    return connectPromise;
   }, [
     appendAssistantChunk,
     config.gatewayBaseUrl,
     ensureDevToken,
     finalizeAssistantMessage,
+    resetVoiceState,
     setConnectionState,
     setHeartbeat,
     setLastError,
     setVoiceMode,
     setVoiceTranscript,
     setVoiceVADState,
-    voiceMode,
-    voiceSessionActive,
-    resetVoiceState,
+    shouldResetVoiceState,
   ]);
 
   const sendChatMessage = useCallback(

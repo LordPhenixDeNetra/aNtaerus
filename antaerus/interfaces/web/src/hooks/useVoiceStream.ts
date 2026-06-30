@@ -26,10 +26,9 @@ export function useVoiceStream({
 
   const isVoiceAvailable = config.chatTransport === "ws";
   const hasSession = Boolean(sessionId);
-  const canStart = isVoiceAvailable && hasSession && !voiceSessionActive;
-  const canStop = isVoiceAvailable && voiceSessionActive;
-  const canBargeIn =
-    isVoiceAvailable && voiceSessionActive && voiceMode === "speaking";
+  const canStart = isVoiceAvailable && hasSession && voiceMode === "idle";
+  const canStop = isVoiceAvailable && hasSession && voiceMode !== "idle";
+  const canBargeIn = isVoiceAvailable && hasSession && voiceMode === "speaking";
 
   const statusLabel = useMemo(() => {
     if (!isVoiceAvailable) {
@@ -78,6 +77,13 @@ export function useVoiceStream({
     return sendVoiceBargeIn();
   };
 
+  const handlePrimaryAction = async () => {
+    if (voiceMode === "idle") {
+      return startVoice();
+    }
+    return stopVoice();
+  };
+
   return {
     voiceMode: voiceMode as VoiceMode,
     voiceTranscript,
@@ -89,6 +95,7 @@ export function useVoiceStream({
     canBargeIn,
     statusLabel,
     primaryActionLabel,
+    handlePrimaryAction,
     startVoice,
     stopVoice,
     bargeIn,

@@ -1,6 +1,5 @@
 $root = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$workingDirectory = Join-Path $root "providers\engine_rust"
-$process = Start-Process powershell -ArgumentList "-NoProfile", "-Command", "Set-Location '$workingDirectory'; cargo run" -PassThru -WindowStyle Hidden
+$process = Start-Process powershell -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Set-Location '$root'; & '.\\scripts\\dev-engine.ps1'" -PassThru -WindowStyle Hidden
 
 try {
     $success = $false

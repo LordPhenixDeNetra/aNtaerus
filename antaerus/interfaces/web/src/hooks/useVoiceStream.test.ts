@@ -45,6 +45,31 @@ describe("useVoiceStream", () => {
     expect(sendVoiceStart).toHaveBeenCalled();
   });
 
+  it("aligne l'action primaire sur le mode affiché", async () => {
+    useAppStore.setState({
+      voiceMode: "idle",
+      voiceSessionActive: true,
+    });
+    const sendVoiceStart = vi.fn().mockResolvedValue(true);
+    const sendVoiceStop = vi.fn().mockResolvedValue(true);
+    const { result } = renderHook(() =>
+      useVoiceStream({
+        sessionId: "session-1",
+        connectionState: "connected",
+        sendVoiceStart,
+        sendVoiceStop,
+        sendVoiceBargeIn: vi.fn(),
+      }),
+    );
+
+    await act(async () => {
+      await result.current.handlePrimaryAction();
+    });
+
+    expect(sendVoiceStart).toHaveBeenCalled();
+    expect(sendVoiceStop).not.toHaveBeenCalled();
+  });
+
   it("désactive la voix en mode sse-dev", () => {
     useAppStore.setState({
       config: {

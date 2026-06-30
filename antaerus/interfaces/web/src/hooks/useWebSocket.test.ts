@@ -12,6 +12,7 @@ class MockWebSocket {
   static instances: MockWebSocket[] = [];
   static OPEN = 1;
   static CONNECTING = 0;
+  static autoOpen = true;
 
   readyState = MockWebSocket.CONNECTING;
   sentMessages: string[] = [];
@@ -19,10 +20,11 @@ class MockWebSocket {
 
   constructor(public readonly url: string) {
     MockWebSocket.instances.push(this);
-    queueMicrotask(() => {
-      this.readyState = MockWebSocket.OPEN;
-      this.listeners.open?.forEach((listener) => listener());
-    });
+    if (MockWebSocket.autoOpen) {
+      queueMicrotask(() => {
+        this.emitOpen();
+      });
+    }
   }
 
   addEventListener(
@@ -40,12 +42,18 @@ class MockWebSocket {
   close() {
     this.listeners.close?.forEach((listener) => listener());
   }
+
+  emitOpen() {
+    this.readyState = MockWebSocket.OPEN;
+    this.listeners.open?.forEach((listener) => listener());
+  }
 }
 
 describe("useWebSocket", () => {
   beforeEach(() => {
     window.localStorage.clear();
     MockWebSocket.instances = [];
+    MockWebSocket.autoOpen = true;
     vi.stubGlobal("WebSocket", MockWebSocket);
     useAppStore.setState({
       config: {
@@ -206,20 +214,14 @@ describe("useWebSocket", () => {
   });
 
   it("passe en mode speaking sur chat.token puis revient en listening sur chat.complete", async () => {
-    useAppStore.setState({
-      voiceMode: "listening",
-      voiceSessionActive: true,
-      voiceTranscript: "",
-      voiceVADState: "silence",
-      voiceLastUpdatedAt: Date.now(),
-    });
     const { result } = renderHook(() => useWebSocket("session-1"));
 
     await act(async () => {
-      await result.current.connect();
+      await result.current.sendVoiceStart();
     });
 
     const instance = MockWebSocket.instances[0];
+    expect(useAppStore.getState().voiceSessionActive).toBe(true);
     await act(async () => {
       instance.listeners.message?.forEach((listener) =>
         listener({
@@ -253,5 +255,56 @@ describe("useWebSocket", () => {
     });
 
     expect(useAppStore.getState().voiceMode).toBe("listening");
+  });
+
+  it("attend l'ouverture de la socket avant d'envoyer voice.start", async () => {
+    MockWebSocket.autoOpen = false;
+    const { result } = renderHook(() => useWebSocket("session-1"));
+
+    let sent = false;
+    const startPromise = act(async () => {
+      const pending = result.current.sendVoiceStart().then((value) => {
+        sent = value;
+      });
+      await Promise.resolve();
+      expect(MockWebSocket.instances).toHaveLength(1);
+      expect(MockWebSocket.instances[0].sentMessages).toHaveLength(0);
+      MockWebSocket.instances[0].emitOpen();
+      await pending;
+    });
+
+    await startPromise;
+
+    const instance = MockWebSocket.instances[0];
+    expect(sent).toBe(true);
+    expect(instance.sentMessages).toHaveLength(1);
+    expect(JSON.parse(instance.sentMessages[0]).type).toBe("voice.start");
+  });
+
+  it("réinitialise l'état voix sur une erreur runtime voix", async () => {
+    const { result } = renderHook(() => useWebSocket("session-1"));
+
+    await act(async () => {
+      await result.current.sendVoiceStart();
+    });
+
+    const instance = MockWebSocket.instances[0];
+    await act(async () => {
+      instance.listeners.message?.forEach((listener) =>
+        listener({
+          data: JSON.stringify({
+            type: "system.alert",
+            timestamp: new Date().toISOString(),
+            payload: {
+              level: "error",
+              message: "No active voice session for this sessionId",
+            },
+          }),
+        } as MessageEvent),
+      );
+    });
+
+    expect(useAppStore.getState().voiceMode).toBe("idle");
+    expect(useAppStore.getState().voiceSessionActive).toBe(false);
   });
 });
