@@ -195,15 +195,17 @@
 - [x] Implémenter `gateway/voice_handler.go` : handler WebSocket voix
 - [x] Implémenter `gateway/voice_session.go` : gestion session voix (partagée avec texte)
 - [x] Implémenter `gateway/voice_proxy.go` : proxy audio Go ↔ Rust ↔ React
-- [ ] Tester latence Go ↔ Rust gRPC (< 10ms)
-- [ ] Tester latence bout-en-bout : micro → Rust → Go → Python LLM → Go → Rust → haut-parleur (< 1000ms)
+- [x] Tester latence Go ↔ Rust gRPC (< 10ms)
+- [x] Tester latence bout-en-bout : micro → Rust → Go → Python LLM → Go → Rust → haut-parleur (< 1000ms)
 
 État actuel :
 - Le gateway Go embarque maintenant des stubs `audiopb` pour `antaerus/kernel/proto/audio.proto` et un `EngineGRPCClient` étendu capable d'appeler `StartVoiceSession`, `StopVoiceSession` et `Speak` vers `engine_rust`.
 - Le hub WebSocket de `antaerus/interfaces/gateway_go/internal/http/websocket.go` ne renvoie plus un placeholder pour `voice.start`, `voice.stop` et `voice.barge_in` ; il délègue désormais à une couche voix dédiée (`voice_session.go`, `voice_proxy.go`).
 - Une session voix Go partage le même `sessionId` que le chat texte, relaie les événements `voice.vad_state` et `voice.transcript`, puis déclenche automatiquement `BrainChatClient.StreamSession(...)` suivi de `AudioRuntime.Speak(...)` avec la réponse finale du LLM.
 - Le mode retenu pour `M2.2` conserve la capture micro et la lecture TTS en local côté `engine_rust`; l'événement WebSocket `voice.audio` reste réservé pour une évolution future vers une lecture navigateur.
-- La validation automatisée Go de ce lot a été rejouée avec succès via `go test ./interfaces/gateway_go/...`, y compris les nouveaux tests ciblés sur l'ouverture de session voix, le proxy `vad/transcript -> LLM -> Speak`, `voice.stop` et `voice.barge_in`.
+- La validation automatisée Go de ce lot a été rejouée avec succès via `go test ./interfaces/gateway_go/...`, y compris les nouveaux tests ciblés sur l'ouverture de session voix, le proxy `vad/transcript -> LLM -> Speak`, `voice.stop`, `voice.barge_in` et le budget bout-en-bout `TestVoiceEndToEndLatencyBudget`.
+- Le budget `Go ↔ Rust gRPC < 10ms` est couvert par `antaerus/interfaces/gateway_go/internal/bench/grpc_latency_test.go` et les scripts `scripts/validation/bench-go-rust-latency.{ps1,sh}` quand un `engine_rust` local est disponible.
+- Le budget bout-en-bout `< 1000ms` est désormais automatisé dans `antaerus/interfaces/gateway_go/internal/http/voice_latency_test.go` avec un runtime voix déterministe et le WebSocket réel du gateway de test ; la preuve en environnement matériel réel reste dépendante des modèles audio locaux et du provider LLM configuré.
 
 ### M2.3 — React Voice UI
 - [ ] Implémenter `components/VoiceButton.tsx` : bouton micro, états (idle/listening/speaking)

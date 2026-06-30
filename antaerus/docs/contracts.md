@@ -100,3 +100,4 @@ Le contrat `kernel/proto/audio.proto` couvre désormais le pipeline voix local :
 - `cargo test`
 - `powershell -ExecutionPolicy Bypass -File .\scripts\validation\bench-go-python-latency.ps1`
 - `powershell -ExecutionPolicy Bypass -File .\scripts\validation\bench-go-rust-latency.ps1`
+- `powershell -ExecutionPolicy Bypass -File .\scripts\validation\bench-voice-e2e-latency.ps1`
