@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -101,5 +102,51 @@ func TestNewMuxServesFrontendIndexForSPARoutes(t *testing.T) {
 	}
 	if body := assetRecorder.Body.String(); body != "console.log('ok')" {
 		t.Fatalf("expected asset body, got %q", body)
+	}
+}
+
+func TestNewMuxAllowsConfiguredWebOriginPreflight(t *testing.T) {
+	cfg := websocketTestConfig()
+	mux := NewMux(cfg, system.NewHandlers(cfg))
+
+	request := httptest.NewRequest(http.MethodOptions, "/api/v1/auth/dev-token", nil)
+	request.Header.Set("Origin", cfg.WebURL)
+	request.Header.Set("Access-Control-Request-Method", http.MethodPost)
+	request.Header.Set("Access-Control-Request-Headers", "Content-Type")
+
+	recorder := httptest.NewRecorder()
+	mux.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 for CORS preflight, got %d", recorder.Code)
+	}
+	if allowOrigin := recorder.Header().Get("Access-Control-Allow-Origin"); allowOrigin != cfg.WebURL {
+		t.Fatalf("expected allow origin %q, got %q", cfg.WebURL, allowOrigin)
+	}
+	if allowMethods := recorder.Header().Get("Access-Control-Allow-Methods"); allowMethods != "GET, POST, OPTIONS" {
+		t.Fatalf("expected allow methods header, got %q", allowMethods)
+	}
+}
+
+func TestNewMuxIncludesCORSHeadersOnDevTokenResponse(t *testing.T) {
+	cfg := websocketTestConfig()
+	mux := NewMux(cfg, system.NewHandlers(cfg))
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/auth/dev-token",
+		bytes.NewBufferString(`{"subject":"web-dev-user","role":"user"}`),
+	)
+	request.Header.Set("Origin", cfg.WebURL)
+	request.Header.Set("Content-Type", "application/json")
+
+	recorder := httptest.NewRecorder()
+	mux.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 for dev token route, got %d", recorder.Code)
+	}
+	if allowOrigin := recorder.Header().Get("Access-Control-Allow-Origin"); allowOrigin != cfg.WebURL {
+		t.Fatalf("expected allow origin %q, got %q", cfg.WebURL, allowOrigin)
 	}
 }
