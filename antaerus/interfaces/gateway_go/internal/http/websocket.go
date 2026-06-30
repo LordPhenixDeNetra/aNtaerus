@@ -17,17 +17,20 @@ import (
 )
 
 type Hub struct {
-	config        config.Config
-	authenticator Authenticator
-	rateLimiter   *RateLimiter
-	brainChat     clients.BrainChatClient
-	healthService system.HealthService
-	upgrader      websocket.Upgrader
-	register      chan *Client
-	unregister    chan *Client
-	clients       map[*Client]struct{}
-	startOnce     sync.Once
-	clientSeq     uint64
+	config              config.Config
+	authenticator       Authenticator
+	rateLimiter         *RateLimiter
+	brainChat           clients.BrainChatClient
+	voiceRuntimeFactory voiceRuntimeFactory
+	healthService       system.HealthService
+	upgrader            websocket.Upgrader
+	register            chan *Client
+	unregister          chan *Client
+	clients             map[*Client]struct{}
+	voiceMu             sync.Mutex
+	voiceSessions       map[string]*voiceSession
+	startOnce           sync.Once
+	clientSeq           uint64
 }
 
 type Client struct {
@@ -45,20 +48,23 @@ func NewHub(
 	authenticator Authenticator,
 	rateLimiter *RateLimiter,
 	brainChat clients.BrainChatClient,
+	voiceRuntimeFactory voiceRuntimeFactory,
 	healthService system.HealthService,
 ) *Hub {
 	return &Hub{
-		config:        cfg,
-		authenticator: authenticator,
-		rateLimiter:   rateLimiter,
-		brainChat:     brainChat,
-		healthService: healthService,
+		config:              cfg,
+		authenticator:       authenticator,
+		rateLimiter:         rateLimiter,
+		brainChat:           brainChat,
+		voiceRuntimeFactory: voiceRuntimeFactory,
+		healthService:       healthService,
 		upgrader: websocket.Upgrader{
 			CheckOrigin: func(*http.Request) bool { return true },
 		},
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		clients:    map[*Client]struct{}{},
+		register:      make(chan *Client),
+		unregister:    make(chan *Client),
+		clients:       map[*Client]struct{}{},
+		voiceSessions: map[string]*voiceSession{},
 	}
 }
 
@@ -183,6 +189,7 @@ func (client *Client) heartbeatPump() {
 func (client *Client) close() {
 	client.closeOnce.Do(func() {
 		close(client.done)
+		client.hub.stopAllVoiceSessions(client)
 		client.hub.unregister <- client
 		_ = client.conn.Close()
 	})
@@ -199,7 +206,13 @@ func (client *Client) handleMessage(message contracts.ClientMessage) {
 
 		client.handleChatMessage(payload)
 	case contracts.ClientMessageVoiceStart, contracts.ClientMessageVoiceStop, contracts.ClientMessageBargeIn:
-		client.enqueue(alertMessage("info", "Voice transport placeholder active. Le pipeline voix n'est pas encore branche."))
+		var payload contracts.SessionControlPayload
+		if err := json.Unmarshal(message.Payload, &payload); err != nil {
+			client.enqueue(alertMessage("error", "Invalid voice payload"))
+			return
+		}
+
+		client.handleVoiceControl(contracts.ClientMessageType(message.Type), payload)
 	case contracts.ClientMessageCancel:
 		var payload contracts.MissionCancelPayload
 		if err := json.Unmarshal(message.Payload, &payload); err != nil {

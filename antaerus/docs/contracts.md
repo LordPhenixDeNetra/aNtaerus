@@ -8,6 +8,7 @@ Les contrats de cette phase définissent trois objets JSON partagés :
 - `websocket-client-message.schema.json` : messages client → gateway
 - `websocket-server-message.schema.json` : messages gateway → client
 - `kernel/proto/engine.proto` : contrat Protobuf fondation Go ↔ Rust
+- `kernel/proto/audio.proto` : contrat Protobuf voix Go ↔ Rust
 
 ## Principes
 
@@ -15,9 +16,9 @@ Les contrats de cette phase définissent trois objets JSON partagés :
 - la source de vérité du dashboard est le `gateway_go`
 - `brain_python` et `engine_rust` exposent leurs états et capacités via HTTP
 - le frontend ne contacte pas directement Python ou Rust
-- le proto gRPC partagé reste sous `kernel/proto/engine.proto`
-- les stubs Go sont commités sous `interfaces/gateway_go/internal/gen/enginepb/`
-- le provider Rust consomme un stub serveur sous `providers/engine_rust/src/gen/engine.rs`
+- les protos gRPC partagés restent sous `kernel/proto/`
+- les stubs Go sont commités sous `interfaces/gateway_go/internal/gen/enginepb/` et `interfaces/gateway_go/internal/gen/audiopb/`
+- le provider Rust consomme des stubs serveur sous `providers/engine_rust/src/gen/`
 
 ## Services Référencés
 
@@ -28,7 +29,8 @@ Les contrats de cette phase définissent trois objets JSON partagés :
 
 ## Régénération
 
-- Go : `task generate:proto:go` ou `protoc --proto_path=antaerus/kernel/proto --go_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/enginepb --go-grpc_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/enginepb antaerus/kernel/proto/engine.proto`
+- Go (`engine.proto`) : `task generate:proto:go` ou `protoc --proto_path=antaerus/kernel/proto --go_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/enginepb --go-grpc_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/enginepb antaerus/kernel/proto/engine.proto`
+- Go (`audio.proto`) : `protoc --proto_path=antaerus/kernel/proto --go_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/audiopb --go-grpc_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/audiopb antaerus/kernel/proto/audio.proto`
 - Rust : `task generate:proto:rust`, qui appelle le helper `providers/engine_rust/tools/proto_codegen`
 
 ## Évolution Prévue
@@ -67,6 +69,13 @@ Le format WebSocket fondation utilise une enveloppe commune :
 - `proactive.notification`
 - `health.heartbeat`
 
+Notes `M2.2` :
+
+- `voice.start`, `voice.stop` et `voice.barge_in` sont maintenant branchés au pipeline Go ↔ Rust.
+- `voice.transcript` et `voice.vad_state` sont alimentés depuis `AudioRuntime.StartVoiceSession`.
+- un transcript final déclenche automatiquement le brain Python puis `AudioRuntime.Speak`.
+- `voice.audio` reste réservé pour une évolution future navigateur; en `M2.2`, la lecture TTS reste locale dans `engine_rust`.
+
 ## gRPC Fondation Go ↔ Rust
 
 Le contrat `kernel/proto/engine.proto` introduit le service `EngineRuntime` avec trois RPC minimaux :
@@ -76,6 +85,12 @@ Le contrat `kernel/proto/engine.proto` introduit le service `EngineRuntime` avec
 - `GetCapabilities` : récupération des capacités déclarées
 
 Ce contrat reste volontairement minimal pour éviter d'empiéter sur le pipeline audio détaillé prévu en `M2`.
+
+Le contrat `kernel/proto/audio.proto` couvre désormais le pipeline voix local :
+
+- `StartVoiceSession` : ouvre le stream d'événements voix (`vad`, `transcript`, `system`)
+- `StopVoiceSession` : ferme une session voix active
+- `Speak` : déclenche la synthèse locale côté `engine_rust`
 
 ## Validation Locale
 

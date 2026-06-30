@@ -19,6 +19,14 @@ var webDistDirCandidates = []string{
 }
 
 func NewMux(cfg config.Config, handlers system.Handlers) *http.ServeMux {
+	return newMux(cfg, handlers, newDefaultVoiceRuntimeFactory(cfg.EngineGRPCTarget))
+}
+
+func newMux(
+	cfg config.Config,
+	handlers system.Handlers,
+	voiceFactory voiceRuntimeFactory,
+) *http.ServeMux {
 	mux := http.NewServeMux()
 	apiMux := http.NewServeMux()
 	healthHTTPClient := &http.Client{Timeout: cfg.RequestTimeout}
@@ -27,7 +35,7 @@ func NewMux(cfg config.Config, handlers system.Handlers) *http.ServeMux {
 	authenticator := NewAuthenticator(cfg)
 	rateLimiter := NewRateLimiter(cfg)
 	brainChat := clients.NewBrainChatClient(chatHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
-	hub := NewHub(cfg, authenticator, rateLimiter, brainChat, healthService)
+	hub := NewHub(cfg, authenticator, rateLimiter, brainChat, voiceFactory, healthService)
 
 	mux.HandleFunc("/health", handlers.HandleHealth)
 	apiMux.HandleFunc("/api/v1/health", handlers.HandleAggregatedHealth)

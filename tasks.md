@@ -191,12 +191,19 @@
 - [x] Tester latence Rust : texte → TTS → audio (< 300ms) (tests `#[ignore]`)
 
 ### M2.2 — Go ↔ Rust Intégration Voix
-- [ ] Implémenter `gateway/grpc_client.go` : client gRPC vers Rust
-- [ ] Implémenter `gateway/voice_handler.go` : handler WebSocket voix
-- [ ] Implémenter `gateway/voice_session.go` : gestion session voix (partagée avec texte)
-- [ ] Implémenter `gateway/voice_proxy.go` : proxy audio Go ↔ Rust ↔ React
+- [x] Implémenter `gateway/grpc_client.go` : client gRPC vers Rust
+- [x] Implémenter `gateway/voice_handler.go` : handler WebSocket voix
+- [x] Implémenter `gateway/voice_session.go` : gestion session voix (partagée avec texte)
+- [x] Implémenter `gateway/voice_proxy.go` : proxy audio Go ↔ Rust ↔ React
 - [ ] Tester latence Go ↔ Rust gRPC (< 10ms)
 - [ ] Tester latence bout-en-bout : micro → Rust → Go → Python LLM → Go → Rust → haut-parleur (< 1000ms)
+
+État actuel :
+- Le gateway Go embarque maintenant des stubs `audiopb` pour `antaerus/kernel/proto/audio.proto` et un `EngineGRPCClient` étendu capable d'appeler `StartVoiceSession`, `StopVoiceSession` et `Speak` vers `engine_rust`.
+- Le hub WebSocket de `antaerus/interfaces/gateway_go/internal/http/websocket.go` ne renvoie plus un placeholder pour `voice.start`, `voice.stop` et `voice.barge_in` ; il délègue désormais à une couche voix dédiée (`voice_session.go`, `voice_proxy.go`).
+- Une session voix Go partage le même `sessionId` que le chat texte, relaie les événements `voice.vad_state` et `voice.transcript`, puis déclenche automatiquement `BrainChatClient.StreamSession(...)` suivi de `AudioRuntime.Speak(...)` avec la réponse finale du LLM.
+- Le mode retenu pour `M2.2` conserve la capture micro et la lecture TTS en local côté `engine_rust`; l'événement WebSocket `voice.audio` reste réservé pour une évolution future vers une lecture navigateur.
+- La validation automatisée Go de ce lot a été rejouée avec succès via `go test ./interfaces/gateway_go/...`, y compris les nouveaux tests ciblés sur l'ouverture de session voix, le proxy `vad/transcript -> LLM -> Speak`, `voice.stop` et `voice.barge_in`.
 
 ### M2.3 — React Voice UI
 - [ ] Implémenter `components/VoiceButton.tsx` : bouton micro, états (idle/listening/speaking)

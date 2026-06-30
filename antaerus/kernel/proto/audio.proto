@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package antaerus.kernel.audio.v1;
 
+option go_package = "antaerus/interfaces/gateway_go/internal/gen/audiopb;audiopb";
+
 service AudioRuntime {
   rpc StartVoiceSession(StartVoiceSessionRequest) returns (stream VoiceEvent);
   rpc StopVoiceSession(StopVoiceSessionRequest) returns (StopVoiceSessionResponse);
@@ -55,4 +57,3 @@ message SystemEvent {
   string level = 1;
   string message = 2;
 }
-

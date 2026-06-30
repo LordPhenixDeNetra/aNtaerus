@@ -4,14 +4,16 @@ import (
 	"context"
 	"time"
 
+	"antaerus/interfaces/gateway_go/internal/gen/audiopb"
 	"antaerus/interfaces/gateway_go/internal/gen/enginepb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 type EngineGRPCClient struct {
-	conn   *grpc.ClientConn
-	client enginepb.EngineRuntimeClient
+	conn        *grpc.ClientConn
+	client      enginepb.EngineRuntimeClient
+	audioClient audiopb.AudioRuntimeClient
 }
 
 func NewEngineGRPCClient(ctx context.Context, target string) (*EngineGRPCClient, error) {
@@ -26,8 +28,9 @@ func NewEngineGRPCClient(ctx context.Context, target string) (*EngineGRPCClient,
 	}
 
 	return &EngineGRPCClient{
-		conn:   connection,
-		client: enginepb.NewEngineRuntimeClient(connection),
+		conn:        connection,
+		client:      enginepb.NewEngineRuntimeClient(connection),
+		audioClient: audiopb.NewAudioRuntimeClient(connection),
 	}, nil
 }
 
@@ -59,4 +62,35 @@ func (client *EngineGRPCClient) GetCapabilities(
 	ctx context.Context,
 ) (*enginepb.CapabilitiesResponse, error) {
 	return client.client.GetCapabilities(ctx, &enginepb.CapabilitiesRequest{})
+}
+
+func (client *EngineGRPCClient) StartVoiceSession(
+	ctx context.Context,
+	sessionID string,
+	language string,
+) (grpc.ServerStreamingClient[audiopb.VoiceEvent], error) {
+	return client.audioClient.StartVoiceSession(ctx, &audiopb.StartVoiceSessionRequest{
+		SessionId: sessionID,
+		Language:  language,
+	})
+}
+
+func (client *EngineGRPCClient) StopVoiceSession(
+	ctx context.Context,
+	sessionID string,
+) (*audiopb.StopVoiceSessionResponse, error) {
+	return client.audioClient.StopVoiceSession(ctx, &audiopb.StopVoiceSessionRequest{
+		SessionId: sessionID,
+	})
+}
+
+func (client *EngineGRPCClient) Speak(
+	ctx context.Context,
+	sessionID string,
+	text string,
+) (*audiopb.SpeakResponse, error) {
+	return client.audioClient.Speak(ctx, &audiopb.SpeakRequest{
+		SessionId: sessionID,
+		Text:      text,
+	})
 }
