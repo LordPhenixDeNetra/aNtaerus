@@ -4,7 +4,7 @@ from typing import Any, AsyncIterator, Literal, Protocol
 
 from pydantic import BaseModel, Field
 
-ProviderName = Literal["anthropic", "openai", "mistral", "ollama"]
+ProviderName = Literal["anthropic", "openai", "mistral", "deepseek", "ollama"]
 MessageRole = Literal["system", "user", "assistant"]
 StreamingEventType = Literal["token", "complete", "error"]
 

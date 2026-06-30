@@ -22,6 +22,7 @@ Ce service est conçu pour être consommé en interne par le gateway Go.
 - `anthropic`
 - `openai`
 - `mistral`
+- `deepseek`
 - `ollama`
 
 Les providers cloud passent par `litellm`. `Ollama` est appelé via `httpx` sur une instance locale.
@@ -39,9 +40,11 @@ Variables d'environnement utiles :
 - `ANTAERUS_ANTHROPIC_API_KEY` : clé API Anthropic
 - `ANTAERUS_OPENAI_API_KEY` : clé API OpenAI
 - `ANTAERUS_MISTRAL_API_KEY` : clé API Mistral
+- `ANTAERUS_DEEPSEEK_API_KEY` : clé API DeepSeek
 - `ANTAERUS_BRAIN_ANTHROPIC_MODEL` : modèle Anthropic
 - `ANTAERUS_BRAIN_OPENAI_MODEL` : modèle OpenAI
 - `ANTAERUS_BRAIN_MISTRAL_MODEL` : modèle Mistral
+- `ANTAERUS_BRAIN_DEEPSEEK_MODEL` : modèle DeepSeek
 - `ANTAERUS_BRAIN_OLLAMA_BASE_URL` : URL de l'instance Ollama. Défaut : `http://localhost:11434`
 - `ANTAERUS_BRAIN_OLLAMA_MODEL` : modèle Ollama. Défaut : `llama3.1:8b`
 - `ANTAERUS_BRAIN_LLM_TIMEOUT_SECONDS` : timeout LLM. Défaut : `30`

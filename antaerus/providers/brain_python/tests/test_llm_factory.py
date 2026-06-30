@@ -18,6 +18,7 @@ def test_create_llm_client_resolves_all_supported_providers() -> None:
     assert isinstance(create_llm_client(settings, "anthropic"), CloudLLMClient)
     assert isinstance(create_llm_client(settings, "openai"), CloudLLMClient)
     assert isinstance(create_llm_client(settings, "mistral"), CloudLLMClient)
+    assert isinstance(create_llm_client(settings, "deepseek"), CloudLLMClient)
     assert isinstance(create_llm_client(settings, "ollama"), OllamaLLMClient)
 
 
@@ -89,9 +90,11 @@ def build_settings() -> Settings:
         anthropic_api_key=SecretStr("anthropic-key"),
         openai_api_key=SecretStr("openai-key"),
         mistral_api_key=SecretStr("mistral-key"),
+        deepseek_api_key=SecretStr("deepseek-key"),
         anthropic_model="anthropic/model",
         openai_model="openai/model",
         mistral_model="mistral/model",
+        deepseek_model="deepseek/deepseek-chat",
         ollama_base_url="http://localhost:11434",
         ollama_model="llama3.1:8b",
         llm_timeout_seconds=5.0,

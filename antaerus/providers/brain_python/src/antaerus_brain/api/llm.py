@@ -22,6 +22,7 @@ def list_providers() -> dict[str, object]:
             {"name": "anthropic", "model": settings.anthropic_model},
             {"name": "openai", "model": settings.openai_model},
             {"name": "mistral", "model": settings.mistral_model},
+            {"name": "deepseek", "model": settings.deepseek_model},
             {"name": "ollama", "model": settings.ollama_model},
         ],
     }

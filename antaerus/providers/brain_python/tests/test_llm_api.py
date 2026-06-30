@@ -15,7 +15,8 @@ def test_llm_providers_endpoint_lists_all_supported_providers() -> None:
 
     assert response.status_code == 200
     payload = response.json()
-    assert len(payload["providers"]) == 4
+    assert len(payload["providers"]) == 5
+    assert any(provider["name"] == "deepseek" for provider in payload["providers"])
 
 
 def test_llm_chat_endpoint_returns_completion(monkeypatch) -> None:

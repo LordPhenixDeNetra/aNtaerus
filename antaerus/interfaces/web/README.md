@@ -11,6 +11,7 @@ Le package `antaerus/interfaces/web/` porte l'UI texte des lots `M1.3` et `M1.4`
 - hook WebSocket vers le gateway Go ;
 - hook `SSE` direct vers `brain_python` pour le développement ;
 - hydratation de l'historique de session via le gateway Go ;
+- sélection locale des providers `Anthropic`, `OpenAI`, `Mistral`, `DeepSeek` et `Ollama` ;
 - build statique servie ensuite par le gateway Go.
 
 ## Routes
@@ -41,7 +42,7 @@ Le wizard `Setup` persiste localement dans le navigateur :
 - `gatewayBaseUrl` ;
 - `brainBaseUrl` ;
 - `websocketDevToken` ;
-- clés API locales `Anthropic`, `OpenAI`, `Mistral` ;
+- clés API locales `Anthropic`, `OpenAI`, `Mistral`, `DeepSeek` ;
 - mode de transport texte (`ws` ou `sse-dev`).
 
 Important :

@@ -11,6 +11,7 @@ const providerOptions: ProviderName[] = [
   "anthropic",
   "openai",
   "mistral",
+  "deepseek",
   "ollama",
 ];
 
@@ -185,6 +186,12 @@ export default function Setup() {
               label="Mistral"
               value={config.mistralApiKey}
               onChange={(value) => updateConfig({ mistralApiKey: value })}
+            />
+            <ApiKeyInput
+              id="deepseek-api-key"
+              label="DeepSeek"
+              value={config.deepseekApiKey}
+              onChange={(value) => updateConfig({ deepseekApiKey: value })}
             />
           </div>
         </section>

@@ -21,3 +21,4 @@ def test_brain_secretstr_masks_repr_and_string() -> None:
     assert "development-secret" not in repr(settings.anthropic_api_key)
     assert "development-secret" not in repr(settings.openai_api_key)
     assert "development-secret" not in repr(settings.mistral_api_key)
+    assert "development-secret" not in repr(settings.deepseek_api_key)

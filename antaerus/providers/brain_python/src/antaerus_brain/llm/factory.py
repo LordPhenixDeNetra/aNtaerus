@@ -30,6 +30,13 @@ def create_llm_client(settings: Settings, provider: ProviderName | None = None) 
             default_model=settings.mistral_model,
             timeout_seconds=settings.llm_timeout_seconds,
         )
+    if resolved_provider == "deepseek":
+        return CloudLLMClient(
+            provider_name="deepseek",
+            api_key=settings.deepseek_api_key,
+            default_model=settings.deepseek_model,
+            timeout_seconds=settings.llm_timeout_seconds,
+        )
     if resolved_provider == "ollama":
         return OllamaLLMClient(
             base_url=settings.ollama_base_url,

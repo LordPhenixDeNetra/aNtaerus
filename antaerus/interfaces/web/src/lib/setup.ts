@@ -1,4 +1,4 @@
-export type ProviderName = "anthropic" | "openai" | "mistral" | "ollama";
+export type ProviderName = "anthropic" | "openai" | "mistral" | "deepseek" | "ollama";
 
 export type ChatTransportMode = "ws" | "sse-dev";
 
@@ -11,6 +11,7 @@ export type LocalSetupConfig = {
   anthropicApiKey: string;
   openaiApiKey: string;
   mistralApiKey: string;
+  deepseekApiKey: string;
   chatTransport: ChatTransportMode;
 };
 
@@ -23,5 +24,6 @@ export const DEFAULT_SETUP_CONFIG: LocalSetupConfig = {
   anthropicApiKey: "",
   openaiApiKey: "",
   mistralApiKey: "",
+  deepseekApiKey: "",
   chatTransport: "ws",
 };

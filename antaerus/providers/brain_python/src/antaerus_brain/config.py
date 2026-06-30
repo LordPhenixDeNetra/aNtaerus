@@ -20,9 +20,11 @@ class Settings:
     anthropic_api_key: SecretStr
     openai_api_key: SecretStr
     mistral_api_key: SecretStr
+    deepseek_api_key: SecretStr
     anthropic_model: str
     openai_model: str
     mistral_model: str
+    deepseek_model: str
     ollama_base_url: str
     ollama_model: str
     llm_timeout_seconds: float
@@ -49,7 +51,7 @@ def _default_memory_topics_dir() -> Path:
 
 def _require_supported_provider(provider: str) -> str:
     normalized = provider.strip().lower()
-    if normalized not in {"anthropic", "openai", "mistral", "ollama"}:
+    if normalized not in {"anthropic", "openai", "mistral", "deepseek", "ollama"}:
         raise ValueError(f"Unsupported default provider: {provider}")
 
     return normalized
@@ -98,6 +100,7 @@ def get_settings() -> Settings:
         anthropic_api_key=SecretStr(getenv("ANTAERUS_ANTHROPIC_API_KEY", "")),
         openai_api_key=SecretStr(getenv("ANTAERUS_OPENAI_API_KEY", "")),
         mistral_api_key=SecretStr(getenv("ANTAERUS_MISTRAL_API_KEY", "")),
+        deepseek_api_key=SecretStr(getenv("ANTAERUS_DEEPSEEK_API_KEY", "")),
         anthropic_model=getenv(
             "ANTAERUS_BRAIN_ANTHROPIC_MODEL",
             "anthropic/claude-3-5-sonnet-latest",
@@ -107,6 +110,7 @@ def get_settings() -> Settings:
             "ANTAERUS_BRAIN_MISTRAL_MODEL",
             "mistral/mistral-large-latest",
         ),
+        deepseek_model=getenv("ANTAERUS_BRAIN_DEEPSEEK_MODEL", "deepseek/deepseek-chat"),
         ollama_base_url=getenv("ANTAERUS_BRAIN_OLLAMA_BASE_URL", "http://localhost:11434"),
         ollama_model=getenv("ANTAERUS_BRAIN_OLLAMA_MODEL", "llama3.1:8b"),
         llm_timeout_seconds=llm_timeout_seconds,
@@ -135,6 +139,9 @@ def get_settings() -> Settings:
 
     if settings.default_provider == "mistral" and not settings.mistral_api_key.get_secret_value():
         raise ValueError("ANTAERUS_MISTRAL_API_KEY must not be empty when provider is mistral")
+
+    if settings.default_provider == "deepseek" and not settings.deepseek_api_key.get_secret_value():
+        raise ValueError("ANTAERUS_DEEPSEEK_API_KEY must not be empty when provider is deepseek")
 
     if settings.default_provider == "ollama" and settings.ollama_base_url.strip() == "":
         raise ValueError("ANTAERUS_BRAIN_OLLAMA_BASE_URL must not be empty when provider is ollama")

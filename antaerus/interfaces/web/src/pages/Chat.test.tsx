@@ -63,7 +63,10 @@ describe("Chat", () => {
 
         return Promise.resolve({
           ok: true,
-          json: async () => ({ defaultProvider: "ollama", providers: [] }),
+          json: async () => ({
+            defaultProvider: "ollama",
+            providers: [{ name: "deepseek", model: "deepseek/deepseek-chat" }],
+          }),
         });
       }),
     );
