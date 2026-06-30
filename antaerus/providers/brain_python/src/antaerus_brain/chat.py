@@ -9,7 +9,7 @@ from antaerus_brain.llm import ProviderName, StreamingEvent
 from antaerus_brain.llm.factory import create_llm_client
 from antaerus_brain.memory import ChatHistoryResponse
 from antaerus_brain.memory.kernel import MemoryKernel
-from antaerus_brain.prompting import inject_system_prompt
+from antaerus_brain.prompting import inject_system_prompt, is_identity_question
 
 
 class SessionStreamRequest(BaseModel):
@@ -25,6 +25,34 @@ class SessionChatService:
 
     async def stream_session(self, request: SessionStreamRequest) -> AsyncIterator[StreamingEvent]:
         await self.kernel.initialize()
+        if is_identity_question(request.message):
+            name = self.settings.assistant_name.strip() or "aNtaerus"
+            response_text = "Je suis aNtaerus, un assistant IA open source."
+            if name != "aNtaerus":
+                response_text = f"Je suis {name}, un assistant IA open source."
+
+            await self.kernel.append_chat_message(
+                request.session_id,
+                role="user",
+                content=request.message,
+                provider=request.provider,
+            )
+            yield StreamingEvent(
+                event="complete",
+                data={
+                    "sessionId": request.session_id,
+                    "text": response_text,
+                    "provider": request.provider or self.settings.default_provider,
+                },
+            )
+            await self.kernel.append_chat_message(
+                request.session_id,
+                role="assistant",
+                content=response_text,
+                provider=request.provider or self.settings.default_provider,
+            )
+            return
+
         client = create_llm_client(self.settings, provider=request.provider)
 
         await self.kernel.append_chat_message(
