@@ -18,4 +18,28 @@ describe("MessageInput", () => {
 
     expect(onSend).toHaveBeenCalledWith("Bonjour aNtaerus");
   });
+
+  it("rend les contrôles voix quand ils sont fournis", () => {
+    render(
+      <MessageInput
+        onSend={vi.fn()}
+        voice={{
+          mode: "idle",
+          transcript: "",
+          vadState: null,
+          visualizerLevel: "idle",
+          statusLabel: "Voix inactive",
+          disabled: false,
+          canBargeIn: false,
+          onPrimaryAction: vi.fn(),
+          onBargeIn: vi.fn(),
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: /Démarrer la voix/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Transcript voix/i)).toBeInTheDocument();
+  });
 });

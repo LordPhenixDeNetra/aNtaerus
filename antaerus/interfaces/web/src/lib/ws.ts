@@ -127,6 +127,36 @@ export function createChatMessageEnvelope(
   };
 }
 
+export function createVoiceStartEnvelope(sessionId: string): WebSocketClientMessage {
+  return {
+    type: "voice.start",
+    timestamp: new Date().toISOString(),
+    payload: {
+      sessionId,
+    },
+  };
+}
+
+export function createVoiceStopEnvelope(sessionId: string): WebSocketClientMessage {
+  return {
+    type: "voice.stop",
+    timestamp: new Date().toISOString(),
+    payload: {
+      sessionId,
+    },
+  };
+}
+
+export function createVoiceBargeInEnvelope(sessionId: string): WebSocketClientMessage {
+  return {
+    type: "voice.barge_in",
+    timestamp: new Date().toISOString(),
+    payload: {
+      sessionId,
+    },
+  };
+}
+
 export function parseWebSocketServerMessage(raw: string): WebSocketServerMessage | null {
   try {
     return JSON.parse(raw) as WebSocketServerMessage;

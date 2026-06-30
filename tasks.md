@@ -208,12 +208,20 @@
 - Le budget bout-en-bout `< 1000ms` est désormais automatisé dans `antaerus/interfaces/gateway_go/internal/http/voice_latency_test.go` avec un runtime voix déterministe et le WebSocket réel du gateway de test ; la preuve en environnement matériel réel reste dépendante des modèles audio locaux et du provider LLM configuré.
 
 ### M2.3 — React Voice UI
-- [ ] Implémenter `components/VoiceButton.tsx` : bouton micro, états (idle/listening/speaking)
-- [ ] Implémenter `components/VoiceVisualizer.tsx` : visualisation onde audio (Web Audio API)
-- [ ] Implémenter `components/VoiceTranscript.tsx` : transcription temps réel
-- [ ] Implémenter `hooks/useVoiceStream.ts` : gestion stream audio WebSocket
-- [ ] Implémenter `hooks/useVAD.ts` : affichage état VAD (speaking/silence)
-- [ ] Implémenter barge-in UI : bouton interruption, stop TTS
+- [x] Implémenter `components/VoiceButton.tsx` : bouton micro, états (idle/listening/speaking)
+- [x] Implémenter `components/VoiceVisualizer.tsx` : visualisation onde audio (Web Audio API)
+- [x] Implémenter `components/VoiceTranscript.tsx` : transcription temps réel
+- [x] Implémenter `hooks/useVoiceStream.ts` : gestion stream audio WebSocket
+- [x] Implémenter `hooks/useVAD.ts` : affichage état VAD (speaking/silence)
+- [x] Implémenter barge-in UI : bouton interruption, stop TTS
+
+État actuel :
+- L'interface React expose désormais une Voice UI intégrée à `antaerus/interfaces/web/src/components/MessageInput.tsx` avec un bouton principal micro (`idle` / `listening` / `speaking`), un bouton `Interrompre` pour `barge_in`, un transcript temps réel et un visualiseur d'état.
+- `antaerus/interfaces/web/src/hooks/useWebSocket.ts` sait maintenant sérialiser `voice.start`, `voice.stop` et `voice.barge_in`, consommer `voice.transcript` et `voice.vad_state`, et dériver l'état UI `speaking` à partir de la timeline assistant (`chat.token` -> `chat.complete`).
+- L'état voix partagé est stocké dans `antaerus/interfaces/web/src/store/useAppStore.ts` et orchestré par `antaerus/interfaces/web/src/hooks/useVoiceStream.ts` et `antaerus/interfaces/web/src/hooks/useVAD.ts`.
+- Conformément à la décision produit prise en `M2.2`, `M2.3` reste une UI de télécommande/visualisation du pipeline Rust local : aucune capture micro navigateur n'est introduite et `voice.audio` reste non consommé.
+- La visualisation `VoiceVisualizer` représente l'état de session et le VAD reçu du backend ; elle ne branche pas de flux micro navigateur réel malgré l'intitulé initial `Web Audio API` dans la checklist.
+- La validation frontend de ce lot est verte via `npm run check`, `npm run test` et `npm run lint`, avec des tests dédiés pour les composants voix, les hooks `useVoiceStream` / `useVAD`, la sérialisation WebSocket voix et l'intégration minimale dans `Chat`.
 
 ### M2.4 — Wake Word (optionnel P1)
 - [ ] Implémenter détection wake word "aNtaerus" (pattern audio ou model léger)

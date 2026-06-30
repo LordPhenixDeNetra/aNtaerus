@@ -3,6 +3,9 @@ import { useCallback, useEffect, useRef } from "react";
 import { fetchDevToken } from "@/lib/api";
 import {
   buildWebSocketUrl,
+  createVoiceBargeInEnvelope,
+  createVoiceStartEnvelope,
+  createVoiceStopEnvelope,
   createChatMessageEnvelope,
   parseWebSocketServerMessage,
 } from "@/lib/ws";
@@ -19,6 +22,13 @@ export function useWebSocket(sessionId: string) {
     (state) => state.finalizeAssistantMessage,
   );
   const setHeartbeat = useAppStore((state) => state.setHeartbeat);
+  const setVoiceMode = useAppStore((state) => state.setVoiceMode);
+  const setVoiceSessionActive = useAppStore((state) => state.setVoiceSessionActive);
+  const setVoiceTranscript = useAppStore((state) => state.setVoiceTranscript);
+  const setVoiceVADState = useAppStore((state) => state.setVoiceVADState);
+  const voiceSessionActive = useAppStore((state) => state.voiceSessionActive);
+  const voiceMode = useAppStore((state) => state.voiceMode);
+  const resetVoiceState = useAppStore((state) => state.resetVoiceState);
   const socketRef = useRef<WebSocket | null>(null);
 
   const ensureDevToken = useCallback(async () => {
@@ -44,7 +54,8 @@ export function useWebSocket(sessionId: string) {
     }
 
     setConnectionState("idle");
-  }, [setConnectionState]);
+    resetVoiceState();
+  }, [resetVoiceState, setConnectionState]);
 
   const connect = useCallback(async (): Promise<boolean> => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -97,6 +108,7 @@ export function useWebSocket(sessionId: string) {
       socket.addEventListener("close", () => {
         socketRef.current = null;
         setConnectionState("idle");
+        resetVoiceState();
       });
 
       socket.addEventListener("message", (event) => {
@@ -108,9 +120,25 @@ export function useWebSocket(sessionId: string) {
         switch (message.type) {
           case "chat.token":
             appendAssistantChunk(message.payload.token, "ws");
+            if (voiceSessionActive) {
+              setVoiceMode("speaking");
+            }
             break;
           case "chat.complete":
             finalizeAssistantMessage(message.payload.message, "ws");
+            setVoiceMode(voiceSessionActive ? "listening" : "idle");
+            break;
+          case "voice.transcript":
+            setVoiceTranscript(message.payload.transcript);
+            break;
+          case "voice.vad_state":
+            setVoiceVADState(message.payload.state);
+            if (voiceSessionActive && voiceMode !== "speaking") {
+              setVoiceMode("listening");
+            }
+            break;
+          case "system.alert":
+            setLastError(message.payload.message);
             break;
           case "health.heartbeat":
             setHeartbeat(message.payload.services);
@@ -128,6 +156,12 @@ export function useWebSocket(sessionId: string) {
     setConnectionState,
     setHeartbeat,
     setLastError,
+    setVoiceMode,
+    setVoiceTranscript,
+    setVoiceVADState,
+    voiceMode,
+    voiceSessionActive,
+    resetVoiceState,
   ]);
 
   const sendChatMessage = useCallback(
@@ -150,6 +184,76 @@ export function useWebSocket(sessionId: string) {
     [connect, sessionId, setLastError],
   );
 
+  const sendVoiceStart = useCallback(async () => {
+    if (!sessionId) {
+      setLastError("Session introuvable.");
+      return false;
+    }
+
+    const connected = await connect();
+    if (!connected || !socketRef.current) {
+      return false;
+    }
+
+    setVoiceTranscript("");
+    setVoiceVADState(null);
+    setVoiceSessionActive(true);
+    setVoiceMode("listening");
+    socketRef.current.send(JSON.stringify(createVoiceStartEnvelope(sessionId)));
+    return true;
+  }, [
+    connect,
+    sessionId,
+    setLastError,
+    setVoiceMode,
+    setVoiceSessionActive,
+    setVoiceTranscript,
+    setVoiceVADState,
+  ]);
+
+  const sendVoiceStop = useCallback(async () => {
+    if (!sessionId) {
+      setLastError("Session introuvable.");
+      return false;
+    }
+
+    const connected = await connect();
+    if (!connected || !socketRef.current) {
+      return false;
+    }
+
+    socketRef.current.send(JSON.stringify(createVoiceStopEnvelope(sessionId)));
+    resetVoiceState();
+    return true;
+  }, [connect, resetVoiceState, sessionId, setLastError]);
+
+  const sendVoiceBargeIn = useCallback(async () => {
+    if (!sessionId) {
+      setLastError("Session introuvable.");
+      return false;
+    }
+
+    const connected = await connect();
+    if (!connected || !socketRef.current) {
+      return false;
+    }
+
+    socketRef.current.send(JSON.stringify(createVoiceBargeInEnvelope(sessionId)));
+    setVoiceTranscript("");
+    setVoiceVADState(null);
+    setVoiceSessionActive(true);
+    setVoiceMode("listening");
+    return true;
+  }, [
+    connect,
+    sessionId,
+    setLastError,
+    setVoiceMode,
+    setVoiceSessionActive,
+    setVoiceTranscript,
+    setVoiceVADState,
+  ]);
+
   useEffect(() => () => disconnect(), [disconnect]);
 
   return {
@@ -157,6 +261,9 @@ export function useWebSocket(sessionId: string) {
     disconnect,
     ensureDevToken,
     sendChatMessage,
+    sendVoiceStart,
+    sendVoiceStop,
+    sendVoiceBargeIn,
     connectionState,
   };
 }

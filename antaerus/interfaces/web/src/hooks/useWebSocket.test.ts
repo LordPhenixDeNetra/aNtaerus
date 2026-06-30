@@ -58,6 +58,11 @@ describe("useWebSocket", () => {
       connectionState: "idle",
       lastError: null,
       lastHeartbeat: [],
+      voiceMode: "idle",
+      voiceSessionActive: false,
+      voiceTranscript: "",
+      voiceVADState: null,
+      voiceLastUpdatedAt: null,
     });
   });
 
@@ -100,6 +105,11 @@ describe("useWebSocket", () => {
       connectionState: "idle",
       lastError: null,
       lastHeartbeat: [],
+      voiceMode: "idle",
+      voiceSessionActive: false,
+      voiceTranscript: "",
+      voiceVADState: null,
+      voiceLastUpdatedAt: null,
     });
 
     const { result } = renderHook(() => useWebSocket("session-1"));
@@ -109,5 +119,139 @@ describe("useWebSocket", () => {
     });
 
     expect(useAppStore.getState().config.websocketDevToken).toBe("generated-token");
+  });
+
+  it("sérialise une commande voice.start", async () => {
+    const { result } = renderHook(() => useWebSocket("session-1"));
+
+    await act(async () => {
+      await result.current.sendVoiceStart();
+    });
+
+    const instance = MockWebSocket.instances[0];
+    const payload = JSON.parse(instance.sentMessages[0]) as {
+      type: string;
+      payload: { sessionId: string };
+    };
+
+    expect(payload.type).toBe("voice.start");
+    expect(payload.payload.sessionId).toBe("session-1");
+    expect(useAppStore.getState().voiceMode).toBe("listening");
+    expect(useAppStore.getState().voiceSessionActive).toBe(true);
+  });
+
+  it("sérialise une commande voice.stop", async () => {
+    useAppStore.setState({
+      voiceMode: "speaking",
+      voiceSessionActive: true,
+      voiceTranscript: "Bonjour",
+      voiceVADState: "speaking",
+      voiceLastUpdatedAt: Date.now(),
+    });
+    const { result } = renderHook(() => useWebSocket("session-1"));
+
+    await act(async () => {
+      await result.current.sendVoiceStop();
+    });
+
+    const instance = MockWebSocket.instances[0];
+    const payload = JSON.parse(instance.sentMessages[0]) as {
+      type: string;
+      payload: { sessionId: string };
+    };
+
+    expect(payload.type).toBe("voice.stop");
+    expect(useAppStore.getState().voiceMode).toBe("idle");
+    expect(useAppStore.getState().voiceTranscript).toBe("");
+  });
+
+  it("consomme voice.transcript et voice.vad_state", async () => {
+    const { result } = renderHook(() => useWebSocket("session-1"));
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    const instance = MockWebSocket.instances[0];
+    await act(async () => {
+      instance.listeners.message?.forEach((listener) =>
+        listener({
+          data: JSON.stringify({
+            type: "voice.transcript",
+            timestamp: new Date().toISOString(),
+            payload: {
+              sessionId: "session-1",
+              transcript: "Salut en direct",
+            },
+          }),
+        } as MessageEvent),
+      );
+
+      instance.listeners.message?.forEach((listener) =>
+        listener({
+          data: JSON.stringify({
+            type: "voice.vad_state",
+            timestamp: new Date().toISOString(),
+            payload: {
+              sessionId: "session-1",
+              state: "speaking",
+            },
+          }),
+        } as MessageEvent),
+      );
+    });
+
+    expect(useAppStore.getState().voiceTranscript).toBe("Salut en direct");
+    expect(useAppStore.getState().voiceVADState).toBe("speaking");
+  });
+
+  it("passe en mode speaking sur chat.token puis revient en listening sur chat.complete", async () => {
+    useAppStore.setState({
+      voiceMode: "listening",
+      voiceSessionActive: true,
+      voiceTranscript: "",
+      voiceVADState: "silence",
+      voiceLastUpdatedAt: Date.now(),
+    });
+    const { result } = renderHook(() => useWebSocket("session-1"));
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    const instance = MockWebSocket.instances[0];
+    await act(async () => {
+      instance.listeners.message?.forEach((listener) =>
+        listener({
+          data: JSON.stringify({
+            type: "chat.token",
+            timestamp: new Date().toISOString(),
+            payload: {
+              sessionId: "session-1",
+              token: "Bon",
+            },
+          }),
+        } as MessageEvent),
+      );
+    });
+
+    expect(useAppStore.getState().voiceMode).toBe("speaking");
+
+    await act(async () => {
+      instance.listeners.message?.forEach((listener) =>
+        listener({
+          data: JSON.stringify({
+            type: "chat.complete",
+            timestamp: new Date().toISOString(),
+            payload: {
+              sessionId: "session-1",
+              message: "Bonjour",
+            },
+          }),
+        } as MessageEvent),
+      );
+    });
+
+    expect(useAppStore.getState().voiceMode).toBe("listening");
   });
 });

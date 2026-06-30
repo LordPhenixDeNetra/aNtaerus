@@ -83,6 +83,11 @@ describe("Chat", () => {
       connectionState: "idle",
       lastError: null,
       lastHeartbeat: [],
+      voiceMode: "idle",
+      voiceSessionActive: false,
+      voiceTranscript: "",
+      voiceVADState: null,
+      voiceLastUpdatedAt: null,
     });
   });
 
@@ -97,6 +102,22 @@ describe("Chat", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Historique persiste")).toBeInTheDocument();
+    });
+  });
+
+  it("affiche les contrôles voix en mode ws", async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <Chat />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button", { name: /Démarrer la voix/i }).length,
+      ).toBeGreaterThan(0);
     });
   });
 });

@@ -12,6 +12,8 @@ import {
 } from "@/lib/api";
 import { useChatStream } from "@/hooks/useChatStream";
 import { useSession } from "@/hooks/useSession";
+import { useVAD } from "@/hooks/useVAD";
+import { useVoiceStream } from "@/hooks/useVoiceStream";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { fromHistoryMessage } from "@/lib/chat";
 import { useAppStore } from "@/store/useAppStore";
@@ -31,9 +33,26 @@ export default function Chat() {
   const addUserMessage = useAppStore((state) => state.addUserMessage);
   const clearMessages = useAppStore((state) => state.clearMessages);
   const replaceMessages = useAppStore((state) => state.replaceMessages);
-  const { connectionState, connect, disconnect, ensureDevToken, sendChatMessage } =
-    useWebSocket(sessionId);
+  const resetVoiceState = useAppStore((state) => state.resetVoiceState);
+  const {
+    connectionState,
+    connect,
+    disconnect,
+    ensureDevToken,
+    sendChatMessage,
+    sendVoiceStart,
+    sendVoiceStop,
+    sendVoiceBargeIn,
+  } = useWebSocket(sessionId);
   const { isStreaming, streamPrompt } = useChatStream();
+  const { visualizerLevel } = useVAD();
+  const voice = useVoiceStream({
+    sessionId,
+    connectionState,
+    sendVoiceStart,
+    sendVoiceStop,
+    sendVoiceBargeIn,
+  });
 
   const statusQuery = useQuery(queryOptions);
   const providersQuery = useQuery({
@@ -149,6 +168,7 @@ export default function Chat() {
                   onClick={() => {
                     resetSession();
                     clearMessages();
+                    resetVoiceState();
                   }}
                   className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200"
                 >
@@ -183,6 +203,20 @@ export default function Chat() {
             <MessageInput
               disabled={isStreaming}
               onSend={(content) => handleSend(content)}
+              voice={{
+                mode: voice.voiceMode,
+                transcript: voice.voiceTranscript,
+                vadState: voice.voiceVADState,
+                visualizerLevel,
+                statusLabel: voice.statusLabel,
+                disabled: !voice.isVoiceAvailable || connectionState === "connecting",
+                canBargeIn: voice.canBargeIn,
+                onPrimaryAction:
+                  voice.voiceSessionActive || voice.voiceMode === "speaking"
+                    ? voice.stopVoice
+                    : voice.startVoice,
+                onBargeIn: voice.bargeIn,
+              }}
             />
           </div>
 

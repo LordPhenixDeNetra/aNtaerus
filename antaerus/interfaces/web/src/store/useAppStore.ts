@@ -13,6 +13,8 @@ import {
 import type { HealthHeartbeatPayload } from "@/lib/ws";
 
 export type ConnectionState = "idle" | "connecting" | "connected" | "error";
+export type VoiceMode = "idle" | "listening" | "speaking";
+export type VoiceVADState = "speaking" | "silence" | null;
 
 type AppState = {
   config: LocalSetupConfig;
@@ -21,6 +23,11 @@ type AppState = {
   connectionState: ConnectionState;
   lastError: string | null;
   lastHeartbeat: HealthHeartbeatPayload["services"];
+  voiceMode: VoiceMode;
+  voiceSessionActive: boolean;
+  voiceTranscript: string;
+  voiceVADState: VoiceVADState;
+  voiceLastUpdatedAt: number | null;
   setConfig: (nextConfig: LocalSetupConfig) => void;
   updateConfig: (patch: Partial<LocalSetupConfig>) => void;
   setSessionId: (sessionId: string) => void;
@@ -37,6 +44,11 @@ type AppState = {
   setConnectionState: (state: ConnectionState) => void;
   setLastError: (message: string | null) => void;
   setHeartbeat: (services: HealthHeartbeatPayload["services"]) => void;
+  setVoiceMode: (mode: VoiceMode) => void;
+  setVoiceSessionActive: (active: boolean) => void;
+  setVoiceTranscript: (transcript: string) => void;
+  setVoiceVADState: (state: VoiceVADState) => void;
+  resetVoiceState: () => void;
 };
 
 function updateSetupConfig(nextConfig: LocalSetupConfig) {
@@ -51,6 +63,11 @@ export const useAppStore = create<AppState>((set) => ({
   connectionState: "idle",
   lastError: null,
   lastHeartbeat: [],
+  voiceMode: "idle",
+  voiceSessionActive: false,
+  voiceTranscript: "",
+  voiceVADState: null,
+  voiceLastUpdatedAt: null,
   setConfig: (nextConfig) =>
     set(() => ({
       config: updateSetupConfig(nextConfig),
@@ -116,4 +133,32 @@ export const useAppStore = create<AppState>((set) => ({
   setConnectionState: (connectionState) => set(() => ({ connectionState })),
   setLastError: (lastError) => set(() => ({ lastError })),
   setHeartbeat: (lastHeartbeat) => set(() => ({ lastHeartbeat })),
+  setVoiceMode: (voiceMode) =>
+    set(() => ({
+      voiceMode,
+      voiceLastUpdatedAt: Date.now(),
+    })),
+  setVoiceSessionActive: (voiceSessionActive) =>
+    set(() => ({
+      voiceSessionActive,
+      voiceLastUpdatedAt: Date.now(),
+    })),
+  setVoiceTranscript: (voiceTranscript) =>
+    set(() => ({
+      voiceTranscript,
+      voiceLastUpdatedAt: Date.now(),
+    })),
+  setVoiceVADState: (voiceVADState) =>
+    set(() => ({
+      voiceVADState,
+      voiceLastUpdatedAt: Date.now(),
+    })),
+  resetVoiceState: () =>
+    set(() => ({
+      voiceMode: "idle",
+      voiceSessionActive: false,
+      voiceTranscript: "",
+      voiceVADState: null,
+      voiceLastUpdatedAt: null,
+    })),
 }));

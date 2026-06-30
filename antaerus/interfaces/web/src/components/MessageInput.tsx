@@ -1,13 +1,31 @@
 import { useState } from "react";
 
+import VoiceButton from "@/components/VoiceButton";
+import VoiceTranscript from "@/components/VoiceTranscript";
+import VoiceVisualizer from "@/components/VoiceVisualizer";
+import type { VoiceVisualizerLevel } from "@/hooks/useVAD";
+import type { VoiceMode, VoiceVADState } from "@/store/useAppStore";
+
 type MessageInputProps = {
   disabled?: boolean;
   onSend: (message: string) => Promise<void> | void;
+  voice?: {
+    mode: VoiceMode;
+    transcript: string;
+    vadState: VoiceVADState;
+    visualizerLevel: VoiceVisualizerLevel;
+    statusLabel: string;
+    disabled: boolean;
+    canBargeIn: boolean;
+    onPrimaryAction: () => Promise<boolean> | boolean | Promise<void> | void;
+    onBargeIn: () => Promise<boolean> | boolean | Promise<void> | void;
+  };
 };
 
 export default function MessageInput({
   disabled = false,
   onSend,
+  voice,
 }: MessageInputProps) {
   const [value, setValue] = useState("");
 
@@ -23,6 +41,29 @@ export default function MessageInput({
 
   return (
     <div className="rounded-[28px] border border-white/10 bg-slate-950/70 p-3 backdrop-blur">
+      {voice && (
+        <div className="mb-3 grid gap-3 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-3">
+            <VoiceTranscript
+              mode={voice.mode}
+              transcript={voice.transcript}
+              vadState={voice.vadState}
+              statusLabel={voice.statusLabel}
+            />
+            <VoiceButton
+              mode={voice.mode}
+              statusLabel={voice.statusLabel}
+              disabled={voice.disabled}
+              canBargeIn={voice.canBargeIn}
+              onPrimaryAction={voice.onPrimaryAction}
+              onBargeIn={voice.onBargeIn}
+            />
+          </div>
+
+          <VoiceVisualizer level={voice.visualizerLevel} />
+        </div>
+      )}
+
       <label className="sr-only" htmlFor="chat-message-input">
         Message
       </label>
