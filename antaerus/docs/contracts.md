@@ -137,6 +137,30 @@ Le contrat `kernel/proto/audio.proto` couvre désormais le pipeline voix local :
 - `StopVoiceSession` : ferme une session voix active
 - `Speak` : déclenche la synthèse locale côté `engine_rust`
 
+## Capacités Locales `M3.2`
+
+Le lot `M3.2` ajoute des briques locales de sandbox dans `engine_rust`, sans modifier le contrat gRPC réel `kernel/proto/engine.proto` à ce stade.
+
+Capacités désormais déclarées par `GET /capabilities` côté moteur Rust :
+
+- `fs-sandbox`
+- `fs-readonly-reader`
+- `cli-sandbox`
+- `wasm-runtime` quand la feature `wasm-runtime` est activée
+
+Portée de ces capacités en `M3.2` :
+
+- `fs-sandbox` : validation whitelistée de chemins et ouverture bornée de fichiers autorisés
+- `fs-readonly-reader` : lecture sécurisée de fichiers texte avec limite de taille
+- `cli-sandbox` : exécution locale d'une commande explicitement whitelistée, sans shell libre
+- `wasm-runtime` : chargement local d'un module WASM et exécution d'un export simple sous `wasmtime`
+
+Limites volontaires du lot :
+
+- aucun nouveau RPC `ExecuteWASM` n'est encore exposé
+- aucun bridge Python -> Rust n'est encore branché pour `filesystem` et `cli`
+- la source de vérité de whitelist reste `antaerus/config/tools.yaml`
+
 ## Validation Locale
 
 - `go test ./interfaces/gateway_go/...`

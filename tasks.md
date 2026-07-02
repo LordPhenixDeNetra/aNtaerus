@@ -265,10 +265,19 @@
 - La validation finale du lot a été rejouée avec succès dans `antaerus/providers/brain_python/` via `python -m ruff check .`, `python -m pytest tests` et `python -m mypy src tests`.
 
 ### M3.2 — Rust Tools (Sandbox)
-- [ ] Implémenter `engine_rust/fs/sandbox.rs` : filesystem sandbox (whitelist chemins)
-- [ ] Implémenter `engine_rust/fs/reader.rs` : lecture fichier sécurisée
-- [ ] Implémenter `engine_rust/cli/sandbox.rs` : exécution commande whitelistée
-- [ ] Implémenter `engine_rust/sandbox/wasm.rs` : runtime WASM (`wasmtime`)
+- [x] Implémenter `engine_rust/fs/sandbox.rs` : filesystem sandbox (whitelist chemins)
+- [x] Implémenter `engine_rust/fs/reader.rs` : lecture fichier sécurisée
+- [x] Implémenter `engine_rust/cli/sandbox.rs` : exécution commande whitelistée
+- [x] Implémenter `engine_rust/sandbox/wasm.rs` : runtime WASM (`wasmtime`)
+
+État actuel :
+- Le provider Rust expose désormais les modules `antaerus/providers/engine_rust/src/fs/`, `antaerus/providers/engine_rust/src/cli/` et `antaerus/providers/engine_rust/src/sandbox/`, avec export crate dans `src/lib.rs` et configuration dédiée dans `src/config.rs`.
+- La whitelist versionnée reste centralisée dans `antaerus/config/tools.yaml`, désormais consommée côté Rust via `antaerus/providers/engine_rust/src/tools_config.rs`, avec chemins runtime configurables par `ANTAERUS_ENGINE_TOOLS_CONFIG_PATH` et `ANTAERUS_ENGINE_TOOLS_SANDBOX_ROOT`.
+- Le sandbox filesystem Rust s'appuie sur `cap-std` pour ouvrir les racines autorisées, borne les lectures par `max_bytes` et refuse explicitement les chemins hors whitelist ou les fichiers absents.
+- Le sandbox CLI Rust exécute uniquement des commandes whitelistées sans shell libre, dans `tools_sandbox_root`, avec capture `stdout/stderr`, `exit_code` et timeout explicite.
+- Le runtime WASM minimal réel, implémenté dans `antaerus/providers/engine_rust/src/sandbox/wasm.rs`, charge un module local sous `wasmtime`, vérifie qu'il reste dans le sandbox root et exécute une fonction exportée simple de retour `i32`; cette capacité est compilée derrière la feature `wasm-runtime`.
+- Les capabilities HTTP du moteur Rust annoncent maintenant `fs-sandbox`, `fs-readonly-reader` et `cli-sandbox`; `wasm-runtime` n'est déclaré que si la feature correspondante est activée. Aucun nouveau RPC `engine.proto` n'est introduit dans ce lot; l'intégration inter-services reste reportée à `M3.3`.
+- La couverture de régression `M3.2` est matérialisée par `tests/fs_sandbox.rs`, `tests/cli_sandbox.rs`, `tests/wasm_runtime.rs` et l'extension de `tests/health.rs`, puis validée via `cargo check`, `cargo clippy --all-targets -- -D warnings` et `cargo test`; la branche `--all-features` reste bloquée dans l'environnement Windows courant par des build scripts transitifs de `wasmtime` (`zerocopy`, `ahash`, `target-lexicon`) malgré un code applicatif au vert sur le chemin par défaut.
 
 ### M3.3 — Intégration Tools
 - [ ] Connecter tools Python au LLM (function calling)

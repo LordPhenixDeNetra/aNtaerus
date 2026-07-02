@@ -1,9 +1,13 @@
 pub mod bootstrap;
 pub mod audio;
+pub mod cli;
 pub mod config;
 pub mod crypto;
+pub mod fs;
 pub mod grpc;
 pub mod grpc_service;
 pub mod http;
 pub mod protocol;
+pub mod sandbox;
 pub mod state;
+pub mod tools_config;

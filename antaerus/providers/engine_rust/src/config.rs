@@ -1,4 +1,4 @@
-use std::{env, path::PathBuf};
+use std::{env, path::{Path, PathBuf}};
 
 use secrecy::SecretString;
 
@@ -19,10 +19,16 @@ pub struct Settings {
     pub piper_config_path: Option<PathBuf>,
     pub espeak_data_path: Option<PathBuf>,
     pub wake_word: String,
+    pub tools_config_path: PathBuf,
+    pub tools_sandbox_root: PathBuf,
 }
 
 impl Settings {
     pub fn from_env() -> Self {
+        let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .canonicalize()
+            .unwrap_or_else(|_| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."));
         let version = env::var("ANTAERUS_ENGINE_VERSION").unwrap_or_else(|_| "0.1.0".to_string());
         let port = env::var("ANTAERUS_ENGINE_PORT")
             .ok()
@@ -39,6 +45,20 @@ impl Settings {
         let audio_output_sample_rate = env::var("ANTAERUS_ENGINE_AUDIO_OUTPUT_SAMPLE_RATE")
             .ok()
             .and_then(|value| value.parse::<u32>().ok());
+        let tools_config_path = resolve_project_path(
+            env::var("ANTAERUS_ENGINE_TOOLS_CONFIG_PATH")
+                .ok()
+                .filter(|value| !value.trim().is_empty()),
+            &workspace_root,
+            "config/tools.yaml",
+        );
+        let tools_sandbox_root = resolve_project_path(
+            env::var("ANTAERUS_ENGINE_TOOLS_SANDBOX_ROOT")
+                .ok()
+                .filter(|value| !value.trim().is_empty()),
+            &workspace_root,
+            ".",
+        );
 
         Self {
             service_name: "engine_rust".to_string(),
@@ -68,6 +88,23 @@ impl Settings {
                 .ok()
                 .filter(|value| !value.trim().is_empty())
                 .unwrap_or_else(|| "aNtaerus".to_string()),
+            tools_config_path,
+            tools_sandbox_root,
         }
+    }
+}
+
+fn resolve_project_path(
+    raw_value: Option<String>,
+    workspace_root: &Path,
+    default_relative: &str,
+) -> PathBuf {
+    let candidate = raw_value
+        .map(PathBuf::from)
+        .unwrap_or_else(|| workspace_root.join(default_relative));
+    if candidate.is_absolute() {
+        candidate
+    } else {
+        workspace_root.join(candidate)
     }
 }
