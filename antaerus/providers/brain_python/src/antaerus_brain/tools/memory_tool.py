@@ -21,6 +21,8 @@ class MemoryTool(BaseTool):
     name = "memory_tool"
     description = "Ecrit une note ou un fait structuré dans le kernel mémoire"
     risk_level = "medium"
+    category = "memory"
+    autonomy_level = 1
     input_model = MemoryToolInput
     operations = ("remember",)
 

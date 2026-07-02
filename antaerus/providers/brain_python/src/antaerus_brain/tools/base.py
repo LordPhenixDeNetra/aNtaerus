@@ -9,6 +9,15 @@ from antaerus_brain.config import Settings
 
 ToolRiskLevel = Literal["low", "medium", "high"]
 ToolStatus = Literal["ok", "error", "denied", "not_configured", "not_available"]
+ToolCategory = Literal[
+    "browser",
+    "communication",
+    "calendar",
+    "knowledge",
+    "vision",
+    "memory",
+    "rust-sandbox",
+]
 
 
 class ToolAvailability(BaseModel):
@@ -23,6 +32,8 @@ class ToolDescriptor(BaseModel):
     name: str
     description: str
     risk_level: ToolRiskLevel = Field(alias="riskLevel")
+    category: ToolCategory
+    autonomy_level: int = Field(alias="autonomyLevel", ge=1, le=5)
     operations: list[str] = Field(default_factory=list)
     enabled: bool
     available: bool
@@ -56,6 +67,8 @@ class BaseTool(ABC):
     name: str
     description: str
     risk_level: ToolRiskLevel = "low"
+    category: ToolCategory = "knowledge"
+    autonomy_level: int = 1
     input_model: type[BaseModel]
     operations: tuple[str, ...] = ()
 
@@ -78,6 +91,8 @@ class BaseTool(ABC):
             name=self.name,
             description=self.description,
             riskLevel=self.risk_level,
+            category=self.category,
+            autonomyLevel=self.autonomy_level,
             operations=list(self.operations),
             enabled=availability.enabled,
             available=availability.available,

@@ -19,6 +19,8 @@ class WeatherTool(BaseTool):
     name = "weather"
     description = "Récupère une météo actuelle minimale via Open-Meteo"
     risk_level = "low"
+    category = "knowledge"
+    autonomy_level = 1
     input_model = WeatherToolInput
     operations = ("current",)
 

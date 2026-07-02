@@ -18,6 +18,8 @@ class VisionTool(BaseTool):
     name = "vision"
     description = "Detection locale minimale par image si le modele et ultralytics sont disponibles"
     risk_level = "medium"
+    category = "vision"
+    autonomy_level = 2
     input_model = VisionToolInput
     operations = ("detect",)
 

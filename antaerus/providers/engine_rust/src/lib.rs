@@ -7,6 +7,7 @@ pub mod fs;
 pub mod grpc;
 pub mod grpc_service;
 pub mod http;
+pub mod http_tools;
 pub mod protocol;
 pub mod sandbox;
 pub mod state;

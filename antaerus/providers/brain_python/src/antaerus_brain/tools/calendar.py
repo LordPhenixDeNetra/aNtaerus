@@ -22,6 +22,8 @@ class CalendarTool(BaseTool):
     name = "calendar"
     description = "Liste ou cree des evenements simples via Google Calendar API"
     risk_level = "high"
+    category = "calendar"
+    autonomy_level = 2
     input_model = CalendarToolInput
     operations = ("list_upcoming", "create_event")
 

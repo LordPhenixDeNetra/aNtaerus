@@ -10,6 +10,8 @@ from antaerus_brain.llm import (
     LLMClient,
     ProviderName,
     StreamingEvent,
+    ToolCall,
+    ToolCallFunction,
 )
 
 try:
@@ -39,6 +41,7 @@ class CloudLLMClient(LLMClient):
             model=request.model or self.default_model,
             text=self._choice_text(choice),
             finish_reason=self._choice_finish_reason(choice),
+            toolCalls=self._choice_tool_calls(choice),
         )
 
     async def stream(self, request: GenerationRequest) -> AsyncIterator[StreamingEvent]:
@@ -73,6 +76,8 @@ class CloudLLMClient(LLMClient):
             timeout=self.timeout_seconds,
             temperature=request.temperature,
             max_tokens=request.max_tokens,
+            tools=[tool.model_dump() for tool in request.tools] or None,
+            tool_choice=request.tool_choice,
             stream=stream,
         )
 
@@ -105,6 +110,47 @@ class CloudLLMClient(LLMClient):
         return None
 
     @staticmethod
+    def _choice_tool_calls(choice: Any) -> list[ToolCall]:
+        message = getattr(choice, "message", None)
+        if message is None and isinstance(choice, dict):
+            message = choice.get("message", {})
+
+        raw_tool_calls = getattr(message, "tool_calls", None)
+        if raw_tool_calls is None and isinstance(message, dict):
+            raw_tool_calls = message.get("tool_calls", [])
+        if not raw_tool_calls:
+            return []
+
+        parsed: list[ToolCall] = []
+        for entry in raw_tool_calls:
+            function = getattr(entry, "function", None)
+            if function is None and isinstance(entry, dict):
+                function = entry.get("function", {})
+            entry_id = (
+                getattr(entry, "id", None)
+                if not isinstance(entry, dict)
+                else entry.get("id")
+            )
+            entry_type = (
+                getattr(entry, "type", "function")
+                if not isinstance(entry, dict)
+                else entry.get("type", "function")
+            )
+            function_name = _tool_call_value(function, "name", "")
+            function_arguments = _tool_call_value(function, "arguments", "{}")
+            parsed.append(
+                ToolCall(
+                    id=entry_id,
+                    type=entry_type,
+                    function=ToolCallFunction(
+                        name=function_name,
+                        arguments=function_arguments,
+                    ),
+                )
+            )
+        return parsed
+
+    @staticmethod
     def _chunk_text(chunk: Any) -> str:
         choices = getattr(chunk, "choices", None)
         if choices is None and isinstance(chunk, dict):
@@ -124,10 +170,28 @@ class CloudLLMClient(LLMClient):
         return ""
 
 
-def _request_messages(request: GenerationRequest) -> list[dict[str, str]]:
+def _request_messages(request: GenerationRequest) -> list[dict[str, Any]]:
     if request.messages:
-        return [{"role": message.role, "content": message.content} for message in request.messages]
+        payload: list[dict[str, Any]] = []
+        for message in request.messages:
+            item: dict[str, Any] = {"role": message.role, "content": message.content}
+            if message.name:
+                item["name"] = message.name
+            if message.tool_call_id:
+                item["tool_call_id"] = message.tool_call_id
+            if message.tool_calls:
+                item["tool_calls"] = [tool_call.model_dump() for tool_call in message.tool_calls]
+            payload.append(item)
+        return payload
     if request.prompt:
         return [{"role": "user", "content": request.prompt}]
 
     raise ValueError("Generation request requires either prompt or messages")
+
+
+def _tool_call_value(function: Any, key: str, default: str) -> str:
+    if isinstance(function, dict):
+        value = function.get(key, default)
+    else:
+        value = getattr(function, key, default)
+    return value if isinstance(value, str) else default

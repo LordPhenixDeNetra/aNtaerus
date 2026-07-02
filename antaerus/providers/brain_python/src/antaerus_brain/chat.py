@@ -10,6 +10,7 @@ from antaerus_brain.llm.factory import create_llm_client
 from antaerus_brain.memory import ChatHistoryResponse
 from antaerus_brain.memory.kernel import MemoryKernel
 from antaerus_brain.prompting import inject_system_prompt, is_identity_question
+from antaerus_brain.tool_calling.orchestrator import complete_with_tools
 
 
 class SessionStreamRequest(BaseModel):
@@ -73,18 +74,27 @@ class SessionChatService:
                     request.provider,
                 ),
             )
-            async for event in client.stream(
+            completion = await complete_with_tools(
+                self.settings,
+                client,
+                session_id=request.session_id,
                 request=generation_request,
-            ):
-                data = dict(event.data)
-                data["sessionId"] = request.session_id
-
-                if event.event == "token":
-                    final_text += str(data.get("text", ""))
-                elif event.event == "complete":
-                    final_text = str(data.get("text", final_text))
-
-                yield StreamingEvent(event=event.event, data=data)
+            )
+            final_text = completion.text
+            if final_text:
+                yield StreamingEvent(
+                    event="token",
+                    data={"sessionId": request.session_id, "text": final_text},
+                )
+            yield StreamingEvent(
+                event="complete",
+                data={
+                    "sessionId": request.session_id,
+                    "text": final_text,
+                    "provider": completion.provider,
+                    "model": completion.model,
+                },
+            )
         except Exception as exc:
             yield StreamingEvent(
                 event="error",

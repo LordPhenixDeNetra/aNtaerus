@@ -50,6 +50,8 @@ class BrowserTool(BaseTool):
     name = "browser"
     description = "Recherche web simple et extraction textuelle d'une page HTML"
     risk_level = "low"
+    category = "browser"
+    autonomy_level = 1
     input_model = BrowserToolInput
     operations = ("search", "fetch")
 

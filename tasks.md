@@ -280,12 +280,19 @@
 - La couverture de régression `M3.2` est matérialisée par `tests/fs_sandbox.rs`, `tests/cli_sandbox.rs`, `tests/wasm_runtime.rs` et l'extension de `tests/health.rs`, puis validée via `cargo check`, `cargo clippy --all-targets -- -D warnings` et `cargo test`; la branche `--all-features` reste bloquée dans l'environnement Windows courant par des build scripts transitifs de `wasmtime` (`zerocopy`, `ahash`, `target-lexicon`) malgré un code applicatif au vert sur le chemin par défaut.
 
 ### M3.3 — Intégration Tools
-- [ ] Connecter tools Python au LLM (function calling)
-- [ ] Connecter tools Rust au gate composite (niveau 3+)
-- [ ] Tester tool browser : recherche + résumé
-- [ ] Tester tool gmail : lecture emails récents
-- [ ] Tester tool calendar : création événement
-- [ ] Tester tool vision : capture + détection objets
+- [x] Connecter tools Python au LLM (function calling)
+- [x] Connecter tools Rust au gate composite (niveau 3+)
+- [x] Tester tool browser : recherche + résumé
+- [x] Tester tool gmail : lecture emails récents
+- [x] Tester tool calendar : création événement
+- [x] Tester tool vision : capture + détection objets
+
+État actuel :
+- Le `brain_python` exécute désormais une boucle de function calling sur `POST /llm/session-stream` via `antaerus/providers/brain_python/src/antaerus_brain/tool_calling/orchestrator.py` et `antaerus/providers/brain_python/src/antaerus_brain/chat.py` : le LLM reçoit les schémas tools, peut émettre un `tool_call`, récupère ensuite le résultat outillé puis reformule une réponse finale utilisateur.
+- Les tools `filesystem` et `cli` restent enregistrés côté Python, mais délèguent leur exécution réelle au moteur Rust via le proxy HTTP interne `antaerus/providers/brain_python/src/antaerus_brain/tools/rust_proxy.py` vers `antaerus/providers/engine_rust/src/http_tools.rs`.
+- Le gate composite est maintenant exécutable dans `antaerus/providers/brain_python/src/antaerus_brain/approval/gate.py` : les tools de catégorie `rust-sandbox` et de niveau d'autonomie `3` sont auto-autorisés avec audit append-only, tandis que les niveaux `4+` restent marqués `review`.
+- L'audit minimal des exécutions outillées est matérialisé par `antaerus/providers/brain_python/src/antaerus_brain/approval/audit.py`, qui écrit un journal JSONL append-only sous `antaerus/memory_data/audit/tool_execution_audit.jsonl` ou dans le miroir mémoire configuré.
+- La couverture `M3.3` inclut désormais des tests Python dédiés pour `browser`, `gmail`, `calendar`, `vision`, `filesystem`, `cli`, l'API tools et l'intégration sessionnelle `LLM -> tool -> réponse finale`, ainsi que des tests Rust `http_tools.rs` pour les endpoints internes `filesystem` et `cli`.
 
 ---
 

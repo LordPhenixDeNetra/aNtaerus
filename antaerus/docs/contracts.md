@@ -66,7 +66,22 @@ Format homogène de réponse d'exécution :
 - `error`
 - `meta`
 
-Cette API reste strictement interne au workspace et ne constitue pas encore l'orchestration LLM -> function calling prévue pour `M3.3`.
+Depuis `M3.3`, cette API reste utile comme point d'administration interne, mais l'orchestration `LLM -> tool -> réponse finale` est désormais branchée sur `POST /llm/session-stream`.
+
+### Session Stream Tool-Aware
+
+Le endpoint `POST /llm/session-stream` devient la surface unique tool-aware du lot `M3.3` :
+
+- le brain recharge l'historique conversationnel de la session
+- il injecte les schémas tools issus du registry dynamique dans le premier appel LLM
+- si le provider retourne un ou plusieurs `tool_calls`, le brain exécute les tools concernés
+- chaque résultat est réinjecté comme message `tool` avant un second appel LLM
+- le SSE retourné au client continue de publier uniquement la réponse finale normalisée via `token`, `complete` ou `error`
+
+Portée volontaire :
+
+- `POST /llm/chat` et `POST /llm/stream` ne deviennent pas tool-aware dans ce lot
+- le function calling est limité à un nombre borné de tours internes pour éviter les boucles infinies
 
 ## Régénération
 
@@ -158,8 +173,39 @@ Portée de ces capacités en `M3.2` :
 Limites volontaires du lot :
 
 - aucun nouveau RPC `ExecuteWASM` n'est encore exposé
-- aucun bridge Python -> Rust n'est encore branché pour `filesystem` et `cli`
 - la source de vérité de whitelist reste `antaerus/config/tools.yaml`
+
+## Endpoints HTTP Internes `M3.3`
+
+Le lot `M3.3` ajoute un pont HTTP interne `brain_python -> engine_rust` pour les tools sandboxés.
+
+Routes désormais exposées par `engine_rust` :
+
+- `POST /internal/tools/filesystem/read`
+- `POST /internal/tools/cli/execute`
+
+Contrat de réponse homogène :
+
+- `ok`
+- `tool`
+- `status`
+- `result`
+- `error`
+- `meta`
+
+Sémantique attendue :
+
+- `filesystem/read` lit un fichier texte autorisé par la whitelist Rust et retourne notamment `path`, `content`, `size`, `truncated`
+- `cli/execute` exécute une commande whitelistée sans shell libre et retourne notamment `command`, `args`, `exitCode`, `stdout`, `stderr`
+- en cas d'erreur métier ou de refus sandbox, `ok=false` avec un `status` compatible `ToolResult` (`denied`, `not_configured`, `error`)
+
+## Gate Composite `M3.3`
+
+Le gate composite décrit dans `antaerus/kernel/approval/gate.md` est désormais matérialisé côté `brain_python` :
+
+- `category=rust-sandbox` et `autonomy_level >= 3` => `allow` automatique avec audit append-only
+- `autonomy_level >= 4` => `review`
+- les autres tools suivent une politique `allow` par défaut, avec audit si le niveau d'autonomie est au moins `3`
 
 ## Validation Locale
 

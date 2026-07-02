@@ -85,14 +85,14 @@ def test_llm_session_stream_endpoint_returns_session_aware_sse(tmp_path, monkeyp
     class FakeClient:
         provider_name = "ollama"
 
-        def stream(self, request):
+        async def complete(self, request):
             captured["request"] = request
-
-            async def generator():
-                yield StreamingEvent(event="token", data={"text": "Bon"})
-                yield StreamingEvent(event="complete", data={"text": "Bonjour"})
-
-            return generator()
+            return CompletionResult(
+                provider="ollama",
+                model="llama",
+                text="Bonjour",
+                finish_reason="stop",
+            )
 
     monkeypatch.setenv("ANTAERUS_BRAIN_MEMORY_DB_PATH", str(tmp_path / "antaerus_memory.db"))
     monkeypatch.setattr(
@@ -116,3 +116,4 @@ def test_llm_session_stream_endpoint_returns_session_aware_sse(tmp_path, monkeyp
     llm_request = captured["request"]
     assert llm_request.messages[0].role == "system"
     assert "aNtaerus" in llm_request.messages[0].content
+    assert llm_request.tools

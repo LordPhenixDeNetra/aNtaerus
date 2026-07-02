@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 
 from antaerus_brain.app import create_app
 from antaerus_brain.config import get_settings
+from antaerus_brain.tools.base import ToolResult
 
 
 def test_tools_api_lists_catalog_and_executes_tool(tmp_path, monkeypatch) -> None:
@@ -39,6 +40,22 @@ cli:
 
     monkeypatch.setenv("ANTAERUS_BRAIN_TOOLS_CONFIG_PATH", str(tools_config))
     monkeypatch.setenv("ANTAERUS_BRAIN_TOOLS_SANDBOX_ROOT", str(tmp_path))
+    async def fake_execute_rust_tool(settings, *, tool, endpoint, payload):
+        return ToolResult(
+            ok=True,
+            tool=tool,
+            status="ok",
+            result={
+                "path": str(tmp_path / payload["path"]),
+                "content": "bonjour tools",
+                "size": 13,
+                "truncated": False,
+            },
+        )
+    monkeypatch.setattr(
+        "antaerus_brain.tools.filesystem.execute_rust_tool",
+        fake_execute_rust_tool,
+    )
     get_settings.cache_clear()
     client = TestClient(create_app())
 

@@ -591,6 +591,7 @@ dependencies = [
  "ring",
  "secrecy",
  "serde",
+ "serde_json",
  "serde_yaml",
  "silero",
  "tempfile",

@@ -5,13 +5,27 @@ from typing import Any, AsyncIterator, Literal, Protocol
 from pydantic import BaseModel, Field
 
 ProviderName = Literal["anthropic", "openai", "mistral", "deepseek", "ollama"]
-MessageRole = Literal["system", "user", "assistant"]
+MessageRole = Literal["system", "user", "assistant", "tool"]
 StreamingEventType = Literal["token", "complete", "error"]
+
+
+class ToolCallFunction(BaseModel):
+    name: str
+    arguments: str = "{}"
+
+
+class ToolCall(BaseModel):
+    id: str | None = None
+    type: str = "function"
+    function: ToolCallFunction
 
 
 class ChatMessage(BaseModel):
     role: MessageRole
-    content: str = Field(min_length=1)
+    content: str = ""
+    name: str | None = None
+    tool_call_id: str | None = Field(default=None, alias="toolCallId")
+    tool_calls: list[ToolCall] = Field(default_factory=list, alias="toolCalls")
 
 
 class ToolDefinition(BaseModel):
@@ -35,6 +49,7 @@ class CompletionResult(BaseModel):
     model: str
     text: str
     finish_reason: str | None = None
+    tool_calls: list[ToolCall] = Field(default_factory=list, alias="toolCalls")
 
 
 class StreamingEvent(BaseModel):

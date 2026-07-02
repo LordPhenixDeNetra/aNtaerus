@@ -22,6 +22,8 @@ class GmailTool(BaseTool):
     name = "gmail"
     description = "Liste des emails recents et envoi simple via Gmail API"
     risk_level = "high"
+    category = "communication"
+    autonomy_level = 2
     input_model = GmailToolInput
     operations = ("list_recent", "send")
 

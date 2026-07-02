@@ -38,6 +38,7 @@ class Settings:
     )
     tools_sandbox_root: Path = field(default_factory=lambda: Path(__file__).resolve().parents[4])
     tool_request_timeout_seconds: float = 15.0
+    engine_base_url: str = "http://localhost:7000"
     browser_user_agent: str = "aNtaerus/0.1 (+https://localhost)"
     browser_timeout_seconds: float = 12.0
     weather_timeout_seconds: float = 10.0
@@ -166,6 +167,7 @@ def get_settings() -> Settings:
         tools_config_path=tools_config_path,
         tools_sandbox_root=tools_sandbox_root,
         tool_request_timeout_seconds=tool_request_timeout_seconds,
+        engine_base_url=getenv("ANTAERUS_BRAIN_ENGINE_BASE_URL", "http://localhost:7000"),
         browser_user_agent=getenv(
             "ANTAERUS_BRAIN_BROWSER_USER_AGENT",
             "aNtaerus/0.1 (+https://localhost)",
@@ -203,6 +205,9 @@ def get_settings() -> Settings:
 
     if settings.tool_request_timeout_seconds <= 0:
         raise ValueError("ANTAERUS_BRAIN_TOOL_REQUEST_TIMEOUT_SECONDS must be greater than zero")
+
+    if settings.engine_base_url.strip() == "":
+        raise ValueError("ANTAERUS_BRAIN_ENGINE_BASE_URL must not be empty")
 
     if settings.browser_timeout_seconds <= 0:
         raise ValueError("ANTAERUS_BRAIN_BROWSER_TIMEOUT_SECONDS must be greater than zero")

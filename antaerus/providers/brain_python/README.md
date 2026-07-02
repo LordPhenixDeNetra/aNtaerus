@@ -55,6 +55,7 @@ Variables d'environnement utiles :
 - `ANTAERUS_BRAIN_TOOLS_CONFIG_PATH` : chemin du fichier `tools.yaml`. Défaut : `antaerus/config/tools.yaml`
 - `ANTAERUS_BRAIN_TOOLS_SANDBOX_ROOT` : racine locale utilisée par les wrappers `filesystem`/`cli`
 - `ANTAERUS_BRAIN_TOOL_REQUEST_TIMEOUT_SECONDS` : timeout par défaut des outils
+- `ANTAERUS_BRAIN_ENGINE_BASE_URL` : URL HTTP interne de `engine_rust` utilisée pour les tools Rust proxifiés. Défaut : `http://localhost:7000`
 - `ANTAERUS_BRAIN_BROWSER_USER_AGENT` : user-agent HTTP du tool `browser`
 - `ANTAERUS_BRAIN_BROWSER_TIMEOUT_SECONDS` : timeout HTTP du tool `browser`
 - `ANTAERUS_BRAIN_WEATHER_TIMEOUT_SECONDS` : timeout HTTP du tool `weather`
@@ -102,7 +103,9 @@ Le endpoint `POST /llm/session-stream` :
 - reçoit `sessionId`, `message` et `provider` optionnel ;
 - recharge le contexte conversationnel de la session ;
 - persiste le message utilisateur ;
-- stream les tokens du provider LLM ;
+- injecte les schémas tools du registry dynamique dans le premier tour LLM ;
+- exécute les `tool_calls` éventuels puis réinterroge le LLM pour produire la réponse finale ;
+- stream le résultat final normalisé au client ;
 - persiste le message assistant final.
 
 ### API tools
@@ -122,6 +125,12 @@ Outils actuellement exposés :
 - `gmail` : listing / envoi minimal avec mode dégradé si non configuré
 - `calendar` : listing / création minimale avec mode dégradé si non configuré
 - `vision` : détection locale minimale si dépendances et modèle sont présents
+
+Depuis `M3.3` :
+
+- `filesystem` et `cli` restent exposés par le registry Python, mais délèguent l'exécution réelle à `engine_rust` via HTTP interne
+- le gate composite du brain évalue les tools avant exécution et audite automatiquement les outils `rust-sandbox` de niveau `3+`
+- le fichier d'audit append-only est écrit dans le répertoire mémoire configuré, sous `audit/tool_execution_audit.jsonl`
 
 La configuration versionnée des outils se trouve dans `antaerus/config/tools.yaml`.
 

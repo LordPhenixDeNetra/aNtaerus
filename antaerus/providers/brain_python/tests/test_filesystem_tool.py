@@ -3,16 +3,30 @@ from __future__ import annotations
 import asyncio
 
 from antaerus_brain.config import get_settings
+from antaerus_brain.tools.base import ToolResult
 from antaerus_brain.tools.filesystem import FilesystemTool
 
 
 def test_filesystem_tool_reads_only_allowed_paths(tmp_path, monkeypatch) -> None:
-    allowed_dir = tmp_path / "allowed"
-    allowed_dir.mkdir()
-    file_path = allowed_dir / "note.txt"
-    file_path.write_text("contenu test", encoding="utf-8")
+    async def fake_execute_rust_tool(settings, *, tool, endpoint, payload):
+        if payload["path"].startswith("../"):
+            return ToolResult(ok=False, tool=tool, status="denied", error="path not allowed")
+        return ToolResult(
+            ok=True,
+            tool=tool,
+            status="ok",
+            result={
+                "path": str(tmp_path / payload["path"]),
+                "content": "contenu test",
+                "size": 12,
+                "truncated": False,
+            },
+        )
 
-    monkeypatch.setenv("ANTAERUS_BRAIN_TOOLS_SANDBOX_ROOT", str(tmp_path))
+    monkeypatch.setattr(
+        "antaerus_brain.tools.filesystem.execute_rust_tool",
+        fake_execute_rust_tool,
+    )
     get_settings.cache_clear()
     tool = FilesystemTool(get_settings(), {"enabled": True, "allowed_roots": ["allowed"]})
 

@@ -1,19 +1,32 @@
 from __future__ import annotations
 
 import asyncio
-import sys
 
 from antaerus_brain.config import get_settings
+from antaerus_brain.tools.base import ToolResult
 from antaerus_brain.tools.cli import CLITool
 
 
 def test_cli_tool_executes_whitelisted_command(monkeypatch) -> None:
+    async def fake_execute_rust_tool(settings, *, tool, endpoint, payload):
+        return ToolResult(
+            ok=True,
+            tool=tool,
+            status="ok",
+            result={
+                "command": payload["command"],
+                "args": payload["args"],
+                "exitCode": 0,
+                "stdout": "ok-cli\n",
+                "stderr": "",
+            },
+        )
+
+    monkeypatch.setattr("antaerus_brain.tools.cli.execute_rust_tool", fake_execute_rust_tool)
     get_settings.cache_clear()
     tool = CLITool(get_settings(), {"enabled": True, "allowed_commands": ["python"]})
 
-    result = asyncio.run(
-        tool.execute({"command": sys.executable, "args": ["-c", "print('ok-cli')"]})
-    )
+    result = asyncio.run(tool.execute({"command": "python", "args": ["-c", "print('ok-cli')"]}))
 
     assert result.ok is True
     assert result.result["exitCode"] == 0
@@ -21,6 +34,10 @@ def test_cli_tool_executes_whitelisted_command(monkeypatch) -> None:
 
 
 def test_cli_tool_denies_non_whitelisted_command(monkeypatch) -> None:
+    async def fake_execute_rust_tool(settings, *, tool, endpoint, payload):
+        return ToolResult(ok=False, tool=tool, status="denied", error="command not allowed: git")
+
+    monkeypatch.setattr("antaerus_brain.tools.cli.execute_rust_tool", fake_execute_rust_tool)
     get_settings.cache_clear()
     tool = CLITool(get_settings(), {"enabled": True, "allowed_commands": ["python"]})
 
