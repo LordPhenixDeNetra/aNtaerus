@@ -1,0 +1,43 @@
+browser:
+  enabled: true
+  max_results: 5
+
+gmail:
+  enabled: true
+  allow_send: false
+
+calendar:
+  enabled: true
+  allow_create: false
+
+weather:
+  enabled: true
+  geocoding_enabled: true
+
+vision:
+  enabled: true
+  default_confidence: 0.25
+
+filesystem:
+  enabled: true
+  allowed_roots:
+    - docs
+    - memory_data
+    - providers/brain_python
+  max_bytes: 65536
+
+memory_tool:
+  enabled: true
+  default_category: notes
+
+cli:
+  enabled: true
+  allowed_commands:
+    - python
+    - py
+    - git
+    - go
+    - cargo
+    - uv
+    - npm
+  timeout_seconds: 10

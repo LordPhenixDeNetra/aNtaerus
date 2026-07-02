@@ -38,5 +38,8 @@ def capabilities() -> dict[str, object]:
             "memory-kernel",
             "memory-search",
             "memory-mirror",
+            "tools-registry",
+            "tools-execution",
+            "tools-schema-generation",
         ],
     }

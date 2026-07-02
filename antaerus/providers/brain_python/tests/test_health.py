@@ -28,3 +28,4 @@ def test_capabilities_endpoint_returns_python_runtime() -> None:
     assert "healthcheck" in payload["capabilities"]
     assert "llm-routing" in payload["capabilities"]
     assert "memory-kernel" in payload["capabilities"]
+    assert "tools-registry" in payload["capabilities"]

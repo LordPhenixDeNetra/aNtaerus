@@ -27,6 +27,47 @@ Les contrats de cette phase définissent trois objets JSON partagés :
 - `brain_python`
 - `engine_rust`
 
+## Contrats HTTP Internes
+
+Le service `brain_python` expose des routes HTTP internes consommées par le reste du système pour le texte, la mémoire et, depuis `M3.1`, le catalogue d'outils.
+
+### Capabilities `brain_python`
+
+Le endpoint `GET /internal/capabilities` publie désormais notamment :
+
+- `llm-routing`
+- `llm-streaming-sse`
+- `memory-kernel`
+- `memory-search`
+- `memory-mirror`
+- `tools-registry`
+- `tools-execution`
+- `tools-schema-generation`
+
+### API `tools`
+
+Le lot `M3.1` ajoute une API interne minimale pour les outils Python :
+
+- `GET /tools` : retourne le catalogue des outils, leur schéma d'entrée, leur niveau de risque et leur état `enabled` / `available`
+- `POST /tools/execute` : exécute un outil par nom avec un payload JSON validé
+
+Sémantique de disponibilité :
+
+- `enabled` : l'outil est activé dans `antaerus/config/tools.yaml`
+- `available` : l'outil peut réellement être utilisé dans l'environnement courant
+- `reason` : motif explicite si l'outil est désactivé, non configuré ou indisponible
+
+Format homogène de réponse d'exécution :
+
+- `ok`
+- `tool`
+- `status`
+- `result`
+- `error`
+- `meta`
+
+Cette API reste strictement interne au workspace et ne constitue pas encore l'orchestration LLM -> function calling prévue pour `M3.3`.
+
 ## Régénération
 
 - Go (`engine.proto`) : `task generate:proto:go` ou `protoc --proto_path=antaerus/kernel/proto --go_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/enginepb --go-grpc_out=paths=source_relative:antaerus/interfaces/gateway_go/internal/gen/enginepb antaerus/kernel/proto/engine.proto`

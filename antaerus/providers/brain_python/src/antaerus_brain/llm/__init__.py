@@ -14,6 +14,11 @@ class ChatMessage(BaseModel):
     content: str = Field(min_length=1)
 
 
+class ToolDefinition(BaseModel):
+    type: str = "function"
+    function: dict[str, Any]
+
+
 class GenerationRequest(BaseModel):
     provider: ProviderName | None = None
     model: str | None = None
@@ -21,6 +26,8 @@ class GenerationRequest(BaseModel):
     messages: list[ChatMessage] = Field(default_factory=list)
     temperature: float = 0.2
     max_tokens: int = 512
+    tools: list[ToolDefinition] = Field(default_factory=list)
+    tool_choice: str | None = None
 
 
 class CompletionResult(BaseModel):

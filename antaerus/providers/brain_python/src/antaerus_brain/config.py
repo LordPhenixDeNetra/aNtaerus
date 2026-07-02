@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import lru_cache
 from os import getenv
 from pathlib import Path
@@ -33,6 +33,22 @@ class Settings:
     memory_db_path: Path
     memory_topics_dir: Path
     memory_default_limit: int
+    tools_config_path: Path = field(
+        default_factory=lambda: Path(__file__).resolve().parents[4] / "config" / "tools.yaml"
+    )
+    tools_sandbox_root: Path = field(default_factory=lambda: Path(__file__).resolve().parents[4])
+    tool_request_timeout_seconds: float = 15.0
+    browser_user_agent: str = "aNtaerus/0.1 (+https://localhost)"
+    browser_timeout_seconds: float = 12.0
+    weather_timeout_seconds: float = 10.0
+    google_client_id: str = ""
+    google_client_secret: SecretStr = field(default_factory=lambda: SecretStr(""))
+    google_refresh_token: SecretStr = field(default_factory=lambda: SecretStr(""))
+    google_redirect_uri: str = "http://localhost/oauth/google/callback"
+    gmail_sender_email: str = ""
+    vision_model_path: Path | None = None
+    vision_default_image_path: Path | None = None
+    vision_enable_screen_capture: bool = False
 
 
 def _project_root() -> Path:
@@ -49,6 +65,17 @@ def _default_memory_db_path() -> Path:
 
 def _default_memory_topics_dir() -> Path:
     return _project_root() / "memory_data" / "topics"
+
+
+def _default_tools_config_path() -> Path:
+    return _project_root() / "config" / "tools.yaml"
+
+
+def _parse_bool(raw_value: str, *, default: bool) -> bool:
+    normalized = raw_value.strip().lower()
+    if not normalized:
+        return default
+    return normalized in {"1", "true", "yes", "on"}
 
 
 def _require_supported_provider(provider: str) -> str:
@@ -81,6 +108,9 @@ def get_settings() -> Settings:
     port = int(getenv("ANTAERUS_BRAIN_PORT", "8000"))
     llm_timeout_seconds = float(getenv("ANTAERUS_BRAIN_LLM_TIMEOUT_SECONDS", "30"))
     memory_default_limit = int(getenv("ANTAERUS_BRAIN_MEMORY_DEFAULT_LIMIT", "25"))
+    tool_request_timeout_seconds = float(
+        getenv("ANTAERUS_BRAIN_TOOL_REQUEST_TIMEOUT_SECONDS", "15")
+    )
     memory_db_path = _resolve_project_path(
         getenv("ANTAERUS_BRAIN_MEMORY_DB_PATH", str(_default_memory_db_path())),
         _default_memory_db_path(),
@@ -89,6 +119,18 @@ def get_settings() -> Settings:
         getenv("ANTAERUS_BRAIN_MEMORY_TOPICS_DIR", str(_default_memory_topics_dir())),
         _default_memory_topics_dir(),
     )
+    tools_config_path = _resolve_project_path(
+        getenv("ANTAERUS_BRAIN_TOOLS_CONFIG_PATH", str(_default_tools_config_path())),
+        _default_tools_config_path(),
+    )
+    tools_sandbox_root = _resolve_project_path(
+        getenv("ANTAERUS_BRAIN_TOOLS_SANDBOX_ROOT", str(_project_root())),
+        _project_root(),
+    )
+    browser_timeout_seconds = float(getenv("ANTAERUS_BRAIN_BROWSER_TIMEOUT_SECONDS", "12"))
+    weather_timeout_seconds = float(getenv("ANTAERUS_BRAIN_WEATHER_TIMEOUT_SECONDS", "10"))
+    vision_model_raw = getenv("ANTAERUS_BRAIN_VISION_MODEL_PATH", "").strip()
+    vision_image_raw = getenv("ANTAERUS_BRAIN_VISION_DEFAULT_IMAGE_PATH", "").strip()
 
     settings = Settings(
         service_name="brain_python",
@@ -121,6 +163,33 @@ def get_settings() -> Settings:
         memory_db_path=memory_db_path,
         memory_topics_dir=memory_topics_dir,
         memory_default_limit=memory_default_limit,
+        tools_config_path=tools_config_path,
+        tools_sandbox_root=tools_sandbox_root,
+        tool_request_timeout_seconds=tool_request_timeout_seconds,
+        browser_user_agent=getenv(
+            "ANTAERUS_BRAIN_BROWSER_USER_AGENT",
+            "aNtaerus/0.1 (+https://localhost)",
+        ),
+        browser_timeout_seconds=browser_timeout_seconds,
+        weather_timeout_seconds=weather_timeout_seconds,
+        google_client_id=getenv("ANTAERUS_GOOGLE_CLIENT_ID", ""),
+        google_client_secret=SecretStr(getenv("ANTAERUS_GOOGLE_CLIENT_SECRET", "")),
+        google_refresh_token=SecretStr(getenv("ANTAERUS_GOOGLE_REFRESH_TOKEN", "")),
+        google_redirect_uri=getenv(
+            "ANTAERUS_GOOGLE_REDIRECT_URI",
+            "http://localhost/oauth/google/callback",
+        ),
+        gmail_sender_email=getenv("ANTAERUS_GMAIL_SENDER_EMAIL", ""),
+        vision_model_path=(
+            _resolve_project_path(vision_model_raw, _project_root()) if vision_model_raw else None
+        ),
+        vision_default_image_path=(
+            _resolve_project_path(vision_image_raw, _project_root()) if vision_image_raw else None
+        ),
+        vision_enable_screen_capture=_parse_bool(
+            getenv("ANTAERUS_BRAIN_VISION_ENABLE_SCREEN_CAPTURE", ""),
+            default=False,
+        ),
     )
 
     if settings.port <= 0:
@@ -131,6 +200,15 @@ def get_settings() -> Settings:
 
     if settings.memory_default_limit <= 0:
         raise ValueError("ANTAERUS_BRAIN_MEMORY_DEFAULT_LIMIT must be greater than zero")
+
+    if settings.tool_request_timeout_seconds <= 0:
+        raise ValueError("ANTAERUS_BRAIN_TOOL_REQUEST_TIMEOUT_SECONDS must be greater than zero")
+
+    if settings.browser_timeout_seconds <= 0:
+        raise ValueError("ANTAERUS_BRAIN_BROWSER_TIMEOUT_SECONDS must be greater than zero")
+
+    if settings.weather_timeout_seconds <= 0:
+        raise ValueError("ANTAERUS_BRAIN_WEATHER_TIMEOUT_SECONDS must be greater than zero")
 
     if (
         settings.default_provider == "anthropic"

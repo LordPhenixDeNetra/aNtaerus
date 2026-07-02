@@ -13,7 +13,8 @@ Le service `brain_python` fournit :
 - un service de chat session-aware pour `M1.4` ;
 - un historique conversationnel persistant par `sessionId` ;
 - une ingestion heuristique de facts ;
-- un mirror Markdown unidirectionnel de la mémoire.
+- un mirror Markdown unidirectionnel de la mémoire ;
+- un catalogue d'outils Python internes avec exécution contrôlée (`M3.1`).
 
 Ce service est conçu pour être consommé en interne par le gateway Go.
 
@@ -51,6 +52,17 @@ Variables d'environnement utiles :
 - `ANTAERUS_BRAIN_MEMORY_DB_PATH` : chemin SQLite. Défaut : `antaerus/memory_data/antaerus_memory.db`
 - `ANTAERUS_BRAIN_MEMORY_TOPICS_DIR` : répertoire du mirror Markdown. Défaut : `antaerus/memory_data/topics`
 - `ANTAERUS_BRAIN_MEMORY_DEFAULT_LIMIT` : limite de recherche mémoire. Défaut : `25`
+- `ANTAERUS_BRAIN_TOOLS_CONFIG_PATH` : chemin du fichier `tools.yaml`. Défaut : `antaerus/config/tools.yaml`
+- `ANTAERUS_BRAIN_TOOLS_SANDBOX_ROOT` : racine locale utilisée par les wrappers `filesystem`/`cli`
+- `ANTAERUS_BRAIN_TOOL_REQUEST_TIMEOUT_SECONDS` : timeout par défaut des outils
+- `ANTAERUS_BRAIN_BROWSER_USER_AGENT` : user-agent HTTP du tool `browser`
+- `ANTAERUS_BRAIN_BROWSER_TIMEOUT_SECONDS` : timeout HTTP du tool `browser`
+- `ANTAERUS_BRAIN_WEATHER_TIMEOUT_SECONDS` : timeout HTTP du tool `weather`
+- `ANTAERUS_GOOGLE_CLIENT_ID` / `ANTAERUS_GOOGLE_CLIENT_SECRET` / `ANTAERUS_GOOGLE_REFRESH_TOKEN` : credentials OAuth2 minimaux pour `gmail` et `calendar`
+- `ANTAERUS_GMAIL_SENDER_EMAIL` : adresse d'envoi par défaut pour `gmail`
+- `ANTAERUS_BRAIN_VISION_MODEL_PATH` : chemin du modèle vision local
+- `ANTAERUS_BRAIN_VISION_DEFAULT_IMAGE_PATH` : image par défaut pour tests vision
+- `ANTAERUS_BRAIN_VISION_ENABLE_SCREEN_CAPTURE` : active la capture écran locale pour `vision`
 
 Tous les secrets applicatifs restent typés avec `SecretStr`.
 
@@ -71,6 +83,8 @@ Routes exposées :
 - `POST /llm/chat`
 - `POST /llm/stream`
 - `POST /llm/session-stream`
+- `GET /tools`
+- `POST /tools/execute`
 - `GET /memory/facts`
 - `GET /memory/chat/sessions/{session_id}`
 - `POST /memory/facts`
@@ -90,6 +104,26 @@ Le endpoint `POST /llm/session-stream` :
 - persiste le message utilisateur ;
 - stream les tokens du provider LLM ;
 - persiste le message assistant final.
+
+### API tools
+
+Le lot `M3.1` ajoute une API interne minimale pour les outils Python :
+
+- `GET /tools` : retourne le catalogue, l'état `enabled` / `available`, le niveau de risque et le schéma d'entrée
+- `POST /tools/execute` : exécute un outil par nom avec un payload JSON validé
+
+Outils actuellement exposés :
+
+- `browser` : recherche web simple + fetch HTML textuel
+- `weather` : météo actuelle via Open-Meteo
+- `memory_tool` : écriture de faits structurés
+- `filesystem` : lecture seule dans une whitelist de chemins
+- `cli` : exécution de commandes whitelistées sans shell libre
+- `gmail` : listing / envoi minimal avec mode dégradé si non configuré
+- `calendar` : listing / création minimale avec mode dégradé si non configuré
+- `vision` : détection locale minimale si dépendances et modèle sont présents
+
+La configuration versionnée des outils se trouve dans `antaerus/config/tools.yaml`.
 
 ## Stockage mémoire
 

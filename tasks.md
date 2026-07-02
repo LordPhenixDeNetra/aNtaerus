@@ -243,17 +243,26 @@
 ## Phase M3 — Outils (3 semaines)
 
 ### M3.1 — Python Tools
-- [ ] Implémenter `brain_python/tools/browser.py` : recherche web + scraping
-- [ ] Implémenter `brain_python/tools/gmail.py` : OAuth2 + lister/envoyer emails
-- [ ] Implémenter `brain_python/tools/calendar.py` : Google Calendar OAuth2
-- [ ] Implémenter `brain_python/tools/weather.py` : Open-Meteo API (sans clé)
-- [ ] Implémenter `brain_python/tools/vision.py` : capture écran + YOLOv8
-- [ ] Implémenter `brain_python/tools/filesystem.py` : lecture fichiers (sandbox)
-- [ ] Implémenter `brain_python/tools/memory_tool.py` : écrire notes structurées
-- [ ] Implémenter `brain_python/tools/cli.py` : commandes shell whitelistées
-- [ ] Créer `config/tools.yaml` : whitelist commandes CLI
-- [ ] Implémenter `brain_python/tools/tool_registry.py` : registry dynamique
-- [ ] Implémenter `brain_python/tools/tool_schema.py` : génération schémas pour LLM
+- [x] Implémenter `brain_python/tools/browser.py` : recherche web + scraping
+- [x] Implémenter `brain_python/tools/gmail.py` : OAuth2 + lister/envoyer emails
+- [x] Implémenter `brain_python/tools/calendar.py` : Google Calendar OAuth2
+- [x] Implémenter `brain_python/tools/weather.py` : Open-Meteo API (sans clé)
+- [x] Implémenter `brain_python/tools/vision.py` : capture écran + YOLOv8
+- [x] Implémenter `brain_python/tools/filesystem.py` : lecture fichiers (sandbox)
+- [x] Implémenter `brain_python/tools/memory_tool.py` : écrire notes structurées
+- [x] Implémenter `brain_python/tools/cli.py` : commandes shell whitelistées
+- [x] Créer `config/tools.yaml` : whitelist commandes CLI
+- [x] Implémenter `brain_python/tools/tool_registry.py` : registry dynamique
+- [x] Implémenter `brain_python/tools/tool_schema.py` : génération schémas pour LLM
+
+État actuel :
+- Le package `antaerus/providers/brain_python/src/antaerus_brain/tools/` matérialise désormais un socle complet `M3.1` avec `base.py`, `tool_registry.py`, `tool_schema.py` et huit outils Python minimaux réels : `browser`, `gmail`, `calendar`, `weather`, `vision`, `filesystem`, `memory_tool` et `cli`.
+- La configuration versionnée des outils est définie dans `antaerus/config/tools.yaml`, tandis que `antaerus/providers/brain_python/src/antaerus_brain/config.py` et `antaerus/.env.example` exposent les paramètres runtime associés (sandbox root, timeouts, Google OAuth2 minimal, vision locale, user-agent browser).
+- Le brain Python expose maintenant une API interne `GET /tools` et `POST /tools/execute` via `antaerus/providers/brain_python/src/antaerus_brain/api/tools.py`, avec des capabilities déclarées `tools-registry`, `tools-execution` et `tools-schema-generation` dans `antaerus/providers/brain_python/src/antaerus_brain/api/health.py`.
+- Le registry dynamique publie aussi des schémas compatibles LLM dans `antaerus/providers/brain_python/src/antaerus_brain/tools/tool_schema.py` et `antaerus/providers/brain_python/src/antaerus_brain/llm/__init__.py`, sans encore boucler le function calling complet qui reste planifié en `M3.3`.
+- Les wrappers `filesystem` et `cli` restent strictement gouvernés par whitelist pour préparer le sandbox Rust de `M3.2` : lecture seule dans des racines autorisées pour `filesystem`, exécution sans shell libre et commandes explicitement autorisées pour `cli`.
+- `gmail`, `calendar` et `vision` livrent un mode réel minimal mais dégradable : les outils sont présents au catalogue, puis répondent proprement `not_configured` ou `not_available` si l'environnement local n'est pas prêt.
+- La validation finale du lot a été rejouée avec succès dans `antaerus/providers/brain_python/` via `python -m ruff check .`, `python -m pytest tests` et `python -m mypy src tests`.
 
 ### M3.2 — Rust Tools (Sandbox)
 - [ ] Implémenter `engine_rust/fs/sandbox.rs` : filesystem sandbox (whitelist chemins)

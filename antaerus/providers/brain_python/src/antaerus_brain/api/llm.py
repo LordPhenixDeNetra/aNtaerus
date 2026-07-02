@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from typing import cast
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
 from antaerus_brain.chat import SessionChatService, SessionStreamRequest
 from antaerus_brain.config import get_settings
-from antaerus_brain.llm import CompletionResult, GenerationRequest, StreamingEvent
+from antaerus_brain.llm import CompletionResult, GenerationRequest, ProviderName, StreamingEvent
 from antaerus_brain.llm.factory import create_llm_client
 from antaerus_brain.llm.streaming import sse_event_stream
 from antaerus_brain.memory.kernel import MemoryKernel
@@ -40,8 +41,9 @@ async def chat(request: GenerationRequest) -> CompletionResult:
             text = "Je suis aNtaerus, un assistant IA open source."
             if name != "aNtaerus":
                 text = f"Je suis {name}, un assistant IA open source."
+            provider = cast(ProviderName, request.provider or settings.default_provider)
             return CompletionResult(
-                provider=request.provider or settings.default_provider,
+                provider=provider,
                 model=request.model or "identity",
                 text=text,
                 finish_reason="stop",
@@ -79,11 +81,11 @@ async def stream_chat(request: GenerationRequest) -> StreamingResponse:
             )
 
         client = create_llm_client(settings, provider=request.provider)
-        stream = sse_event_stream(client, inject_system_prompt(settings, request))
+        stream_bytes = sse_event_stream(client, inject_system_prompt(settings, request))
     except (RuntimeError, ValueError) as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return StreamingResponse(stream, media_type="text/event-stream")
+    return StreamingResponse(stream_bytes, media_type="text/event-stream")
 
 
 @router.post("/session-stream")

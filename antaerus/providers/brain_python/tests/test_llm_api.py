@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from antaerus_brain.app import create_app
 from antaerus_brain.config import get_settings
-from antaerus_brain.llm import CompletionResult, StreamingEvent
+from antaerus_brain.llm import CompletionResult, GenerationRequest, StreamingEvent
 
 
 def test_llm_providers_endpoint_lists_all_supported_providers() -> None:
@@ -20,7 +20,7 @@ def test_llm_providers_endpoint_lists_all_supported_providers() -> None:
 
 
 def test_llm_chat_endpoint_returns_completion(monkeypatch) -> None:
-    captured: dict[str, object] = {}
+    captured: dict[str, GenerationRequest] = {}
 
     class FakeClient:
         async def complete(self, request):
@@ -51,7 +51,7 @@ def test_llm_chat_endpoint_returns_completion(monkeypatch) -> None:
 
 
 def test_llm_stream_endpoint_returns_sse(monkeypatch) -> None:
-    captured: dict[str, object] = {}
+    captured: dict[str, GenerationRequest] = {}
 
     class FakeClient:
         async def stream(self, request):
@@ -80,7 +80,7 @@ def test_llm_stream_endpoint_returns_sse(monkeypatch) -> None:
 
 
 def test_llm_session_stream_endpoint_returns_session_aware_sse(tmp_path, monkeypatch) -> None:
-    captured: dict[str, object] = {}
+    captured: dict[str, GenerationRequest] = {}
 
     class FakeClient:
         provider_name = "ollama"
