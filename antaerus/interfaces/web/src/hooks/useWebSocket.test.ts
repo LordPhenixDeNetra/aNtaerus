@@ -70,6 +70,7 @@ describe("useWebSocket", () => {
       voiceSessionActive: false,
       voiceTranscript: "",
       voiceVADState: null,
+      voiceWakeState: null,
       voiceLastUpdatedAt: null,
     });
   });
@@ -117,6 +118,7 @@ describe("useWebSocket", () => {
       voiceSessionActive: false,
       voiceTranscript: "",
       voiceVADState: null,
+      voiceWakeState: null,
       voiceLastUpdatedAt: null,
     });
 
@@ -146,6 +148,7 @@ describe("useWebSocket", () => {
     expect(payload.payload.sessionId).toBe("session-1");
     expect(useAppStore.getState().voiceMode).toBe("listening");
     expect(useAppStore.getState().voiceSessionActive).toBe(true);
+    expect(useAppStore.getState().voiceWakeState).toBe("waiting");
   });
 
   it("sérialise une commande voice.stop", async () => {
@@ -154,6 +157,7 @@ describe("useWebSocket", () => {
       voiceSessionActive: true,
       voiceTranscript: "Bonjour",
       voiceVADState: "speaking",
+      voiceWakeState: "armed",
       voiceLastUpdatedAt: Date.now(),
     });
     const { result } = renderHook(() => useWebSocket("session-1"));
@@ -171,9 +175,10 @@ describe("useWebSocket", () => {
     expect(payload.type).toBe("voice.stop");
     expect(useAppStore.getState().voiceMode).toBe("idle");
     expect(useAppStore.getState().voiceTranscript).toBe("");
+    expect(useAppStore.getState().voiceWakeState).toBe(null);
   });
 
-  it("consomme voice.transcript et voice.vad_state", async () => {
+  it("consomme voice.transcript, voice.vad_state et voice.wake_state", async () => {
     const { result } = renderHook(() => useWebSocket("session-1"));
 
     await act(async () => {
@@ -198,6 +203,19 @@ describe("useWebSocket", () => {
       instance.listeners.message?.forEach((listener) =>
         listener({
           data: JSON.stringify({
+            type: "voice.wake_state",
+            timestamp: new Date().toISOString(),
+            payload: {
+              sessionId: "session-1",
+              state: "armed",
+            },
+          }),
+        } as MessageEvent),
+      );
+
+      instance.listeners.message?.forEach((listener) =>
+        listener({
+          data: JSON.stringify({
             type: "voice.vad_state",
             timestamp: new Date().toISOString(),
             payload: {
@@ -211,6 +229,7 @@ describe("useWebSocket", () => {
 
     expect(useAppStore.getState().voiceTranscript).toBe("Salut en direct");
     expect(useAppStore.getState().voiceVADState).toBe("speaking");
+    expect(useAppStore.getState().voiceWakeState).toBe("armed");
   });
 
   it("passe en mode speaking sur chat.token puis revient en listening sur chat.complete", async () => {
@@ -306,5 +325,6 @@ describe("useWebSocket", () => {
 
     expect(useAppStore.getState().voiceMode).toBe("idle");
     expect(useAppStore.getState().voiceSessionActive).toBe(false);
+    expect(useAppStore.getState().voiceWakeState).toBe(null);
   });
 });

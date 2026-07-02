@@ -26,6 +26,7 @@ export function useWebSocket(sessionId: string) {
   const setVoiceSessionActive = useAppStore((state) => state.setVoiceSessionActive);
   const setVoiceTranscript = useAppStore((state) => state.setVoiceTranscript);
   const setVoiceVADState = useAppStore((state) => state.setVoiceVADState);
+  const setVoiceWakeState = useAppStore((state) => state.setVoiceWakeState);
   const resetVoiceState = useAppStore((state) => state.resetVoiceState);
   const socketRef = useRef<WebSocket | null>(null);
   const connectPromiseRef = useRef<Promise<boolean> | null>(null);
@@ -159,6 +160,12 @@ export function useWebSocket(sessionId: string) {
               setVoiceMode("listening");
             }
             break;
+          case "voice.wake_state":
+            setVoiceWakeState(message.payload.state);
+            if (useAppStore.getState().voiceSessionActive) {
+              setVoiceMode("listening");
+            }
+            break;
           case "system.alert":
             setLastError(message.payload.message);
             if (shouldResetVoiceState(message.payload.message)) {
@@ -187,6 +194,7 @@ export function useWebSocket(sessionId: string) {
     setVoiceMode,
     setVoiceTranscript,
     setVoiceVADState,
+    setVoiceWakeState,
     shouldResetVoiceState,
   ]);
 
@@ -223,6 +231,7 @@ export function useWebSocket(sessionId: string) {
 
     setVoiceTranscript("");
     setVoiceVADState(null);
+    setVoiceWakeState("waiting");
     setVoiceSessionActive(true);
     setVoiceMode("listening");
     socketRef.current.send(JSON.stringify(createVoiceStartEnvelope(sessionId)));
@@ -235,6 +244,7 @@ export function useWebSocket(sessionId: string) {
     setVoiceSessionActive,
     setVoiceTranscript,
     setVoiceVADState,
+    setVoiceWakeState,
   ]);
 
   const sendVoiceStop = useCallback(async () => {
@@ -267,6 +277,7 @@ export function useWebSocket(sessionId: string) {
     socketRef.current.send(JSON.stringify(createVoiceBargeInEnvelope(sessionId)));
     setVoiceTranscript("");
     setVoiceVADState(null);
+    setVoiceWakeState("waiting");
     setVoiceSessionActive(true);
     setVoiceMode("listening");
     return true;
@@ -278,6 +289,7 @@ export function useWebSocket(sessionId: string) {
     setVoiceSessionActive,
     setVoiceTranscript,
     setVoiceVADState,
+    setVoiceWakeState,
   ]);
 
   useEffect(() => () => disconnect(), [disconnect]);

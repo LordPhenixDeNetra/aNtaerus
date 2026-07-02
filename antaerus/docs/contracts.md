@@ -64,6 +64,7 @@ Le format WebSocket fondation utilise une enveloppe commune :
 - `voice.transcript`
 - `voice.audio`
 - `voice.vad_state`
+- `voice.wake_state`
 - `mission.update`
 - `system.alert`
 - `proactive.notification`
@@ -73,7 +74,9 @@ Notes `M2.2` :
 
 - `voice.start`, `voice.stop` et `voice.barge_in` sont maintenant branchés au pipeline Go ↔ Rust.
 - `voice.transcript` et `voice.vad_state` sont alimentés depuis `AudioRuntime.StartVoiceSession`.
+- `voice.wake_state` expose l'etat d'armement de la session voix (`waiting`, `armed`) pour l'UI React.
 - un transcript final déclenche automatiquement le brain Python puis `AudioRuntime.Speak`.
+- tant que la session est en etat `waiting`, seuls les utterances commencant par le wake word configure (`ANTAERUS_ENGINE_WAKE_WORD`, par defaut `aNtaerus`) sont transmis au brain; le wake word est retire du transcript utile.
 - `voice.audio` reste réservé pour une évolution future navigateur; en `M2.2`, la lecture TTS reste locale dans `engine_rust`.
 
 ## gRPC Fondation Go ↔ Rust
@@ -89,6 +92,7 @@ Ce contrat reste volontairement minimal pour éviter d'empiéter sur le pipeline
 Le contrat `kernel/proto/audio.proto` couvre désormais le pipeline voix local :
 
 - `StartVoiceSession` : ouvre le stream d'événements voix (`vad`, `transcript`, `system`)
+- `WakeWordEvent` : expose l'etat `waiting` / `armed` du wake word sur le stream de session
 - `StopVoiceSession` : ferme une session voix active
 - `Speak` : déclenche la synthèse locale côté `engine_rust`
 

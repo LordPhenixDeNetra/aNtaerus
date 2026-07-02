@@ -12,13 +12,14 @@ use crate::{
         stt::SpeechToText,
         tts::TextToSpeech,
         vad::VadDetector,
+        wake_word::{WakeWordDecision, WakeWordGate},
         AudioEngine, AudioError,
     },
     config::Settings,
     grpc::audiopb::{
         audio_runtime_server::AudioRuntime, voice_event, SpeakRequest, SpeakResponse,
         StartVoiceSessionRequest, StopVoiceSessionRequest, StopVoiceSessionResponse, SystemEvent,
-        TranscriptEvent, VadEvent, VoiceEvent,
+        TranscriptEvent, VadEvent, VoiceEvent, WakeWordEvent,
     },
 };
 
@@ -64,6 +65,13 @@ impl AudioRuntimeService {
                 session_id.clone(),
                 "info",
                 "voice session started".to_string(),
+            )))
+            .await;
+        let mut wake_word_gate = WakeWordGate::new(self.engine.settings.wake_word.as_str());
+        let _ = sender
+            .send(Ok(wake_word_event(
+                session_id.clone(),
+                wake_word_gate.state().as_str(),
             )))
             .await;
 
@@ -174,8 +182,48 @@ impl AudioRuntimeService {
 
                         if !speaking && !buffer.is_empty() {
                             let text = stt.transcribe_16khz_mono(&buffer).unwrap_or_else(|_| String::new());
-                            if !text.trim().is_empty() {
-                                let _ = sender.send(Ok(transcript_event(session_id.clone(), text, true))).await;
+                            let trimmed = text.trim();
+                            if !trimmed.is_empty() {
+                                let previous_wake_state = wake_word_gate.state();
+                                match wake_word_gate.evaluate(trimmed) {
+                                    WakeWordDecision::Ignored => {}
+                                    WakeWordDecision::ArmedNoCommand => {
+                                        if wake_word_gate.state() != previous_wake_state {
+                                            let _ = sender
+                                                .send(Ok(wake_word_event(
+                                                    session_id.clone(),
+                                                    wake_word_gate.state().as_str(),
+                                                )))
+                                                .await;
+                                        }
+                                    }
+                                    WakeWordDecision::ArmedWithCommand(cleaned_text) => {
+                                        if wake_word_gate.state() != previous_wake_state {
+                                            let _ = sender
+                                                .send(Ok(wake_word_event(
+                                                    session_id.clone(),
+                                                    wake_word_gate.state().as_str(),
+                                                )))
+                                                .await;
+                                        }
+                                        let _ = sender
+                                            .send(Ok(transcript_event(
+                                                session_id.clone(),
+                                                cleaned_text,
+                                                true,
+                                            )))
+                                            .await;
+                                    }
+                                    WakeWordDecision::PassThrough(cleaned_text) => {
+                                        let _ = sender
+                                            .send(Ok(transcript_event(
+                                                session_id.clone(),
+                                                cleaned_text,
+                                                true,
+                                            )))
+                                            .await;
+                                    }
+                                }
                             }
                             buffer.clear();
                         }
@@ -318,5 +366,14 @@ fn transcript_event(session_id: String, text: String, is_final: bool) -> VoiceEv
     VoiceEvent {
         session_id,
         payload: Some(voice_event::Payload::Transcript(TranscriptEvent { text, is_final })),
+    }
+}
+
+fn wake_word_event(session_id: String, state: &str) -> VoiceEvent {
+    VoiceEvent {
+        session_id,
+        payload: Some(voice_event::Payload::WakeWord(WakeWordEvent {
+            state: state.to_string(),
+        })),
     }
 }

@@ -4,7 +4,7 @@ import VoiceButton from "@/components/VoiceButton";
 import VoiceTranscript from "@/components/VoiceTranscript";
 import VoiceVisualizer from "@/components/VoiceVisualizer";
 import type { VoiceVisualizerLevel } from "@/hooks/useVAD";
-import type { VoiceMode, VoiceVADState } from "@/store/useAppStore";
+import type { VoiceMode, VoiceVADState, VoiceWakeState } from "@/store/useAppStore";
 
 type MessageInputProps = {
   disabled?: boolean;
@@ -13,6 +13,7 @@ type MessageInputProps = {
     mode: VoiceMode;
     transcript: string;
     vadState: VoiceVADState;
+    wakeState: VoiceWakeState;
     visualizerLevel: VoiceVisualizerLevel;
     statusLabel: string;
     disabled: boolean;
@@ -48,6 +49,7 @@ export default function MessageInput({
               mode={voice.mode}
               transcript={voice.transcript}
               vadState={voice.vadState}
+              wakeState={voice.wakeState}
               statusLabel={voice.statusLabel}
             />
             <VoiceButton

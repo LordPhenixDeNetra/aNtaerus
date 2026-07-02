@@ -286,6 +286,53 @@ func TestForwardVoiceEventStreamsTranscriptAndSpeaks(t *testing.T) {
 	}
 }
 
+func TestForwardVoiceEventRelaysWakeState(t *testing.T) {
+	cfg := websocketTestConfig()
+	hub := &Hub{
+		config:        cfg,
+		voiceSessions: map[string]*voiceSession{},
+	}
+	client := &Client{
+		id:   "user-1",
+		send: make(chan contracts.ServerMessage, 2),
+		done: make(chan struct{}),
+	}
+	sessionCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	session := &voiceSession{
+		key:       "user-1:session-1",
+		client:    client,
+		sessionID: "session-1",
+		language:  defaultVoiceLanguage,
+		ctx:       sessionCtx,
+		cancel:    cancel,
+	}
+
+	hub.forwardVoiceEvent(session, &audiopb.VoiceEvent{
+		SessionId: "session-1",
+		Payload: &audiopb.VoiceEvent_WakeWord{
+			WakeWord: &audiopb.WakeWordEvent{State: "armed"},
+		},
+	})
+
+	select {
+	case message := <-client.send:
+		if message.Type != string(contracts.ServerMessageVoiceWakeState) {
+			t.Fatalf("expected %q, got %q", contracts.ServerMessageVoiceWakeState, message.Type)
+		}
+
+		var payload contracts.VoiceWakeStatePayload
+		if err := json.Unmarshal(message.Payload, &payload); err != nil {
+			t.Fatalf("expected valid wake payload, got error: %v", err)
+		}
+		if payload.State != "armed" {
+			t.Fatalf("expected wake state to be armed, got %q", payload.State)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("expected wake state message to be queued")
+	}
+}
+
 func TestWebSocketVoiceStopStopsRuntimeSession(t *testing.T) {
 	cfg := websocketTestConfig()
 	runtime := &fakeVoiceRuntimeClient{holdOpen: true}

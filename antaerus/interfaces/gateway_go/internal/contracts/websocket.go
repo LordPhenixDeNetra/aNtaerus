@@ -20,6 +20,7 @@ const (
 	ServerMessageVoiceTranscript       ServerMessageType = "voice.transcript"
 	ServerMessageVoiceAudio            ServerMessageType = "voice.audio"
 	ServerMessageVoiceVADState         ServerMessageType = "voice.vad_state"
+	ServerMessageVoiceWakeState        ServerMessageType = "voice.wake_state"
 	ServerMessageMissionUpdate         ServerMessageType = "mission.update"
 	ServerMessageSystemAlert           ServerMessageType = "system.alert"
 	ServerMessageProactiveNotification ServerMessageType = "proactive.notification"
@@ -75,6 +76,11 @@ type VoiceAudioPayload struct {
 }
 
 type VoiceVADStatePayload struct {
+	SessionID string `json:"sessionId"`
+	State     string `json:"state"`
+}
+
+type VoiceWakeStatePayload struct {
 	SessionID string `json:"sessionId"`
 	State     string `json:"state"`
 }

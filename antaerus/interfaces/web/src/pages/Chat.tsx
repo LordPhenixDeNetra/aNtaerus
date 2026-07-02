@@ -207,6 +207,7 @@ export default function Chat() {
                 mode: voice.voiceMode,
                 transcript: voice.voiceTranscript,
                 vadState: voice.voiceVADState,
+                wakeState: voice.voiceWakeState,
                 visualizerLevel,
                 statusLabel: voice.statusLabel,
                 disabled: !voice.isVoiceAvailable || connectionState === "connecting",

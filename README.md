@@ -325,3 +325,7 @@ Pour signaler une vulnérabilité ou une exposition de secret :
 Ce projet est distribué sous licence `MIT`.
 
 Voir [LICENSE](./LICENSE).
+
+
+
+<!-- Teste a parir de tâches M2.3 -->

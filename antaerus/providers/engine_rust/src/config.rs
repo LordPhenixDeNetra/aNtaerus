@@ -18,6 +18,7 @@ pub struct Settings {
     pub piper_model_path: Option<PathBuf>,
     pub piper_config_path: Option<PathBuf>,
     pub espeak_data_path: Option<PathBuf>,
+    pub wake_word: String,
 }
 
 impl Settings {
@@ -63,6 +64,10 @@ impl Settings {
             espeak_data_path: env::var("ANTAERUS_ENGINE_ESPEAK_DATA_PATH")
                 .ok()
                 .map(PathBuf::from),
+            wake_word: env::var("ANTAERUS_ENGINE_WAKE_WORD")
+                .ok()
+                .filter(|value| !value.trim().is_empty())
+                .unwrap_or_else(|| "aNtaerus".to_string()),
         }
     }
 }

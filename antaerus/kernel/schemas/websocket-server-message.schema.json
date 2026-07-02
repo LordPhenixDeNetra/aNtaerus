@@ -13,6 +13,7 @@
         "voice.transcript",
         "voice.audio",
         "voice.vad_state",
+        "voice.wake_state",
         "mission.update",
         "system.alert",
         "proactive.notification",
@@ -70,6 +71,18 @@
             "state": {
               "type": "string",
               "enum": ["speaking", "silence"]
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "title": "voice.wake_state",
+          "required": ["sessionId", "state"],
+          "properties": {
+            "sessionId": { "type": "string" },
+            "state": {
+              "type": "string",
+              "enum": ["waiting", "armed"]
             }
           },
           "additionalProperties": false

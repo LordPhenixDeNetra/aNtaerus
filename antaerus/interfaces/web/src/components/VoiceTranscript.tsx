@@ -1,15 +1,22 @@
-import type { VoiceMode, VoiceVADState } from "@/store/useAppStore";
+import type { VoiceMode, VoiceVADState, VoiceWakeState } from "@/store/useAppStore";
 
 type VoiceTranscriptProps = {
   mode: VoiceMode;
   transcript: string;
   vadState: VoiceVADState;
+  wakeState: VoiceWakeState;
   statusLabel: string;
 };
 
-function buildPlaceholder(mode: VoiceMode, vadState: VoiceVADState) {
+function buildPlaceholder(mode: VoiceMode, vadState: VoiceVADState, wakeState: VoiceWakeState) {
   if (mode === "speaking") {
     return "Réponse en cours...";
+  }
+  if (wakeState === "waiting") {
+    return "Dites aNtaerus pour armer la session.";
+  }
+  if (wakeState === "armed" && transcriptIsWakeOnlyPlaceholder(vadState)) {
+    return "Session armée. Votre prochaine demande vocale sera transmise.";
   }
   if (mode === "listening" && vadState === "speaking") {
     return "Parole détectée...";
@@ -24,9 +31,10 @@ export default function VoiceTranscript({
   mode,
   transcript,
   vadState,
+  wakeState,
   statusLabel,
 }: VoiceTranscriptProps) {
-  const content = transcript.trim() || buildPlaceholder(mode, vadState);
+  const content = transcript.trim() || buildPlaceholder(mode, vadState, wakeState);
 
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/5 px-4 py-3">
@@ -39,4 +47,8 @@ export default function VoiceTranscript({
       <p className="mt-2 text-xs text-slate-400">{statusLabel}</p>
     </div>
   );
+}
+
+function transcriptIsWakeOnlyPlaceholder(vadState: VoiceVADState) {
+  return vadState !== "speaking";
 }

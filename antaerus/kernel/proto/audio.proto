@@ -41,6 +41,7 @@ message VoiceEvent {
     VadEvent vad = 2;
     TranscriptEvent transcript = 3;
     SystemEvent system = 4;
+    WakeWordEvent wake_word = 5;
   }
 }
 
@@ -56,4 +57,8 @@ message TranscriptEvent {
 message SystemEvent {
   string level = 1;
   string message = 2;
+}
+
+message WakeWordEvent {
+  string state = 1;
 }

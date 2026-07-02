@@ -52,6 +52,18 @@ func (hub *Hub) forwardVoiceEvent(session *voiceSession, voiceEvent *audiopb.Voi
 		return
 	}
 
+	if wakeWord := voiceEvent.GetWakeWord(); wakeWord != nil {
+		state := strings.TrimSpace(wakeWord.GetState())
+		if state == "" {
+			state = "waiting"
+		}
+		session.client.enqueue(serverMessage(contracts.ServerMessageVoiceWakeState, contracts.VoiceWakeStatePayload{
+			SessionID: sessionID,
+			State:     state,
+		}))
+		return
+	}
+
 	if transcript := voiceEvent.GetTranscript(); transcript != nil {
 		text := transcript.GetText()
 		session.client.enqueue(serverMessage(contracts.ServerMessageVoiceTranscript, contracts.VoiceTranscriptPayload{

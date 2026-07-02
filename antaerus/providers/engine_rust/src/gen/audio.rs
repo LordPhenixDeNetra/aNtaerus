@@ -40,7 +40,7 @@ pub struct SpeakResponse {
 pub struct VoiceEvent {
     #[prost(string, tag = "1")]
     pub session_id: ::prost::alloc::string::String,
-    #[prost(oneof = "voice_event::Payload", tags = "2, 3, 4")]
+    #[prost(oneof = "voice_event::Payload", tags = "2, 3, 4, 5")]
     pub payload: ::core::option::Option<voice_event::Payload>,
 }
 
@@ -53,6 +53,8 @@ pub mod voice_event {
         Transcript(super::TranscriptEvent),
         #[prost(message, tag = "4")]
         System(super::SystemEvent),
+        #[prost(message, tag = "5")]
+        WakeWord(super::WakeWordEvent),
     }
 }
 
@@ -76,6 +78,12 @@ pub struct SystemEvent {
     pub level: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub message: ::prost::alloc::string::String,
+}
+
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WakeWordEvent {
+    #[prost(string, tag = "1")]
+    pub state: ::prost::alloc::string::String,
 }
 
 pub mod audio_runtime_server {
@@ -283,4 +291,3 @@ pub mod audio_runtime_server {
         const NAME: &'static str = "antaerus.kernel.audio.v1.AudioRuntime";
     }
 }
-

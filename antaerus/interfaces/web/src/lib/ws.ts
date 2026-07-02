@@ -11,6 +11,7 @@ export type WebSocketServerMessageType =
   | "voice.transcript"
   | "voice.audio"
   | "voice.vad_state"
+  | "voice.wake_state"
   | "mission.update"
   | "system.alert"
   | "proactive.notification"
@@ -67,6 +68,11 @@ export type VoiceVADStatePayload = {
   state: "speaking" | "silence";
 };
 
+export type VoiceWakeStatePayload = {
+  sessionId: string;
+  state: "waiting" | "armed";
+};
+
 export type MissionUpdatePayload = {
   missionId: string;
   status: string;
@@ -100,6 +106,7 @@ export type WebSocketServerMessage =
   | Envelope<"voice.transcript", VoiceTranscriptPayload>
   | Envelope<"voice.audio", VoiceAudioPayload>
   | Envelope<"voice.vad_state", VoiceVADStatePayload>
+  | Envelope<"voice.wake_state", VoiceWakeStatePayload>
   | Envelope<"mission.update", MissionUpdatePayload>
   | Envelope<"system.alert", SystemAlertPayload>
   | Envelope<"proactive.notification", ProactiveNotificationPayload>

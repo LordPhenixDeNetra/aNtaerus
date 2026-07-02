@@ -15,6 +15,7 @@ import type { HealthHeartbeatPayload } from "@/lib/ws";
 export type ConnectionState = "idle" | "connecting" | "connected" | "error";
 export type VoiceMode = "idle" | "listening" | "speaking";
 export type VoiceVADState = "speaking" | "silence" | null;
+export type VoiceWakeState = "waiting" | "armed" | null;
 
 type AppState = {
   config: LocalSetupConfig;
@@ -27,6 +28,7 @@ type AppState = {
   voiceSessionActive: boolean;
   voiceTranscript: string;
   voiceVADState: VoiceVADState;
+  voiceWakeState: VoiceWakeState;
   voiceLastUpdatedAt: number | null;
   setConfig: (nextConfig: LocalSetupConfig) => void;
   updateConfig: (patch: Partial<LocalSetupConfig>) => void;
@@ -48,6 +50,7 @@ type AppState = {
   setVoiceSessionActive: (active: boolean) => void;
   setVoiceTranscript: (transcript: string) => void;
   setVoiceVADState: (state: VoiceVADState) => void;
+  setVoiceWakeState: (state: VoiceWakeState) => void;
   resetVoiceState: () => void;
 };
 
@@ -67,6 +70,7 @@ export const useAppStore = create<AppState>((set) => ({
   voiceSessionActive: false,
   voiceTranscript: "",
   voiceVADState: null,
+  voiceWakeState: null,
   voiceLastUpdatedAt: null,
   setConfig: (nextConfig) =>
     set(() => ({
@@ -153,12 +157,18 @@ export const useAppStore = create<AppState>((set) => ({
       voiceVADState,
       voiceLastUpdatedAt: Date.now(),
     })),
+  setVoiceWakeState: (voiceWakeState) =>
+    set(() => ({
+      voiceWakeState,
+      voiceLastUpdatedAt: Date.now(),
+    })),
   resetVoiceState: () =>
     set(() => ({
       voiceMode: "idle",
       voiceSessionActive: false,
       voiceTranscript: "",
       voiceVADState: null,
+      voiceWakeState: null,
       voiceLastUpdatedAt: null,
     })),
 }));

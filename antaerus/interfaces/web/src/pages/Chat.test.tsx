@@ -87,6 +87,7 @@ describe("Chat", () => {
       voiceSessionActive: false,
       voiceTranscript: "",
       voiceVADState: null,
+      voiceWakeState: null,
       voiceLastUpdatedAt: null,
     });
   });

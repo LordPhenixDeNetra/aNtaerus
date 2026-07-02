@@ -1,6 +1,11 @@
 import { useMemo } from "react";
 
-import type { ConnectionState, VoiceMode, VoiceVADState } from "@/store/useAppStore";
+import type {
+  ConnectionState,
+  VoiceMode,
+  VoiceVADState,
+  VoiceWakeState,
+} from "@/store/useAppStore";
 import { useAppStore } from "@/store/useAppStore";
 
 type VoiceStreamArgs = {
@@ -23,6 +28,7 @@ export function useVoiceStream({
   const voiceTranscript = useAppStore((state) => state.voiceTranscript);
   const voiceSessionActive = useAppStore((state) => state.voiceSessionActive);
   const voiceVADState = useAppStore((state) => state.voiceVADState);
+  const voiceWakeState = useAppStore((state) => state.voiceWakeState);
 
   const isVoiceAvailable = config.chatTransport === "ws";
   const hasSession = Boolean(sessionId);
@@ -37,6 +43,15 @@ export function useVoiceStream({
     if (voiceMode === "speaking") {
       return "Réponse vocale en cours";
     }
+    if (voiceWakeState === "waiting") {
+      return "En attente du wake word aNtaerus";
+    }
+    if (voiceWakeState === "armed" && voiceVADState === "speaking") {
+      return "Parole détectée";
+    }
+    if (voiceWakeState === "armed") {
+      return "Session armée, écoute prête";
+    }
     if (voiceMode === "listening" && voiceVADState === "speaking") {
       return "Écoute active";
     }
@@ -47,7 +62,7 @@ export function useVoiceStream({
       return "Connexion WebSocket en cours";
     }
     return "Voix inactive";
-  }, [connectionState, isVoiceAvailable, voiceMode, voiceVADState]);
+  }, [connectionState, isVoiceAvailable, voiceMode, voiceVADState, voiceWakeState]);
 
   const primaryActionLabel = useMemo(() => {
     if (voiceMode === "speaking" || voiceMode === "listening") {
@@ -88,6 +103,7 @@ export function useVoiceStream({
     voiceMode: voiceMode as VoiceMode,
     voiceTranscript,
     voiceVADState: voiceVADState as VoiceVADState,
+    voiceWakeState: voiceWakeState as VoiceWakeState,
     voiceSessionActive,
     isVoiceAvailable,
     canStart,

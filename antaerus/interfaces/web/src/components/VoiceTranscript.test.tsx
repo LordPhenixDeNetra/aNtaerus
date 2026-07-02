@@ -13,6 +13,7 @@ describe("VoiceTranscript", () => {
         mode="listening"
         transcript="Bonjour en direct"
         vadState="speaking"
+        wakeState="armed"
         statusLabel="Écoute active"
       />,
     );
@@ -26,6 +27,7 @@ describe("VoiceTranscript", () => {
         mode="idle"
         transcript=""
         vadState={null}
+        wakeState={null}
         statusLabel="Voix inactive"
       />,
     );

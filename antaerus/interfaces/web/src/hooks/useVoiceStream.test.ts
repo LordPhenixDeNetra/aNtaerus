@@ -21,6 +21,7 @@ describe("useVoiceStream", () => {
       voiceSessionActive: false,
       voiceTranscript: "",
       voiceVADState: null,
+      voiceWakeState: null,
       voiceLastUpdatedAt: null,
     });
   });
@@ -90,5 +91,46 @@ describe("useVoiceStream", () => {
 
     expect(result.current.isVoiceAvailable).toBe(false);
     expect(result.current.statusLabel).toMatch(/SSE dev/i);
+  });
+
+  it("affiche un statut d'attente du wake word", () => {
+    useAppStore.setState({
+      voiceMode: "listening",
+      voiceSessionActive: true,
+      voiceWakeState: "waiting",
+    });
+
+    const { result } = renderHook(() =>
+      useVoiceStream({
+        sessionId: "session-1",
+        connectionState: "connected",
+        sendVoiceStart: vi.fn(),
+        sendVoiceStop: vi.fn(),
+        sendVoiceBargeIn: vi.fn(),
+      }),
+    );
+
+    expect(result.current.statusLabel).toMatch(/wake word/i);
+  });
+
+  it("affiche un statut de session armée", () => {
+    useAppStore.setState({
+      voiceMode: "listening",
+      voiceSessionActive: true,
+      voiceWakeState: "armed",
+      voiceVADState: "silence",
+    });
+
+    const { result } = renderHook(() =>
+      useVoiceStream({
+        sessionId: "session-1",
+        connectionState: "connected",
+        sendVoiceStart: vi.fn(),
+        sendVoiceStop: vi.fn(),
+        sendVoiceBargeIn: vi.fn(),
+      }),
+    );
+
+    expect(result.current.statusLabel).toMatch(/Session armée/i);
   });
 });

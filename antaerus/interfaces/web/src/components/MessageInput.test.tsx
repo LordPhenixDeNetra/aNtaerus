@@ -27,6 +27,7 @@ describe("MessageInput", () => {
           mode: "idle",
           transcript: "",
           vadState: null,
+          wakeState: null,
           visualizerLevel: "idle",
           statusLabel: "Voix inactive",
           disabled: false,

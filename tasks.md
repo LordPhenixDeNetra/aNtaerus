@@ -227,9 +227,16 @@
 - Correctif post-livraison 3 : `scripts/dev-engine.ps1` charge maintenant `LIBCLANG_PATH`, `ONNX_RUNTIME_DIR` et `ONNX_INCLUDE_PATH` depuis `antaerus/.env` (avec alias `ANTAERUS_ENGINE_LIBCLANG_PATH`), tente les emplacements LLVM 64 bits usuels sous Windows et échoue avec un message explicite avant le panic `bindgen` si `libclang.dll` compatible est absent. `scripts/validation/smoke-engine.ps1` réutilise le même point d'entrée pour éviter un diagnostic incohérent entre lancement dev et smoke test. Dans l'environnement Windows courant, le seul `libclang.dll` trouvé sous Unity a ete confirme comme DLL 32 bits invalide pour `bindgen`; l'installation d'un LLVM 64 bits reste donc le prealable local pour compiler `whisper-rs-sys` et `piper1-rs-sys`.
 
 ### M2.4 — Wake Word (optionnel P1)
-- [ ] Implémenter détection wake word "aNtaerus" (pattern audio ou model léger)
-- [ ] Tester précision wake word (fausses acceptations < 1/jour)
-- [ ] Intégrer wake word dans VAD Rust
+- [x] Implémenter détection wake word "aNtaerus" (pattern audio ou model léger)
+- [x] Tester précision wake word (fausses acceptations < 1/jour)
+- [x] Intégrer wake word dans VAD Rust
+
+État actuel :
+- `M2.4` est maintenant livré sous forme d'un wake word transcript-first dans `antaerus/providers/engine_rust/src/audio/wake_word.rs` et `antaerus/providers/engine_rust/src/protocol/server.rs` : tant qu'une session voix n'est pas armée, seuls les transcripts finaux commencant par `ANTAERUS_ENGINE_WAKE_WORD` (defaut `aNtaerus`) sont conservés.
+- La premiere detection du wake word arme durablement la session jusqu'a `voice.stop`; `aNtaerus` seul n'interroge pas le LLM, tandis que `aNtaerus bonjour` transmet uniquement `bonjour` au brain Python.
+- Le contrat voix expose maintenant un etat `waiting` / `armed` via `WakeWordEvent` dans `antaerus/kernel/proto/audio.proto`, relayé jusqu'au frontend par `voice.wake_state`.
+- L'UI React consomme ce nouvel etat dans `antaerus/interfaces/web/src/store/useAppStore.ts`, `useWebSocket.ts`, `useVoiceStream.ts` et `VoiceTranscript.tsx` pour afficher explicitement l'attente du wake word puis l'etat arme.
+- La couverture de regression inclut des tests Rust dedies au matching normalise du wake word, un test Go de relay `voice.wake_state`, et des tests frontend pour la consommation du nouvel etat et les libelles de statut associes.
 
 ---
 

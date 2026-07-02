@@ -8,6 +8,7 @@ pub mod resampler;
 pub mod stt;
 pub mod tts;
 pub mod vad;
+pub mod wake_word;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AudioError {
