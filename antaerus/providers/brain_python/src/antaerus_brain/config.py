@@ -4,9 +4,12 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from os import getenv
 from pathlib import Path
+from typing import Literal
 
 from dotenv import load_dotenv
 from pydantic import SecretStr
+
+ProviderName = Literal["anthropic", "openai", "mistral", "deepseek", "ollama"]
 
 
 @dataclass(frozen=True)
@@ -18,7 +21,7 @@ class Settings:
     api_secret: SecretStr
     assistant_name: str
     assistant_system_prompt: str
-    default_provider: str
+    default_provider: ProviderName
     anthropic_api_key: SecretStr
     openai_api_key: SecretStr
     mistral_api_key: SecretStr
@@ -50,6 +53,10 @@ class Settings:
     vision_model_path: Path | None = None
     vision_default_image_path: Path | None = None
     vision_enable_screen_capture: bool = False
+    mission_max_steps: int = 20
+    mission_llm_timeout_seconds: float = 30.0
+    mission_recovery_enabled: bool = True
+    mission_reflexion_enabled: bool = True
 
 
 def _project_root() -> Path:
@@ -79,12 +86,12 @@ def _parse_bool(raw_value: str, *, default: bool) -> bool:
     return normalized in {"1", "true", "yes", "on"}
 
 
-def _require_supported_provider(provider: str) -> str:
+def _require_supported_provider(provider: str) -> ProviderName:
     normalized = provider.strip().lower()
     if normalized not in {"anthropic", "openai", "mistral", "deepseek", "ollama"}:
         raise ValueError(f"Unsupported default provider: {provider}")
 
-    return normalized
+    return normalized  # type: ignore[return-value]
 
 
 def _resolve_project_path(raw_value: str, fallback: Path) -> Path:
@@ -130,6 +137,16 @@ def get_settings() -> Settings:
     )
     browser_timeout_seconds = float(getenv("ANTAERUS_BRAIN_BROWSER_TIMEOUT_SECONDS", "12"))
     weather_timeout_seconds = float(getenv("ANTAERUS_BRAIN_WEATHER_TIMEOUT_SECONDS", "10"))
+    mission_max_steps = int(getenv("ANTAERUS_BRAIN_MISSION_MAX_STEPS", "20"))
+    mission_llm_timeout_seconds = float(getenv("ANTAERUS_BRAIN_MISSION_LLM_TIMEOUT_SECONDS", "30"))
+    mission_recovery_enabled = _parse_bool(
+        getenv("ANTAERUS_BRAIN_MISSION_RECOVERY_ENABLED", ""),
+        default=True,
+    )
+    mission_reflexion_enabled = _parse_bool(
+        getenv("ANTAERUS_BRAIN_MISSION_REFLEXION_ENABLED", ""),
+        default=True,
+    )
     vision_model_raw = getenv("ANTAERUS_BRAIN_VISION_MODEL_PATH", "").strip()
     vision_image_raw = getenv("ANTAERUS_BRAIN_VISION_DEFAULT_IMAGE_PATH", "").strip()
 
@@ -192,6 +209,10 @@ def get_settings() -> Settings:
             getenv("ANTAERUS_BRAIN_VISION_ENABLE_SCREEN_CAPTURE", ""),
             default=False,
         ),
+        mission_max_steps=mission_max_steps,
+        mission_llm_timeout_seconds=mission_llm_timeout_seconds,
+        mission_recovery_enabled=mission_recovery_enabled,
+        mission_reflexion_enabled=mission_reflexion_enabled,
     )
 
     if settings.port <= 0:
@@ -214,6 +235,12 @@ def get_settings() -> Settings:
 
     if settings.weather_timeout_seconds <= 0:
         raise ValueError("ANTAERUS_BRAIN_WEATHER_TIMEOUT_SECONDS must be greater than zero")
+
+    if settings.mission_max_steps <= 0:
+        raise ValueError("ANTAERUS_BRAIN_MISSION_MAX_STEPS must be greater than zero")
+
+    if settings.mission_llm_timeout_seconds <= 0:
+        raise ValueError("ANTAERUS_BRAIN_MISSION_LLM_TIMEOUT_SECONDS must be greater than zero")
 
     if (
         settings.default_provider == "anthropic"

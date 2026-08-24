@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from antaerus_brain.api.health import router as health_router
 from antaerus_brain.api.llm import router as llm_router
 from antaerus_brain.api.memory import router as memory_router
+from antaerus_brain.api.missions import router as missions_router
 from antaerus_brain.api.tools import router as tools_router
 from antaerus_brain.config import get_settings
 
@@ -20,6 +21,7 @@ def create_app() -> FastAPI:
     app.include_router(llm_router)
     app.include_router(memory_router)
     app.include_router(tools_router)
+    app.include_router(missions_router)
     return app
 
 

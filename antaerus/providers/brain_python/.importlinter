@@ -10,3 +10,33 @@ source_modules =
     antaerus.kernel
 forbidden_modules =
     antaerus_brain
+
+[importlinter:contract:mission-no-backrefs]
+name = Le module mission ne doit pas dependre de l'API brain
+type = forbidden
+source_modules =
+    antaerus_brain.mission
+forbidden_modules =
+    antaerus_brain.api
+
+[importlinter:contract:mission-correct-deps]
+name = Le module mission ne peut importer que memory, llm, tools, approval, config, sa propre couche, modules stdlib/externes
+type = layers
+layers =
+    antaerus_brain.mission
+    antaerus_brain.approval
+    antaerus_brain.tools
+    antaerus_brain.memory
+    antaerus_brain.llm
+    antaerus_brain.config
+ignore_modules =
+    antaerus_brain.mission.*
+
+[importlinter:contract:api-can-import-mission]
+name = L'API brain peut importer le module mission
+type = layers
+layers =
+    antaerus_brain.api
+    antaerus_brain.mission
+ignore_modules =
+    antaerus_brain.api.*

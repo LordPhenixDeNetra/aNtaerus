@@ -299,13 +299,24 @@
 ## Phase M4 — Mission Engine (3 semaines)
 
 ### M4.1 — Mission Engine Core
-- [ ] Implémenter `brain_python/mission/engine.py` : décomposition demande en étapes
-- [ ] Implémenter `brain_python/mission/verifier.py` : vérification structurale (syntaxe plan)
-- [ ] Implémenter `brain_python/mission/semantic_verifier.py` : vérification sémantique (cohérence)
-- [ ] Implémenter `brain_python/mission/orchestrator.py` : exécution étape par étape
-- [ ] Implémenter `brain_python/mission/reflexion.py` : réflexion post-mission
-- [ ] Implémenter `brain_python/mission/state.py` : persistance état mission (SQLite)
-- [ ] Implémenter `brain_python/mission/recovery.py` : reprise après crash (idempotence)
+- [x] Implémenter `brain_python/mission/engine.py` : décomposition demande en étapes
+- [x] Implémenter `brain_python/mission/verifier.py` : vérification structurale (syntaxe plan)
+- [x] Implémenter `brain_python/mission/semantic_verifier.py` : vérification sémantique (cohérence)
+- [x] Implémenter `brain_python/mission/orchestrator.py` : exécution étape par étape
+- [x] Implémenter `brain_python/mission/reflexion.py` : réflexion post-mission
+- [x] Implémenter `brain_python/mission/state.py` : persistance état mission (SQLite)
+- [x] Implémenter `brain_python/mission/recovery.py` : reprise après crash (idempotence)
+
+État actuel :
+- Le package `antaerus/providers/brain_python/src/antaerus_brain/mission/` expose 8 modules cohérents entre eux : `schemas.py` (Pydantic v2 + CREATE TABLE 4 tables SQLite mission / mission_steps / mission_events / mission_step_idempotency avec 3 index), `state.py` (MissionStateStore aiosqlite pour CRUD mission, step, event, idempotence PK mission_id+payload_hash, find_interrupted_steps), `engine.py` (MissionPlanner avec LLM 3 tentatives JSON, stripping code fences, fallback mission final si échec), `verifier.py` (StructuralVerifier 7 règles: 20 étapes max, indexes consécutifs, DAG sans cycle, tool names autorisés, JSON args, champs non vides, warnings distincts des erreurs), `semantic_verifier.py` (SemanticVerifier fallback ok+warnings si LLM absent ou erreur réseau), `recovery.py` (RecoveryManager.scan/recover utilisant idempotence snapshot pour rejeu idempotent).
+- L'orchestrateur central `orchestrator.py` enchaîne vérifications structurale + sémantique → transitions mission planned→running → boucle prérequis/skip no-tool/idempotence/dispatch BaseTool._run() → stop-on-failure ou completed. Tous les événements majeurs (vérif, step start, step ok/ko, idempotence replay) sont persistés en `mission_events`.
+- Le module `reflexion.py` (ReflexionEngine) tente un bilan LLM JSON 6 champs (summary, successes, failures, suggested_fixes, facts_to_remember, score_quality) et retombe en bilan heuristique si JSON irrécupérable ou LLM indisponible ; `warnings: list[str]` est présent sur ReflexionReport pour notifier les dégradations.
+- La couche API FastAPI expose un router `/missions` via `antaerus/providers/brain_python/src/antaerus_brain/api/missions.py` inclus dans `app.py` : `POST /missions` (créer planifier via planner), `GET /missions` (lister filtre sessionId/status), `GET /missions/{id}`, `POST /missions/{id}/run` (conflict 409 si status ≠ planned/paused), `POST /missions/{id}/recover`, `POST /missions/{id}/reflect` (conflict 409 si status ≠ terminal, écrit un event "reflexion" et pousse facts_to_remember dans MemoryKernel si disponible), `GET /missions/{id}/events`.
+- La configuration Settings (frozen dataclass dans `config.py`) a 4 nouveaux champs mission : `mission_max_steps`, `mission_llm_timeout_seconds`, `mission_recovery_enabled`, `mission_reflexion_enabled`, alimentés par `ANTAERUS_BRAIN_MISSION_*` ajoutés dans `.env.example`. Le `default_provider` est désormais typé `ProviderName = Literal["anthropic","openai","mistral","deepseek","ollama"]`.
+- Le handler `/internal/capabilities` annonce `mission-engine`, `mission-state-store`, et conditionnellement `mission-recovery` / `mission-reflexion` selon configuration.
+- Les contrats d'import `.importlinter` sont étendus : `mission-no-backrefs` (mission ne doit pas importer api), `mission-correct-deps` (mission→approval→tools→memory→llm→config, ordre topologique layers), `api-can-import-mission`.
+- Qualimétrie et couverture : 49 tests dédiés (9 fichiers test_mission_*) tous verts ; `mypy` ne signale aucune erreur sur mission, api/missions.py et config.py ; `ruff check --ignore E501` et `ruff format` sont propres ; `run_import_linter.py` retourne 4/4 contrats respectés.
+- Le scénario nominal (créer mission avec FakeLLM → obtenir statut planned → lister → récupérer détail → lister events=[]) est couvert par `test_mission_api.py` avec TestClient FastAPI et monkeypatch Settings cohérent. La reprise après crash est testée via snapshot idempotence PK mission_id+payload_hash.
 
 ### M4.2 — Go Mission Proxy
 - [ ] Implémenter `gateway/mission_handler.go` : routes REST missions
