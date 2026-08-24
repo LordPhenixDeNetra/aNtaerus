@@ -85,7 +85,7 @@ describe("App", () => {
     );
   });
 
-  it("affiche la page de chat par défaut", async () => {
+  it("affiche la page d'accueil puis la page Mission Engine via routing", async () => {
     render(
       <QueryClientProvider client={new QueryClient()}>
         <App />
@@ -93,9 +93,9 @@ describe("App", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Chat texte aNtaerus/i)).toBeInTheDocument();
+      expect(screen.getByText(/aNtaerus · Plateforme/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("link", { name: /Setup/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Mission Engine/i })).toBeInTheDocument();
   });
 });

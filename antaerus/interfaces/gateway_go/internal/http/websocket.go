@@ -26,6 +26,7 @@ type Hub struct {
 	upgrader            websocket.Upgrader
 	register            chan *Client
 	unregister          chan *Client
+	broadcast           chan contracts.ServerMessage
 	clients             map[*Client]struct{}
 	voiceMu             sync.Mutex
 	voiceSessions       map[string]*voiceSession
@@ -63,6 +64,7 @@ func NewHub(
 		},
 		register:      make(chan *Client),
 		unregister:    make(chan *Client),
+		broadcast:     make(chan contracts.ServerMessage, 64),
 		clients:       map[*Client]struct{}{},
 		voiceSessions: map[string]*voiceSession{},
 	}
@@ -118,6 +120,17 @@ func (hub *Hub) run() {
 			if _, ok := hub.clients[client]; ok {
 				delete(hub.clients, client)
 				close(client.send)
+			}
+		case message := <-hub.broadcast:
+			for client := range hub.clients {
+				select {
+				case client.send <- message:
+				default:
+					if _, ok := hub.clients[client]; ok {
+						delete(hub.clients, client)
+						close(client.send)
+					}
+				}
 			}
 		}
 	}

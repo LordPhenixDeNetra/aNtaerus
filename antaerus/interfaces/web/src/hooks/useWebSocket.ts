@@ -28,6 +28,7 @@ export function useWebSocket(sessionId: string) {
   const setVoiceVADState = useAppStore((state) => state.setVoiceVADState);
   const setVoiceWakeState = useAppStore((state) => state.setVoiceWakeState);
   const resetVoiceState = useAppStore((state) => state.resetVoiceState);
+  const mergeMissionUpdate = useAppStore((state) => state.mergeMissionUpdate);
   const socketRef = useRef<WebSocket | null>(null);
   const connectPromiseRef = useRef<Promise<boolean> | null>(null);
 
@@ -175,6 +176,9 @@ export function useWebSocket(sessionId: string) {
           case "health.heartbeat":
             setHeartbeat(message.payload.services);
             break;
+          case "mission.update":
+            mergeMissionUpdate(message.payload);
+            break;
           default:
             break;
         }
@@ -187,6 +191,7 @@ export function useWebSocket(sessionId: string) {
     config.gatewayBaseUrl,
     ensureDevToken,
     finalizeAssistantMessage,
+    mergeMissionUpdate,
     resetVoiceState,
     setConnectionState,
     setHeartbeat,

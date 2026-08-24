@@ -319,15 +319,39 @@
 - Le scénario nominal (créer mission avec FakeLLM → obtenir statut planned → lister → récupérer détail → lister events=[]) est couvert par `test_mission_api.py` avec TestClient FastAPI et monkeypatch Settings cohérent. La reprise après crash est testée via snapshot idempotence PK mission_id+payload_hash.
 
 ### M4.2 — Go Mission Proxy
-- [ ] Implémenter `gateway/mission_handler.go` : routes REST missions
-- [ ] Implémenter `gateway/mission_proxy.go` : proxy vers Python mission engine
-- [ ] Implémenter `gateway/mission_ws.go` : push WebSocket progression mission
+- [x] Implémenter `gateway/mission_handler.go` : routes REST missions
+- [x] Implémenter `gateway/mission_proxy.go` : proxy vers Python mission engine
+- [x] Implémenter `gateway/mission_ws.go` : push WebSocket progression mission
+
+État actuel : M4.2
+- Le package `antaerus/interfaces/gateway_go/internal/clients/brain_mission_client.go` introduit un client HTTP dédié `BrainMissionClient` qui reproduit 1:1 les endpoints missions Python de M4.1 : `CreateMission`, `ListMissions`, `GetMission`, `RunMission`, `RecoverMission`, `ReflectMission`, `ListMissionEvents`. Les structs Go `Mission` / `MissionStep` / `StepResult` / `ReflexionReport` / `MissionEvent` / `CreateMissionRequest` / `ListMissionsResponse` / `MissionEventsResponse` sont alignés sur le schéma Python. Un helper générique `doJSON` applique un `context.WithTimeout` par requête, encode JSON, décode la réponse et remonte `BrainMissionError{StatusCode,Body}` sur les 4xx/5xx.
+- Le module `internal/http/mission_proxy.go` fournit `writeJSON` (en-tête + encode), `writeMissionError` (mappe `BrainMissionError.StatusCode` sur le code HTTP correspondant ou 502 Bad Gateway) et `missionHTTPStatus` (draft→201, planned/paused/running→202, completed/failed/cancelled→200).
+- Le module `internal/http/mission_handler.go` déclare `MissionHandlers{missionClient, hub}` qui implémente `http.Handler` avec un ServeHTTP unique dispatchant vers `handleCreate` (POST /missions), `handleList` (GET /missions), `handleGet` (GET /{id}), `handleRun` (POST /{id}/run), `handleRecover` (POST /{id}/recover), `handleReflect` (POST /{id}/reflect), `handleEvents` (GET /{id}/events). Après `Run` et `Recover` réussis, le handler appelle `hub.BroadcastMissionUpdate(mission, stepResult?)` pour notifier tous les clients WS connectés.
+- Le module `internal/http/mission_ws.go` définit `Hub.BroadcastMissionUpdate(mission, stepResult?)` qui peuple le nouveau `MissionUpdatePayload` étendu (stepIndex / stepId / stepStatus / stepResultJson / error) selon le statut de la première step active/failed/completed trouvée ; le message `serverMessage(ServerMessageMissionUpdate, payload)` est déposé dans le nouveau canal `hub.broadcast` (bufferisé 64).
+- Le struct `contracts.MissionUpdatePayload` dans `internal/contracts/websocket.go` est étendu à 7 champs (MissionID, Status, StepIndex*, StepID*, StepStatus*, StepResultJson*, Error*) avec tags `omitempty` ; son équivalent TS est étendu miroir dans `web/src/lib/ws.ts`.
+- Le Hub (`websocket.go`) gagne un canal `broadcast chan contracts.ServerMessage` initialisé dans `NewHub` (taille 64) ; `Hub.run()` sélectionne désormais 3 cas (register / unregister / broadcast). Sur broadcast, le run diffuse `contracts.ServerMessage` à tous `hub.clients` via envoi non bloquant (`select default`) : tout client lent dont le canal `send` est plein est déconnecté proprement (close send + retrait de la map). Côté WS dispatch, `ClientMessageCancel = "mission.cancel"` était déjà géré.
+- Le wiring dans `internal/http/routes.go` crée un `missionHTTPClient` avec `cfg.WriteTimeout`, instancie `BrainMissionClient`, construit `missionHandlers := NewMissionHandlers(missionClient, hub)` et enregistre `/api/v1/missions` + `/api/v1/missions/` dans `apiMux` (même handler pour gérer les suffixes de segments). Les routes `/api/v1/system` conservent leur contrat existant.
+- Le package `internal/system/health.go` ajoute `mission-proxy` et `mission-ws-push` aux `Capabilities` du `gateway_go` (agrégation `/api/v1/system/status`).
+- Tests Go : `internal/clients/brain_mission_client_test.go` couvre Create, List/Run/Recover/Reflect/Events enchaînés, et mapping 409 vers `BrainMissionError`. `internal/http/mission_handler_test.go` couvre Create+List, le conflit 409 sur Run et l'envoi d'un `mission.update` dans `hub.broadcast` (vérification par lecture non bloquante sur le canal). `go test ./interfaces/gateway_go/...` passe 0 FAIL. `go build ./interfaces/gateway_go/...` est clean.
 
 ### M4.3 — React Mission UI
-- [ ] Implémenter `pages/Missions.tsx` : liste missions en cours
-- [ ] Implémenter `components/MissionCard.tsx` : carte mission (état, étapes, progression)
-- [ ] Implémenter `components/MissionStep.tsx` : étape individuelle (pending/active/done/failed)
-- [ ] Implémenter `hooks/useMissions.ts` : gestion missions temps réel
+- [x] Implémenter `pages/Missions.tsx` : liste missions en cours
+- [x] Implémenter `components/MissionCard.tsx` : carte mission (état, étapes, progression)
+- [x] Implémenter `components/MissionStep.tsx` : étape individuelle (pending/active/done/failed)
+- [x] Implémenter `hooks/useMissions.ts` : gestion missions temps réel
+
+État actuel : M4.3
+- `web/src/lib/api.ts` est étendu avec 8 types TS (`StepResult`, `MissionStep`, `ReflexionReport`, `Mission`, `CreateMissionRequest`, `ListMissionsResponse`, `MissionEvent`, `MissionEventsResponse`) et 7 fonctions fetch qui appellent EXCLUSIVEMENT le gateway via `/api/v1/missions*` (aucun appel direct au brain Python) : `createMission`, `listMissions`, `getMission`, `runMission`, `recoverMission`, `reflectMission`, `listMissionEvents`. Un helper interne `apiURL` encode les query params.
+- `web/src/lib/ws.ts` étend `MissionUpdatePayload` TS avec `stepIndex?`, `stepId?`, `stepStatus?`, `stepResultJson?`, `error?`, en miroir de la struct Go. `useWebSocket` (hook) a été complété par un case `mission.update` qui appelle `useAppStore.getState().mergeMissionUpdate(payload)` — tout push WS du Hub fusionne donc directement dans le store Zustand sans passer par des événements DOM.
+- `web/src/components/MissionStep.tsx` expose 4 variantes visuelles via un `Record<status, styles>` : pending (gris slate), running (bleu sky avec icône Loader2 `animate-spin` + dot `animate-pulse`), completed (vert emerald), failed (rouge rose), skipped inclus aussi. La carte est pliable par clic (ChevronRight/Down) et affiche `description`, `toolName/toolArgs` (JSON préformaté) et `result` (summary/duration/error) dans des panneaux `rounded-2xl border bg-slate-950/40`.
+- `web/src/components/MissionCard.tsx` affiche l'entête Mission (icône Activity, pill statut coloré, ID tronqué + createdAt) ; un compteur progression `done/total` avec barre `w-28 rounded-full` gradient sky→emerald ; 3 boutons Run/Recover/Reflect conditionnels sur le statut mission (`canRun`, `canRecover`, `canReflect`). La section étapes se déplie avec le bouton `etapes/reduire` et liste `MissionStepRow` pour chaque step.
+- `web/src/hooks/useMissions.ts` est un hook Zustand-aware qui : (a) au montage appelle `refresh()` + interval 10s polling ; (b) expose `create`, `run`, `recover`, `reflect`, `setMissionsFilter`, `updateStep`, `mergeMissionUpdate`, `addOrUpdateMission` ; (c) écrit les erreurs via `setMissionsError` et optimistement `mergeMissionUpdate(status="running")` au début de `run()` puis refraîchit par l'API.
+- `web/src/store/useAppStore.ts` gagne 8 champs dédiés missions (`missions`, `missionsTotal`, `missionsLoading`, `missionsLastError`, `missionsFilter`) + 6 actions (`setMissionsFilter`, `setMissions`, `setMissionsLoading`, `setMissionsError`, `addOrUpdateMission`, `mergeMissionUpdate`). Le reducer `mergeMissionUpdate` fusionne status/error globaux puis la step ciblée par `stepIndex` ou `stepId` (stepStatus + stepResultJson JSON parse).
+- `web/src/pages/Missions.tsx` déclare un dashboard `rounded-[32px]` violet/cyan avec 3 Metrics (Missions vues / En cours / Terminées). Panneau gauche : formulaire création mission (textarea user_request + autonomie dropdown / limit / sessionId / status) + filtres rapides par statut (8 chips). Panneau droit : liste de `MissionCard` (`space-y-5`), avec états squelette `animate-pulse` pendant chargement et message vide explicatif si 0 mission.
+- Le routing est câblé dans `web/src/App.tsx` : `"/"` → `Home`, `"/chat"` → `Chat`, `"/setup"` → `Setup`, `"/foundation"` → `FoundationDashboard`, `"/missions"` → `Missions`.
+- `web/src/pages/Home.tsx` devient une entry avec 4 cartes grid 2col `rounded-3xl backdrop-blur` : Chat, Foundation Dashboard, Mission Engine (lien vers `/missions`), Configuration. Un header Plateforme affiche Produit · Couches en métriques.
+- Qualimétrie web : `npm run check` (tsc -b --noEmit) 0 erreur, `npm run build` (tsc + vite build) produit `dist/` sans erreur (seul un chunk >500kB warning non bloquant), `npx vitest run` passe 40/40 tests verts sur 17 fichiers (y compris les nouveaux MissionStep.test 2/2, MissionCard.test 3/3, useMissions.test 3/3, App.test 1/1).
+- Architecture 4 couches CDC §5.1 respectée strictement : tout le traffic mission React transite par `/api/v1/missions*` sur le Go Gateway. Aucun fetch brain direct n'existe sur les fichiers mission du web.
 
 ---
 

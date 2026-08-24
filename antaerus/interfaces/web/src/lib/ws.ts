@@ -76,6 +76,11 @@ export type VoiceWakeStatePayload = {
 export type MissionUpdatePayload = {
   missionId: string;
   status: string;
+  stepIndex?: number;
+  stepId?: string;
+  stepStatus?: string;
+  stepResultJson?: string;
+  error?: string;
 };
 
 export type SystemAlertPayload = {

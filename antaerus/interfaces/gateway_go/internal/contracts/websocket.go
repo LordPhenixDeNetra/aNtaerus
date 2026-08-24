@@ -86,8 +86,13 @@ type VoiceWakeStatePayload struct {
 }
 
 type MissionUpdatePayload struct {
-	MissionID string `json:"missionId"`
-	Status    string `json:"status"`
+	MissionID      string  `json:"missionId"`
+	Status         string  `json:"status"`
+	StepIndex      *int    `json:"stepIndex,omitempty"`
+	StepID         *string `json:"stepId,omitempty"`
+	StepStatus     *string `json:"stepStatus,omitempty"`
+	StepResultJSON *string `json:"stepResultJson,omitempty"`
+	Error          *string `json:"error,omitempty"`
 }
 
 type SystemAlertPayload struct {

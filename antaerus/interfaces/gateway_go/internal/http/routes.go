@@ -31,11 +31,14 @@ func newMux(
 	apiMux := http.NewServeMux()
 	healthHTTPClient := &http.Client{Timeout: cfg.RequestTimeout}
 	chatHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
+	missionHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	healthService := system.NewHealthService(cfg, healthHTTPClient)
 	authenticator := NewAuthenticator(cfg)
 	rateLimiter := NewRateLimiter(cfg)
 	brainChat := clients.NewBrainChatClient(chatHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
+	missionClient := clients.NewBrainMissionClient(missionHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	hub := NewHub(cfg, authenticator, rateLimiter, brainChat, voiceFactory, healthService)
+	missionHandlers := NewMissionHandlers(missionClient, hub)
 
 	mux.HandleFunc("/health", handlers.HandleHealth)
 	apiMux.HandleFunc("/api/v1/health", handlers.HandleAggregatedHealth)
@@ -44,6 +47,8 @@ func newMux(
 	apiMux.HandleFunc("/api/v1/auth/dev-token", NewDevTokenHandler(cfg, authenticator))
 	apiMux.HandleFunc("/api/v1/chat/sessions/", NewChatHistoryHandler(brainChat))
 	apiMux.HandleFunc("/api/v1/ws", hub.ServeWS)
+	apiMux.HandleFunc("/api/v1/missions", missionHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/missions/", missionHandlers.ServeHTTP)
 	mux.Handle("/api/", withCORS(cfg, apiMux))
 
 	if staticHandler := newFrontendStaticHandler(); staticHandler != nil {

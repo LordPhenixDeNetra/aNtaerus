@@ -74,7 +74,7 @@ func (service HealthService) Capabilities(ctx context.Context) []clients.Service
 			Name:         "gateway_go",
 			Version:      service.config.Version,
 			Runtime:      "go",
-			Capabilities: []string{"healthcheck", "service-aggregation", "http-api"},
+			Capabilities: []string{"healthcheck", "service-aggregation", "http-api", "mission-proxy", "mission-ws-push"},
 			Source:       "local",
 		},
 		clients.FetchCapabilities(ctx, service.httpClient, clients.NewBrainClient(service.config.BrainBaseURL)),
