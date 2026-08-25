@@ -24,6 +24,9 @@ filesystem:
     - docs
     - memory_data
     - providers/brain_python
+    - C:/Users/DELL/Music
+    - C:/Users/DELL/Videos
+    - C:/Users/DELL/Downloads
   max_bytes: 65536
 
 memory_tool:
@@ -40,4 +43,12 @@ cli:
     - cargo
     - uv
     - npm
+    - explorer
+    - explorer.exe
+    - vlc
+    - vlc.exe
+    - wmplayer
+    - wmplayer.exe
+    - msedge
+    - msedge.exe
   timeout_seconds: 10

@@ -1,5 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, AlertTriangle, Settings2, Wifi, WifiOff, Zap } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Settings2,
+  Wifi,
+  WifiOff,
+  Zap,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 
@@ -46,6 +54,7 @@ export default function Chat() {
     sendVoiceStop,
     sendVoiceBargeIn,
   } = useWebSocket(sessionId);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const { isStreaming, streamPrompt } = useChatStream();
   const { visualizerLevel } = useVAD();
   const voice = useVoiceStream({
@@ -213,7 +222,30 @@ export default function Chat() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void ensureDevToken()}
+                  onClick={async () => {
+                    try {
+                      setLastError(null);
+                      setSuccessMessage(null);
+                      const generated = await ensureDevToken(true);
+                      if (!generated) {
+                        throw new Error("Jeton vide retourné par le gateway.");
+                      }
+                      const short =
+                        generated.length > 24
+                          ? `${generated.slice(0, 12)}...${generated.slice(-8)}`
+                          : generated;
+                      setSuccessMessage(
+                        `Jeton JWT dev régénéré (${short}). Cliquez sur « Connecter » pour établir la WebSocket.`,
+                      );
+                    } catch (error) {
+                      const hint =
+                        error instanceof Error ? error.message : "Erreur inconnue.";
+                      setLastError(
+                        `Impossible de générer un jeton JWT dev : ${hint}`,
+                      );
+                      setSuccessMessage(null);
+                    }
+                  }}
                   className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200"
                 >
                   Générer JWT dev
@@ -239,6 +271,23 @@ export default function Chat() {
                 </button>
               </div>
             </div>
+
+            {successMessage ? (
+              <div className="rounded-3xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                <div className="flex flex-wrap items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-emerald-200" />
+                  <p className="flex-1 font-medium">{successMessage}</p>
+                  <button
+                    type="button"
+                    onClick={() => void connect()}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-100 hover:bg-emerald-400/20"
+                  >
+                    <Wifi className="h-3.5 w-3.5" />
+                    Connecter maintenant
+                  </button>
+                </div>
+              </div>
+            ) : null}
 
             {lastError && (
               <div className="rounded-3xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">

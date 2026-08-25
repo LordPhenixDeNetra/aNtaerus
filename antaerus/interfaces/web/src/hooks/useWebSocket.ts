@@ -49,8 +49,8 @@ export function useWebSocket(sessionId: string) {
     );
   }, []);
 
-  const ensureDevToken = useCallback(async () => {
-    if (config.websocketDevToken.trim()) {
+  const ensureDevToken = useCallback(async (force: boolean = false) => {
+    if (!force && config.websocketDevToken.trim()) {
       return config.websocketDevToken;
     }
 
@@ -99,9 +99,51 @@ export function useWebSocket(sessionId: string) {
       return false;
     }
 
-    const socket = new WebSocket(
-      buildWebSocketUrl(config.gatewayBaseUrl, token),
-    );
+    const wsAbsoluteUrl = buildWebSocketUrl(config.gatewayBaseUrl, token);
+    try {
+      const httpCheck = new URL(wsAbsoluteUrl);
+      httpCheck.protocol = httpCheck.protocol === "wss:" ? "https:" : "http:";
+      const probe = await fetch(httpCheck.toString(), {
+        method: "GET",
+        headers: { Accept: "*/*" },
+      });
+      if (probe.status === 401) {
+        setLastError(
+          "JWT invalide (401). Vérifiez que ANTAERUS_GATEWAY_JWT_SECRET est identique dans .env lors de la génération et de la validation. Cliquez sur « Générer JWT dev » puis reconnectez.",
+        );
+        setConnectionState("error");
+        return false;
+      }
+      if (probe.status === 429) {
+        setLastError(
+          "Trop de connexions WebSocket simultanées (429). Attendez 10 secondes puis réessayez.",
+        );
+        setConnectionState("error");
+        return false;
+      }
+      if (probe.status === 404 || probe.status < 100) {
+        setLastError(
+          `Gateway Go introuvable (${probe.status === 404 ? "404" : "hors ligne"}). Vérifiez que dev-gateway.ps1 est démarré sur le port 8080.`,
+        );
+        setConnectionState("error");
+        return false;
+      }
+      if (probe.status >= 500) {
+        setLastError(`Erreur interne gateway Go (${probe.status}). Consultez les logs gateway.`);
+        setConnectionState("error");
+        return false;
+      }
+    } catch (networkError) {
+      const hint =
+        networkError instanceof Error ? networkError.message : "NetworkError";
+      setLastError(
+        `Connexion réseau impossible au Gateway Go. Vérifiez que dev-gateway.ps1 est bien STARTING sur le port 8080 (${hint}).`,
+      );
+      setConnectionState("error");
+      return false;
+    }
+
+    const socket = new WebSocket(wsAbsoluteUrl);
     socketRef.current = socket;
 
     const connectPromise = new Promise<boolean>((resolve) => {
