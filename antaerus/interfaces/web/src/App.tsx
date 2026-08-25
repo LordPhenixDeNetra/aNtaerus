@@ -3,6 +3,7 @@ import Analytics from "@/pages/Analytics";
 import Chat from "@/pages/Chat";
 import CommandCenter from "@/pages/CommandCenter";
 import Config from "@/pages/Config";
+import Dashboard from "@/pages/Dashboard";
 import FoundationDashboard from "@/pages/FoundationDashboard";
 import Home from "@/pages/Home";
 import MemoryExplorer from "@/pages/MemoryExplorer";
@@ -16,6 +17,7 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/setup" element={<Setup />} />
         <Route path="/foundation" element={<FoundationDashboard />} />

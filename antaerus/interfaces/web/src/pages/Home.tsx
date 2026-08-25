@@ -3,6 +3,7 @@ import {
   type LucideIcon,
   Activity,
   BarChart3,
+  Grid3X3,
   Heart,
   Home as HomeIcon,
   Layers,
@@ -49,6 +50,7 @@ type NavIcon = {
 };
 
 const TOP_NAV: NavIcon[] = [
+  { to: "/dashboard", icon: Grid3X3, label: "Modules", tone: "text-violet-200" },
   { to: "/chat", icon: MessageSquare, label: "Chat" },
   { to: "/foundation", icon: Layers, label: "Foundation" },
   { to: "/analytics", icon: BarChart3, label: "Analytics" },
