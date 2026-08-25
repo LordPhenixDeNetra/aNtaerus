@@ -1,5 +1,6 @@
 import {
   Activity,
+  BookOpen,
   Bot,
   Cpu,
   Database,
@@ -95,6 +96,14 @@ const cards: CardDef[] = [
     tag: "Snapshot runtime",
     description: "Lecture seule de la configuration des services. Cles sensibles masquees.",
   },
+  {
+    to: "/skill-lab",
+    accent: "border-emerald-400/20 shadow-emerald-950/20 text-emerald-300",
+    icon: BookOpen,
+    title: "Skill Lab",
+    tag: "Marketplace · Editeur · Tester",
+    description: "Creation, test et gestion des skills Python/WASM. Sandbox isole, validation humaine et marketplace interne.",
+  },
 ];
 
 function Metric({ icon: Icon, label, value }: { icon: typeof Activity; label: string; value: string }) {
@@ -136,7 +145,7 @@ export default function Home() {
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
-              <Metric icon={Activity} label="Modules" value="9 / 9" />
+              <Metric icon={Activity} label="Modules" value="10 / 10" />
               <Metric icon={Cpu} label="Couches" value="web · go · python · rust" />
             </div>
           </div>

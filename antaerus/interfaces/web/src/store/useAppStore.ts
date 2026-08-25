@@ -16,6 +16,8 @@ import type {
   Initiative,
   Mission,
   SearchFactsResponse,
+  SkillRecord,
+  SkillRunResult,
 } from "@/lib/api";
 import { loadSetupConfig, saveSetupConfig } from "@/lib/storage";
 import {
@@ -75,6 +77,13 @@ type AppState = {
   analyticsLoading: boolean;
   configSnapshot: ConfigSnapshot | null;
   configSnapshotLoading: boolean;
+  skills: SkillRecord[];
+  skillsTotal: number;
+  skillsLoading: boolean;
+  skillsLastError: string | null;
+  skillRunResult: SkillRunResult | null;
+  skillRunLoading: boolean;
+  skillEditorDraft: string;
   setConfig: (nextConfig: LocalSetupConfig) => void;
   updateConfig: (patch: Partial<LocalSetupConfig>) => void;
   setSessionId: (sessionId: string) => void;
@@ -133,6 +142,14 @@ type AppState = {
   setAnalyticsLoading: (loading: boolean) => void;
   setConfigSnapshot: (next: ConfigSnapshot | null) => void;
   setConfigSnapshotLoading: (loading: boolean) => void;
+  setSkills: (items: SkillRecord[], total: number) => void;
+  setSkillsLoading: (loading: boolean) => void;
+  setSkillsError: (error: string | null) => void;
+  addOrUpdateSkill: (next: SkillRecord) => void;
+  removeSkill: (id: string) => void;
+  setSkillRunResult: (next: SkillRunResult | null) => void;
+  setSkillRunLoading: (loading: boolean) => void;
+  setSkillEditorDraft: (value: string) => void;
 };
 
 function updateSetupConfig(nextConfig: LocalSetupConfig) {
@@ -177,6 +194,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   analyticsLoading: false,
   configSnapshot: null,
   configSnapshotLoading: false,
+  skills: [],
+  skillsTotal: 0,
+  skillsLoading: false,
+  skillsLastError: null,
+  skillRunResult: null,
+  skillRunLoading: false,
+  skillEditorDraft: "",
   setConfig: (nextConfig) =>
     set(() => ({
       config: updateSetupConfig(nextConfig),
@@ -422,4 +446,29 @@ export const useAppStore = create<AppState>((set, get) => ({
   setAnalyticsLoading: (analyticsLoading) => set(() => ({ analyticsLoading })),
   setConfigSnapshot: (configSnapshot) => set(() => ({ configSnapshot })),
   setConfigSnapshotLoading: (configSnapshotLoading) => set(() => ({ configSnapshotLoading })),
+  setSkills: (items, total) => set(() => ({ skills: items, skillsTotal: total })),
+  setSkillsLoading: (skillsLoading) => set(() => ({ skillsLoading })),
+  setSkillsError: (skillsLastError) => set(() => ({ skillsLastError })),
+  addOrUpdateSkill: (next) =>
+    set((state) => {
+      const idx = state.skills.findIndex((s) => s.id === next.id);
+      const copy = [...state.skills];
+      if (idx === -1) {
+        copy.unshift(next);
+        return { skills: copy, skillsTotal: state.skillsTotal + 1 };
+      }
+      copy[idx] = { ...copy[idx], ...next };
+      return { skills: copy };
+    }),
+  removeSkill: (id) =>
+    set((state) => {
+      const filtered = state.skills.filter((s) => s.id !== id);
+      return {
+        skills: filtered,
+        skillsTotal: Math.max(0, state.skillsTotal + (filtered.length - state.skills.length)),
+      };
+    }),
+  setSkillRunResult: (skillRunResult) => set(() => ({ skillRunResult })),
+  setSkillRunLoading: (skillRunLoading) => set(() => ({ skillRunLoading })),
+  setSkillEditorDraft: (skillEditorDraft) => set(() => ({ skillEditorDraft })),
 }));

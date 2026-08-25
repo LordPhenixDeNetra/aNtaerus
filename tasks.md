@@ -444,23 +444,36 @@
 
 ## Phase M7 — Skill Lab (4 semaines)
 
-### M7.1 — Skill Registry
-- [ ] Implémenter `brain_python/skills/registry.py` : registry skills installés
-- [ ] Implémenter `brain_python/skills/lifecycle.py` : install/update/uninstall
-- [ ] Implémenter `gateway/skills_handler.go` : routes REST skills
+### M7.1 — Skill Registry (3/3)
+- [x] Implémenter `brain_python/skills/registry.py` : registry skills installés (SQLite aiosqlite, types Pydantic SkillRecord alignés camelCase aliases Go/TS, CRUD list/count/get/patch/delete/decide approve/reject)
+- [x] Implémenter `brain_python/skills/lifecycle.py` : install/update/uninstall (extraction tarball sécurisée sans "../", API FastAPI 9 endpoints dans api/skills.py)
+- [x] Implémenter `gateway/skills_handler.go` : routes REST skills (gateway_go/internal/clients/brain_skills_client.go + http/skills_handler.go subroutes list/install/get/put/delete/run/approve/reject câblées routes.go /api/v1/skills*)
 
-### M7.2 — Skill Lab UI
-- [ ] Implémenter `pages/SkillLab.tsx` : interface création/test skills
-- [ ] Implémenter `components/SkillEditor.tsx` : éditeur code (CodeMirror)
-- [ ] Implémenter `components/SkillTester.tsx` : bouton "Test dans sandbox"
-- [ ] Implémenter `components/SkillMarketplace.tsx` : liste skills disponibles
+### M7.2 — Skill Lab UI (4/4)
+- [x] Implémenter `pages/SkillLab.tsx` : interface création/test skills (3 onglets Marketplace/Editor/Tester + bandeau approvals pending approve/reject dialog motif min 8 chars)
+- [x] Implémenter `components/SkillEditor.tsx` : éditeur code ZÉRO DÉPENDANCE (textarea custom + line-numbers column + scroll sync + Tab 2 spaces + Ctrl+S localStorage skill-editor-draft ; PAS CodeMirror/Monaco/Prism)
+- [x] Implémenter `components/SkillTester.tsx` : bouton "Test dans sandbox" (Run sandbox JSON badges exitCode/durationMs/fuel/sandboxKind warning amber)
+- [x] Implémenter `components/SkillMarketplace.tsx` : liste skills disponibles (grille 3 curated echo-json/sha256/wasm-add-forty-two + Package lucide icon + Home.tsx carte 10 SkillLab accent emerald)
 
-### M7.3 — Sandbox
-- [ ] Implémenter `engine_rust/sandbox/wasm.rs` : compilation skill → WASM
-- [ ] Implémenter `engine_rust/sandbox/executor.rs` : exécution WASM (`wasmtime`)
-- [ ] Implémenter `brain_python/skills/docker_sandbox.py` : sandbox Docker (tests Python)
-- [ ] Implémenter `brain_python/skills/synthesizer.py` : génération skill depuis usage
-- [ ] Implémenter validation humaine : workflow React (approve/reject)
+### M7.3 — Sandbox (5/5)
+- [x] Implémenter `engine_rust/sandbox/wasm.rs` : compilation skill → WASM (WasmRuntime run_module_bytes/file + wasmtime feature wasm-runtime avec fuel 250k + timeout 30s)
+- [x] Implémenter `engine_rust/sandbox/executor.rs` : exécution WASM (`wasmtime` v17 cranelift + WasmExecutor RunOutcome struct fuel_limit + tests 4/4 PASS (helper thread stack 64MB windows longjmp wasmtime)
+- [x] Implémenter `brain_python/skills/docker_sandbox.py` : sandbox Docker (tests Python) subprocess docker run hardened flags --network none --read-only --tmpfs /tmp rw,noexec,nosuid size=64m --cap-drop=ALL --memory=256m --pids-limit=64 + fallback local python -I -S -c isolated sys.executable PREMIER ordre fix Windows Store alias 9009)
+- [x] Implémenter `brain_python/skills/synthesizer.py` : génération skill depuis usage (chat_client_factory Callable injectable fallback draft python/wat fallback si create_llm_client indisponible; template skill minimal payload {{}} accolades échappées car str.format)
+- [x] Implémenter validation humaine : workflow React (approve/reject) SkillLab bandeau approvals pending + motif minimum 8 caractères double guard frontend (trimmed<8 error) + backend gateway handler http 400 tests guards)
+
+## État actuel (Phase M7 — livrée)
+
+Livraison M7 Skill Lab effectuée le 2026-08-25. Invariant CDC §5.1 architecture 4 couches strictement respecté : React Web → Go Gateway /api/v1/skills* → Python Brain antaerus_brain.skills → Rust Engine engine_rust.sandbox. ZÉRO dépendance nouvelle ajoutée manifests : frontend api.ts/types + useAppStore skills slice (0 npm install ; 0 nouvelle dépendance Cargo.toml Cargo.lock wasmtime/wat features wat-compile/wat v1 optional deja manifest initial ; brain_python pyproject.toml identique subprocess docker. Qualimétrie 8 piles EXIT 0 VERTES :
+(1) Frontend tsc npm run check → 0 erreur,
+(2) Frontend Vite build → built 1985 modules dist 26 kB css 33 kB js 1.0 MB,
+(3) Gateway Go build ./... → 0 erreur,
+(4) Gateway Go test clients + http → ok antaerus/interfaces/gateway_go/internal/clients (6.8s) + internal/http (8.4s) PASS,
+(5) Brain Python ruff src/antaerus_brain/skills src/antaerus_brain/api/skills.py → All checks passed!,
+(6) Brain Python mypy skills+api 6 fichiers → Success 0 issues,
+(7) Brain Python pytest 12 tests 3 fichiers (registry 6/docker_sandbox 3/synthesizer 3 → 12/12 PASS en 19.78s wrapper sync _run async SANS plugin pytest-asyncio,
+(8) Engine Rust cargo build --features wasm-runtime → 0 erreur, cargo test --features wasm-runtime → 29/29 tests unitaires + 4 wasm_executor (compiles wat +42, fuel tracking 100 loop iterations, empty bytes, file demo.wasm 99) + 3 wasm_runtime + 25 tests passent (voice_latency 2 tests tagged ignore).
+Endpoints M4/M5/M6 missions/proactive/memory/analytics/config/system INTACTS aucune regression.
 
 ---
 

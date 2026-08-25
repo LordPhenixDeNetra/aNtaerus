@@ -61,6 +61,12 @@ class Settings:
     proactive_max_initiative_budget: int = 50000
     curator_cron_hour: int = 2
     curator_autonomy_level: int = 3
+    skills_db_path: Path = field(
+        default_factory=lambda: Path(__file__).resolve().parents[4] / "memory_data" / "antaerus_skills.db"
+    )
+    skills_root: Path = field(
+        default_factory=lambda: Path(__file__).resolve().parents[4] / "skills_data"
+    )
 
 
 def _project_root() -> Path:
@@ -160,6 +166,14 @@ def get_settings() -> Settings:
     )
     curator_cron_hour = int(getenv("ANTAERUS_BRAIN_CURATOR_CRON_HOUR", "2"))
     curator_autonomy_level = int(getenv("ANTAERUS_BRAIN_CURATOR_AUTONOMY_LEVEL", "3"))
+    skills_db_path = _resolve_project_path(
+        getenv("ANTAERUS_BRAIN_SKILLS_DB_PATH", ""),
+        _project_root() / "memory_data" / "antaerus_skills.db",
+    )
+    skills_root = _resolve_project_path(
+        getenv("ANTAERUS_BRAIN_SKILLS_ROOT", ""),
+        _project_root() / "skills_data",
+    )
     vision_model_raw = getenv("ANTAERUS_BRAIN_VISION_MODEL_PATH", "").strip()
     vision_image_raw = getenv("ANTAERUS_BRAIN_VISION_DEFAULT_IMAGE_PATH", "").strip()
 
@@ -230,6 +244,8 @@ def get_settings() -> Settings:
         proactive_max_initiative_budget=proactive_max_initiative_budget,
         curator_cron_hour=curator_cron_hour,
         curator_autonomy_level=curator_autonomy_level,
+        skills_db_path=skills_db_path,
+        skills_root=skills_root,
     )
 
     if settings.port <= 0:

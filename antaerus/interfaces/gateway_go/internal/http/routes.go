@@ -37,6 +37,7 @@ func newMux(
 	missionHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	proactiveHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	memoryHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
+	skillsHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	healthService := system.NewHealthService(cfg, healthHTTPClient)
 	authenticator := NewAuthenticator(cfg)
 	rateLimiter := NewRateLimiter(cfg)
@@ -44,10 +45,12 @@ func newMux(
 	missionClient := clients.NewBrainMissionClient(missionHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	proactiveClient := clients.NewBrainProactiveClient(proactiveHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	memoryClient := clients.NewBrainMemoryClient(memoryHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
+	skillsClient := clients.NewBrainSkillsClient(skillsHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	hub := NewHub(cfg, authenticator, rateLimiter, brainChat, voiceFactory, healthService)
 	missionHandlers := NewMissionHandlers(missionClient, hub)
 	proactiveHandlers := NewProactiveHandlers(proactiveClient, hub)
 	memoryHandlers := NewMemoryHandlers(cfg, memoryClient)
+	skillsHandlers := NewSkillsHandlers(skillsClient)
 	analyticsHandlers := NewAnalyticsHandlers(cfg, memoryClient)
 	configHandlers := NewConfigHandlers(cfg, memoryClient)
 	systemPlus := NewSystemHandlersPlus(cfg, handlers)
@@ -81,6 +84,8 @@ func newMux(
 	apiMux.HandleFunc("/api/v1/analytics/", analyticsHandlers.ServeHTTP)
 	apiMux.HandleFunc("/api/v1/config", configHandlers.ServeHTTP)
 	apiMux.HandleFunc("/api/v1/config/", configHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/skills", skillsHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/skills/", skillsHandlers.ServeHTTP)
 	mux.Handle("/api/", withCORS(cfg, apiMux))
 
 	if staticHandler := newFrontendStaticHandler(); staticHandler != nil {

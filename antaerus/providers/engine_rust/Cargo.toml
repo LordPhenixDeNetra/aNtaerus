@@ -10,7 +10,8 @@ voice = [
   "dep:silero",
   "dep:whisper-rs",
 ]
-wasm-runtime = ["dep:wasmtime"]
+wasm-runtime = ["dep:wasmtime", "wat-compile"]
+wat-compile = ["dep:wat"]
 
 [dependencies]
 cap-std = "3"
@@ -22,6 +23,7 @@ tokio-stream = "0.1"
 wait-timeout = "0.2"
 whisper-rs = { version = "=0.15.1", optional = true }
 wasmtime = { version = "17", default-features = false, features = ["cranelift"], optional = true }
+wat = { version = "1", optional = true }
 axum = { version = "0.7", features = ["http1", "json"] }
 chrono = { version = "0.4", features = ["clock", "serde"] }
 prost = "0.13"
@@ -36,4 +38,3 @@ thiserror = "2"
 [dev-dependencies]
 tempfile = "3"
 tower = { version = "0.5", features = ["util"] }
-wat = "1"

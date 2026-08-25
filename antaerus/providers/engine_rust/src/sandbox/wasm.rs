@@ -5,6 +5,7 @@ use thiserror::Error;
 use wasmtime::{Config, Engine, Instance, Linker, Module, Store};
 
 use crate::config::Settings;
+use crate::sandbox::executor::{RunOutcome, WasmExecutor, WasmExecutorConfig, WasmExecutorError};
 
 #[cfg(feature = "wasm-runtime")]
 const DEFAULT_WASM_FUEL: u64 = 10_000;
@@ -131,6 +132,84 @@ impl WasmRuntime {
         }
         Ok(resolved)
     }
+
+    pub fn compile_wat_to_wasm_bytes(wat: &str) -> Result<Vec<u8>, WasmExecutorError> {
+        WasmExecutor::compile_wat_to_wasm_bytes(wat)
+    }
+
+    pub async fn run_module_bytes(
+        &self,
+        module_bytes: &[u8],
+        arg: Option<i32>,
+        fuel_limit: Option<u64>,
+        timeout_ms: Option<u64>,
+    ) -> Result<RunOutcome, WasmExecutorError> {
+        use std::time::Duration;
+        let mut config = WasmExecutorConfig::default();
+        if let Some(f) = fuel_limit {
+            config.fuel_limit = f;
+        }
+        if let Some(ms) = timeout_ms {
+            config.timeout = Duration::from_millis(ms);
+        }
+        let executor = WasmExecutor::new(config);
+        executor.run_i32_bytes(module_bytes, arg).await
+    }
+
+    pub async fn run_module_file(
+        &self,
+        module_path: impl AsRef<Path>,
+        arg: Option<i32>,
+        fuel_limit: Option<u64>,
+        timeout_ms: Option<u64>,
+    ) -> Result<RunOutcome, WasmRuntimeError> {
+        #[cfg(not(feature = "wasm-runtime"))]
+        {
+            let _ = module_path;
+            let _ = arg;
+            let _ = fuel_limit;
+            let _ = timeout_ms;
+            Err(WasmRuntimeError::RuntimeNotEnabled)
+        }
+
+        #[cfg(feature = "wasm-runtime")]
+        {
+            let resolved = self.resolve_module_path(module_path)?;
+            let bytes = std::fs::read(resolved.as_path()).map_err(|e| {
+                WasmRuntimeError::LoadModule {
+                    path: resolved.clone(),
+                    source: wasmtime::Error::msg(e.to_string()),
+                }
+            })?;
+            self.run_module_bytes(&bytes, arg, fuel_limit, timeout_ms)
+                .await
+                .map_err(|e| match e {
+                    WasmExecutorError::RuntimeNotEnabled => WasmRuntimeError::RuntimeNotEnabled,
+                    WasmExecutorError::EmptyModule => WasmRuntimeError::LoadModule {
+                        path: resolved.clone(),
+                        source: wasmtime::Error::msg("empty wasm module"),
+                    },
+                    WasmExecutorError::Engine(e) => WasmRuntimeError::Engine(e),
+                    WasmExecutorError::CompileModule(e) => WasmRuntimeError::LoadModule {
+                        path: resolved.clone(),
+                        source: e,
+                    },
+                    WasmExecutorError::Fuel(e) => WasmRuntimeError::Fuel(e),
+                    WasmExecutorError::Instantiate(e) => WasmRuntimeError::Instantiate(e),
+                    WasmExecutorError::ExportLookup { export, source } => {
+                        WasmRuntimeError::ExportLookup { export, source }
+                    }
+                    WasmExecutorError::Call { export, source } => WasmRuntimeError::Call {
+                        export,
+                        source,
+                    },
+                    other => WasmRuntimeError::Call {
+                        export: "run".into(),
+                        source: wasmtime::Error::msg(other.to_string()),
+                    },
+                })
+        }
+    }
 }
 
 #[cfg(feature = "wasm-runtime")]
@@ -140,12 +219,12 @@ fn call_i32_export(
     export_name: &str,
 ) -> Result<i32, WasmRuntimeError> {
     let func = instance
-        .get_typed_func::<(), i32>(store, export_name)
+        .get_typed_func::<(), i32>(&mut *store, export_name)
         .map_err(|source| WasmRuntimeError::ExportLookup {
             export: export_name.to_string(),
             source,
         })?;
-    func.call(store, ())
+    func.call(&mut *store, ())
         .map_err(|source| WasmRuntimeError::Call {
             export: export_name.to_string(),
             source,

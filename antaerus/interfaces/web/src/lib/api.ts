@@ -993,3 +993,292 @@ export async function detectFreePorts(portsOrStart?: number | number[], probeRan
     probes,
   };
 }
+
+export type SkillRuntime = "python" | "wasm";
+export type SkillStatus = "installed" | "pending_approval" | "disabled" | "rejected";
+
+export type SkillRecord = {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  runtime: SkillRuntime;
+  category: string;
+  author: string;
+  installedAt: string;
+  checksum: string;
+  status: SkillStatus;
+  sourceCode: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SkillListResponse = {
+  items: SkillRecord[];
+  total: number;
+};
+
+export type SkillInstallRequest = {
+  name: string;
+  version?: string;
+  description?: string;
+  runtime?: SkillRuntime;
+  category?: string;
+  author?: string;
+  sourceCode?: string;
+  sourceTarballB64?: string;
+  trusted?: boolean;
+};
+
+export type SkillUpdateRequest = {
+  name?: string;
+  version?: string;
+  description?: string;
+  category?: string;
+  sourceCode?: string;
+  status?: SkillStatus;
+};
+
+export type SkillRunRequest = {
+  argsJson?: string;
+  timeoutMs?: number;
+  fuelLimit?: number;
+};
+
+export type SkillRunResult = {
+  exitCode: number;
+  stdout: string;
+  stderr: string;
+  durationMs: number;
+  fuelUsed?: number | null;
+  sandboxKind: string;
+  error?: string | null;
+};
+
+export type SkillApprovalDecision = {
+  by?: string;
+  reason?: string;
+};
+
+export type SkillGeneratedDraft = {
+  name: string;
+  description: string;
+  runtime: SkillRuntime;
+  sourceCode: string;
+  category: string;
+  suggestedVersion: string;
+  version?: string;
+  inlineTests: string;
+};
+
+export async function listSkills(params?: {
+  category?: string;
+  runtime?: SkillRuntime;
+  status?: SkillStatus;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<SkillListResponse> {
+  const response = await fetch(
+    apiURL("/api/v1/skills", {
+      category: params?.category,
+      runtime: params?.runtime,
+      status: params?.status,
+      search: params?.search,
+      limit: params?.limit ?? 100,
+      offset: params?.offset ?? 0,
+    }),
+  );
+  if (!response.ok) {
+    throw new Error("Impossible de lister les skills.");
+  }
+  return response.json() as Promise<SkillListResponse>;
+}
+
+export async function getSkill(id: string): Promise<SkillRecord> {
+  const response = await fetch(
+    apiURL(`/api/v1/skills/${encodeURIComponent(id)}`),
+  );
+  if (!response.ok) {
+    throw new Error("Skill introuvable.");
+  }
+  return response.json() as Promise<SkillRecord>;
+}
+
+export async function installSkill(
+  req: SkillInstallRequest,
+): Promise<SkillRecord> {
+  const payload: SkillInstallRequest = {
+    version: "0.1.0",
+    runtime: "python",
+    ...req,
+  };
+  const response = await fetch(apiURL("/api/v1/skills"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible d'installer le skill: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<SkillRecord>;
+}
+
+export async function updateSkill(
+  id: string,
+  patch: SkillUpdateRequest,
+): Promise<SkillRecord> {
+  const response = await fetch(
+    apiURL(`/api/v1/skills/${encodeURIComponent(id)}`),
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de mettre a jour le skill: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<SkillRecord>;
+}
+
+export async function uninstallSkill(id: string): Promise<void> {
+  const response = await fetch(
+    apiURL(`/api/v1/skills/${encodeURIComponent(id)}`),
+    { method: "DELETE" },
+  );
+  if (!response.ok && response.status !== 204) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de desinstaller le skill: ${response.status} ${text}`);
+  }
+}
+
+export async function runSkillInSandbox(
+  id: string,
+  params?: SkillRunRequest,
+): Promise<SkillRunResult> {
+  const payload: SkillRunRequest = {
+    argsJson: "{}",
+    timeoutMs: 30000,
+    fuelLimit: 250000,
+    ...params,
+  };
+  const response = await fetch(
+    apiURL(`/api/v1/skills/${encodeURIComponent(id)}/run`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de lancer le skill dans le sandbox: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<SkillRunResult>;
+}
+
+export async function approveSkill(
+  id: string,
+  decision?: SkillApprovalDecision,
+): Promise<SkillRecord> {
+  const response = await fetch(
+    apiURL(`/api/v1/skills/${encodeURIComponent(id)}/approve`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approve: true, by: decision?.by, reason: decision?.reason ?? "" }),
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible d'approuver le skill: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<SkillRecord>;
+}
+
+export async function rejectSkill(
+  id: string,
+  decision?: SkillApprovalDecision | string,
+): Promise<SkillRecord> {
+  const normalized: SkillApprovalDecision =
+    typeof decision === "string" ? { reason: decision } : decision ?? {};
+  const reason = normalized.reason ?? "refus utilisateur sans motif detaille";
+  const response = await fetch(
+    apiURL(`/api/v1/skills/${encodeURIComponent(id)}/reject`),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ approve: false, by: normalized.by, reason }),
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de rejeter le skill: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<SkillRecord>;
+}
+
+export async function generateSkillDraftFromUsage(req: {
+  usage: string;
+  preferredRuntime?: SkillRuntime;
+}): Promise<SkillGeneratedDraft> {
+  const runtime = req.preferredRuntime ?? "python";
+  const usage = req.usage;
+  try {
+    const response = await fetch(apiURL("/api/v1/skills/generate"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usage, preferredRuntime: runtime }),
+    });
+    if (response.ok) {
+      return (await response.json()) as SkillGeneratedDraft;
+    }
+  } catch {
+    /* fall through vers draft minimal local genere en JS pur */
+  }
+  const fallbackName = (usage || "skill-auto")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 32) || "skill-auto";
+  const minimal: SkillGeneratedDraft =
+    runtime === "wasm"
+      ? {
+          name: fallbackName,
+          description: usage,
+          runtime: "wasm",
+          sourceCode: `(module
+  (func (export "run") (param i32) (result i32)
+    local.get 0 i32.const 42 i32.add)
+  (memory (export "memory") 1))
+`,
+          category: "general",
+          suggestedVersion: "0.1.0",
+          inlineTests: "",
+        }
+      : {
+          name: fallbackName,
+          description: usage,
+          runtime: "python",
+          sourceCode: `"""Skill auto-genere fallback stdlib seulement."""
+import json
+
+
+def main(args: dict) -> dict:
+    return {"ok": True, "echo": args, "usage": ${JSON.stringify(usage.slice(0, 120))}}
+
+
+if __name__ == "__main__":
+    import sys
+    payload = json.loads(sys.argv[1]) if len(sys.argv) > 1 else {}
+    print(json.dumps(main(payload)))
+`,
+          category: "general",
+          suggestedVersion: "0.1.0",
+          inlineTests: `assert main({"ping": 1}).get("ok") is True`,
+        };
+  return minimal;
+}
