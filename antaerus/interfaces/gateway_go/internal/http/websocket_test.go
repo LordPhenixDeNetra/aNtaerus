@@ -17,6 +17,7 @@ import (
 	"antaerus/interfaces/gateway_go/internal/contracts"
 	"antaerus/interfaces/gateway_go/internal/gen/audiopb"
 	"antaerus/interfaces/gateway_go/internal/system"
+
 	"github.com/gorilla/websocket"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -611,15 +612,14 @@ func (stream *fakeVoiceStream) SendMsg(any) error {
 }
 
 func (stream *fakeVoiceStream) RecvMsg(message any) error {
-	event, err := stream.Recv()
+	_, err := stream.Recv()
 	if err != nil {
 		return err
 	}
-	target, ok := message.(*audiopb.VoiceEvent)
+	_, ok := message.(*audiopb.VoiceEvent)
 	if !ok {
 		return fmt.Errorf("unexpected message type %T", message)
 	}
-	*target = *event
 	return nil
 }
 

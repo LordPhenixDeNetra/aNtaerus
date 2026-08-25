@@ -42,21 +42,21 @@ type MissionStep struct {
 }
 
 type Mission struct {
-	ID            string       `json:"id"`
-	SessionID     *string      `json:"session_id,omitempty"`
-	Title         string       `json:"title"`
-	UserRequest   string       `json:"user_request"`
-	Plan          string       `json:"plan,omitempty"`
+	ID            string        `json:"id"`
+	SessionID     *string       `json:"session_id,omitempty"`
+	Title         string        `json:"title"`
+	UserRequest   string        `json:"user_request"`
+	Plan          string        `json:"plan,omitempty"`
 	Steps         []MissionStep `json:"steps,omitempty"`
-	Status        string       `json:"status"`
-	AutonomyLevel int          `json:"autonomy_level"`
-	BudgetTokens  int          `json:"budget_tokens"`
-	UsedTokens    int          `json:"used_tokens"`
-	CreatedAt     string       `json:"created_at"`
-	UpdatedAt     string       `json:"updated_at"`
-	StartedAt     *string      `json:"started_at,omitempty"`
-	CompletedAt   *string      `json:"completed_at,omitempty"`
-	Error         *string      `json:"error,omitempty"`
+	Status        string        `json:"status"`
+	AutonomyLevel int           `json:"autonomy_level"`
+	BudgetTokens  int           `json:"budget_tokens"`
+	UsedTokens    int           `json:"used_tokens"`
+	CreatedAt     string        `json:"created_at"`
+	UpdatedAt     string        `json:"updated_at"`
+	StartedAt     *string       `json:"started_at,omitempty"`
+	CompletedAt   *string       `json:"completed_at,omitempty"`
+	Error         *string       `json:"error,omitempty"`
 }
 
 type ReflexionReport struct {
@@ -147,7 +147,7 @@ func (client BrainMissionClient) doJSON(
 		body = bytes.NewReader(buf)
 	}
 	rawURL := client.baseURL + path
-	if query != nil && len(query) > 0 {
+	if len(query) > 0 {
 		rawURL += "?" + query.Encode()
 	}
 	request, err := http.NewRequestWithContext(requestCtx, method, rawURL, body)

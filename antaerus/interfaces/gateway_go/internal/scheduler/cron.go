@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"sync"
 	"time"
 
@@ -16,15 +15,15 @@ type BroadcastFn func(msg contracts.ServerMessage)
 type CronScheduler struct {
 	mu sync.Mutex
 
-	client         clients.BrainProactiveClient
-	broadcastFn    BroadcastFn
-	interval       time.Duration
-	cronHour       int
+	client      clients.BrainProactiveClient
+	broadcastFn BroadcastFn
+	interval    time.Duration
+	cronHour    int
 
-	running    bool
-	stopCh     chan struct{}
-	stoppedCh  chan struct{}
-	lastRun    *time.Time
+	running   bool
+	stopCh    chan struct{}
+	stoppedCh chan struct{}
+	lastRun   *time.Time
 }
 
 type Status struct {
@@ -172,5 +171,5 @@ func (s *CronScheduler) runCuratorOnce(now time.Time) {
 		}
 		s.broadcastFn(msg)
 	}
-	_ = fmt.Sprintf("noop")
+	_ = "noop"
 }
