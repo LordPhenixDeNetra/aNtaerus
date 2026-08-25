@@ -1,4 +1,16 @@
-import { Activity, Bot, Cpu, Network, Rocket, Settings2, Zap } from "lucide-react";
+import {
+  Activity,
+  Bot,
+  Cpu,
+  Database,
+  GitBranch,
+  LineChart,
+  Network,
+  Rocket,
+  Settings2,
+  Shield,
+  Zap,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 
 type CardDef = {
@@ -51,6 +63,38 @@ const cards: CardDef[] = [
     tag: "Setup local",
     description: "URL du gateway, clefs API, mode voix, langue par defaut. Persiste dans localStorage.",
   },
+  {
+    to: "/memory",
+    accent: "border-cyan-400/20 shadow-cyan-950/20 text-cyan-300",
+    icon: Database,
+    title: "Memoire",
+    tag: "Explorateur semantique",
+    description: "Recherche, creation et graphe des faits semantiques stockes dans le brain Python.",
+  },
+  {
+    to: "/analytics",
+    accent: "border-violet-400/20 shadow-violet-950/20 text-violet-300",
+    icon: LineChart,
+    title: "Analytique",
+    tag: "KPIs et series",
+    description: "Latence P95, tokens depenses, messages traites et series temporelles 24h.",
+  },
+  {
+    to: "/system-health",
+    accent: "border-rose-400/20 shadow-rose-950/20 text-rose-300",
+    icon: Shield,
+    title: "Sante systeme",
+    tag: "Heartbeat + logs",
+    description: "Vue agregée des 4 couches, extraction de logs et demande de redemarrage par service.",
+  },
+  {
+    to: "/config",
+    accent: "border-amber-400/20 shadow-amber-950/20 text-amber-300",
+    icon: GitBranch,
+    title: "Inventaire config",
+    tag: "Snapshot runtime",
+    description: "Lecture seule de la configuration des services. Cles sensibles masquees.",
+  },
 ];
 
 function Metric({ icon: Icon, label, value }: { icon: typeof Activity; label: string; value: string }) {
@@ -92,7 +136,7 @@ export default function Home() {
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
-              <Metric icon={Activity} label="Modules" value="5 / 5" />
+              <Metric icon={Activity} label="Modules" value="9 / 9" />
               <Metric icon={Cpu} label="Couches" value="web · go · python · rust" />
             </div>
           </div>

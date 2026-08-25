@@ -644,3 +644,352 @@ export async function stopScheduler(): Promise<SchedulerStatus> {
   }
   return response.json() as Promise<SchedulerStatus>;
 }
+
+export type FactRecord = {
+  id: string;
+  subject?: string | null;
+  predicate?: string | null;
+  object?: string | null;
+  title?: string | null;
+  content?: string | null;
+  tags?: string[] | null;
+  category: string;
+  confidence: number;
+  status: string;
+  sourceEventId?: string | null;
+  factId?: string | null;
+  observedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type FactRelation = {
+  id: string;
+  factId?: string;
+  relatedFactId?: string;
+  sourceFactId?: string;
+  targetFactId?: string;
+  relationType: string;
+  createdAt: string;
+};
+
+export type FactGraphResponse = {
+  facts: FactRecord[];
+  relations: FactRelation[];
+};
+
+export type SearchFactsResponse = {
+  facts: FactRecord[];
+};
+
+export type AnalyticsMetricPoint = {
+  timestamp: string;
+  value: number;
+};
+
+export type AnalyticsSeries = {
+  name: string;
+  points: AnalyticsMetricPoint[];
+  lastValue?: number | null;
+};
+
+export type AnalyticsSummary = {
+  totalTokensSpent: number;
+  totalMessagesProcessed: number;
+  messagesProcessed: number;
+  totalMissionsCompleted: number;
+  totalInitiativesRun: number;
+  averageLatencyMs: number;
+  latencyP95Ms: number;
+  estimatedCostUsd: number;
+  factCount: number;
+  series: AnalyticsSeries[];
+};
+
+export type ConfigSetting = {
+  key: string;
+  value: string | number | boolean | object | null;
+  defaultValue?: string | number | boolean | object | null;
+  description?: string | null;
+  type: "string" | "number" | "boolean" | "object";
+  category: string;
+  readOnly?: boolean;
+  sensitive?: boolean;
+  source?: string;
+};
+
+export type ConfigSnapshot = {
+  generatedAt: string;
+  version: string;
+  snapshotVersion: string;
+  takenAt: string;
+  environment: string;
+  settings: ConfigSetting[];
+};
+
+export type ServiceLogBundle = {
+  service: string | null;
+  lines: string[];
+  generatedAt: string;
+};
+
+export type LogBundle = ServiceLogBundle;
+
+export type ServiceRestartRequest = {
+  serviceName: string;
+};
+
+export type ServiceRestartResponse = {
+  serviceName: string;
+  status: string;
+  message: string;
+  restartedAt: string;
+  success: boolean;
+};
+
+export type ProviderKeyTest = {
+  provider: "openai" | "anthropic" | "google" | "local" | "custom";
+  apiKey: string;
+  baseUrl?: string | null;
+  model?: string | null;
+};
+
+export type ProviderKeyTestResult = {
+  ok: boolean;
+  latencyMs: number;
+  message: string;
+};
+
+export type PortProbe = {
+  port: number;
+  busy: boolean;
+  latencyMs: number | null;
+};
+
+export type PortDetectionResult = {
+  requestedPort: number;
+  usedPorts: number[];
+  freePort: number;
+  isFree: boolean;
+  probes: PortProbe[];
+};
+
+export type SetupWizardState = {
+  step: number;
+  totalSteps: number;
+  identity: {
+    ownerName: string;
+    agentName: string;
+    locale: string;
+    photoReferenceDataUrl?: string | null;
+  };
+  keys: { provider: ProviderKeyTest["provider"]; apiKey: string; baseUrl?: string | null; model?: string | null; valid: boolean | null }[];
+  modules: { chat: boolean; missions: boolean; proactive: boolean; memory: boolean; voice: boolean };
+  network: { gatewayPort: number; brainPort: number; autoSelect: boolean; detection?: PortDetectionResult | null };
+};
+
+export async function listFacts(params?: { query?: string | null; limit?: number | null }): Promise<SearchFactsResponse> {
+  const response = await fetch(
+    apiURL("/api/v1/memory/facts", {
+      query: params?.query ?? undefined,
+      limit: params?.limit ?? undefined,
+    }),
+  );
+  if (!response.ok) {
+    throw new Error("Impossible de charger les facts memoire.");
+  }
+  return response.json() as Promise<SearchFactsResponse>;
+}
+
+export async function createOrUpdateFact(fact: Omit<FactRecord, "id" | "createdAt" | "updatedAt"> & { id?: string | null }): Promise<FactRecord> {
+  const response = await fetch(apiURL("/api/v1/memory/facts"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fact),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de creer le fact: ${response.status} ${text}`);
+  }
+  const wrapper = (await response.json()) as { fact: FactRecord };
+  return wrapper.fact;
+}
+
+export async function fetchFactGraph(params?: { limit?: number | null }): Promise<FactGraphResponse> {
+  const response = await fetch(
+    apiURL("/api/v1/memory/graph", { limit: params?.limit ?? undefined }),
+  );
+  if (!response.ok) {
+    throw new Error("Impossible de charger le graphe memoire.");
+  }
+  return response.json() as Promise<FactGraphResponse>;
+}
+
+export async function fetchAnalytics(): Promise<AnalyticsSummary> {
+  const response = await fetch(apiURL("/api/v1/analytics"));
+  if (!response.ok) {
+    throw new Error("Impossible de charger les metriques d'usage.");
+  }
+  return response.json() as Promise<AnalyticsSummary>;
+}
+
+export async function fetchConfigSnapshot(): Promise<ConfigSnapshot> {
+  const response = await fetch(apiURL("/api/v1/config"));
+  if (!response.ok) {
+    throw new Error("Impossible de charger la configuration.");
+  }
+  return response.json() as Promise<ConfigSnapshot>;
+}
+
+export async function fetchServiceLogs(service?: string | null): Promise<ServiceLogBundle> {
+  const url = apiURL("/api/v1/system/services/logs", { service: service ?? undefined });
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Impossible de charger les logs.");
+  }
+  return response.json() as Promise<ServiceLogBundle>;
+}
+
+export async function requestServiceRestart(serviceName: string): Promise<ServiceRestartResponse> {
+  const payload: ServiceRestartRequest = { serviceName };
+  const response = await fetch(apiURL("/api/v1/system/services/restart"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Redemarrage impossible: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<ServiceRestartResponse>;
+}
+
+export async function validateProviderKey(
+  testOrProvider:
+    | ProviderKeyTest
+    | "openai"
+    | "anthropic"
+    | "google"
+    | "mistral"
+    | "deepseek"
+    | "ollama",
+  maybeApiKey?: string,
+): Promise<ProviderKeyTestResult> {
+  let test: ProviderKeyTest;
+  if (typeof testOrProvider === "string") {
+    const provider = testOrProvider;
+    if (provider === "ollama") {
+      test = { provider: "local", apiKey: "", baseUrl: maybeApiKey ?? "http://localhost:11434" };
+    } else if (provider === "mistral") {
+      test = {
+        provider: "custom",
+        apiKey: maybeApiKey ?? "",
+        baseUrl: "https://api.mistral.ai",
+        model: "mistral-small-latest",
+      };
+    } else if (provider === "deepseek") {
+      test = {
+        provider: "custom",
+        apiKey: maybeApiKey ?? "",
+        baseUrl: "https://api.deepseek.com",
+        model: "deepseek-chat",
+      };
+    } else {
+      test = { provider, apiKey: maybeApiKey ?? "" };
+    }
+  } else {
+    test = testOrProvider;
+  }
+
+  const start = performance.now();
+  let endpoint: string | null = null;
+  let authHeader: string | null = null;
+  let testBody: object | null = null;
+  if (test.provider === "openai") {
+    endpoint = `${test.baseUrl ?? "https://api.openai.com"}/v1/models`;
+    authHeader = `Bearer ${test.apiKey}`;
+  } else if (test.provider === "anthropic") {
+    endpoint = `${test.baseUrl ?? "https://api.anthropic.com"}/v1/messages`;
+    authHeader = `Bearer ${test.apiKey}`;
+    testBody = {
+      model: test.model ?? "claude-3-5-sonnet-20241022",
+      max_tokens: 1,
+      messages: [{ role: "user", content: "ping" }],
+    };
+  } else if (test.provider === "google") {
+    endpoint = `${test.baseUrl ?? "https://generativelanguage.googleapis.com"}/v1beta/models?key=${encodeURIComponent(test.apiKey)}`;
+  } else if (test.provider === "local") {
+    endpoint = `${test.baseUrl ?? "http://localhost:11434"}/api/tags`;
+  } else if (test.provider === "custom") {
+    endpoint = `${test.baseUrl ?? "https://api.example.com"}/v1/chat/completions`;
+    authHeader = `Bearer ${test.apiKey}`;
+    testBody = {
+      model: test.model ?? "gpt-4o-mini",
+      max_tokens: 1,
+      messages: [{ role: "user", content: "ping" }],
+    };
+  } else {
+    const latency = Math.round(performance.now() - start);
+    return { ok: false, latencyMs: latency, message: `Fournisseur ${test.provider} non supporte pour validation.` };
+  }
+  try {
+    const init: RequestInit = { method: testBody ? "POST" : "GET" };
+    if (authHeader) {
+      init.headers = {
+        Authorization: authHeader,
+        "Content-Type": "application/json",
+        "anthropic-version": "2023-06-01",
+      };
+    }
+    if (testBody) {
+      init.body = JSON.stringify(testBody);
+    }
+    const response = await fetch(endpoint, init);
+    const latency = Math.round(performance.now() - start);
+    if (response.ok) {
+      const providerLabel =
+        typeof testOrProvider === "string" ? testOrProvider : test.provider;
+      return { ok: true, latencyMs: latency, message: `Cle valide pour ${providerLabel} (latence ${latency} ms).` };
+    }
+    const text = await response.text().catch(() => "");
+    return { ok: false, latencyMs: latency, message: `Echec validation (${response.status}): ${text.slice(0, 200)}` };
+  } catch (err) {
+    const latency = Math.round(performance.now() - start);
+    return { ok: false, latencyMs: latency, message: `Erreur reseau validation cle: ${err instanceof Error ? err.message : String(err)}` };
+  }
+}
+
+export async function detectFreePorts(portsOrStart?: number | number[], probeRange = 10): Promise<PortDetectionResult> {
+  const ports: number[] = Array.isArray(portsOrStart)
+    ? portsOrStart
+    : typeof portsOrStart === "number"
+      ? Array.from({ length: probeRange }, (_, i) => (portsOrStart ?? 8080) + i)
+      : [8080, 8000, 3000, 11434, 7860];
+  const probes: PortProbe[] = await Promise.all(
+    ports.map(async (port) => {
+      try {
+        const started = performance.now();
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 250);
+        await fetch(`http://127.0.0.1:${port}/`, {
+          method: "HEAD",
+          signal: ctrl.signal,
+          mode: "no-cors",
+        });
+        clearTimeout(timeout);
+        return { port, busy: true, latencyMs: Math.round(performance.now() - started) };
+      } catch {
+        return { port, busy: false, latencyMs: null };
+      }
+    }),
+  );
+  const usedPorts = probes.filter((p) => p.busy).map((p) => p.port);
+  const firstFree = probes.find((p) => !p.busy);
+  return {
+    requestedPort: ports[0] ?? 8080,
+    usedPorts,
+    freePort: firstFree ? firstFree.port : ports[0] ?? 8080,
+    isFree: !usedPorts.includes(ports[0] ?? 8080),
+    probes,
+  };
+}

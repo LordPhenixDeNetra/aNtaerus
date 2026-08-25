@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from antaerus_brain.api.health import router as health_router
 from antaerus_brain.api.llm import router as llm_router
 from antaerus_brain.api.memory import router as memory_router
+from antaerus_brain.api.memory_plus import router as memory_plus_router
 from antaerus_brain.api.missions import router as missions_router
 from antaerus_brain.api.proactive import router as proactive_router
 from antaerus_brain.api.tools import router as tools_router
@@ -21,6 +22,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(llm_router)
     app.include_router(memory_router)
+    app.include_router(memory_plus_router)
     app.include_router(tools_router)
     app.include_router(missions_router)
     if getattr(settings, "proactive_enabled", True):

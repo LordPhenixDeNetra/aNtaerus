@@ -294,6 +294,29 @@ class MemoryKernel:
             )
             await connection.commit()
 
+    async def list_relations(self, fact_ids: list[str] | None = None) -> list[dict[str, str]]:
+        query = """
+            SELECT id, fact_id, related_fact_id, relation_type, created_at
+            FROM fact_relations
+            ORDER BY created_at DESC
+        """
+        params: tuple[object, ...] = ()
+        if fact_ids:
+            placeholders = ",".join(["?"] * len(fact_ids))
+            query = f"""
+                SELECT id, fact_id, related_fact_id, relation_type, created_at
+                FROM fact_relations
+                WHERE fact_id IN ({placeholders})
+                   OR related_fact_id IN ({placeholders})
+                ORDER BY created_at DESC
+            """
+            params = tuple(fact_ids) + tuple(fact_ids)
+        async with aiosqlite.connect(self.database_path) as connection:
+            connection.row_factory = aiosqlite.Row
+            cursor = await connection.execute(query, params)
+            rows = await cursor.fetchall()
+        return [dict(row) for row in rows]
+
 
 def _row_to_fact(row: aiosqlite.Row) -> FactRecord:
     return FactRecord(

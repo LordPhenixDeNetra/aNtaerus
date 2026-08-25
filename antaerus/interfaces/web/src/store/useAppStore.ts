@@ -6,11 +6,16 @@ import {
   type ChatMessageStatus,
 } from "@/lib/chat";
 import type {
+  AnalyticsSummary,
   CollectorInfo,
+  ConfigSnapshot,
   CuratorPatch,
   CuratorReport,
+  FactGraphResponse,
+  FactRecord,
   Initiative,
   Mission,
+  SearchFactsResponse,
 } from "@/lib/api";
 import { loadSetupConfig, saveSetupConfig } from "@/lib/storage";
 import {
@@ -61,6 +66,15 @@ type AppState = {
   globalAutonomyLevel: number;
   lastCuratorReport: CuratorReport | null;
   curatorPatches: CuratorPatch[];
+  memoryFacts: FactRecord[];
+  memoryFactsLoading: boolean;
+  memoryFactsLastError: string | null;
+  memoryGraph: FactGraphResponse | null;
+  memoryGraphLoading: boolean;
+  analytics: AnalyticsSummary | null;
+  analyticsLoading: boolean;
+  configSnapshot: ConfigSnapshot | null;
+  configSnapshotLoading: boolean;
   setConfig: (nextConfig: LocalSetupConfig) => void;
   updateConfig: (patch: Partial<LocalSetupConfig>) => void;
   setSessionId: (sessionId: string) => void;
@@ -109,6 +123,16 @@ type AppState = {
   setLastCuratorReport: (report: CuratorReport | null) => void;
   setCuratorPatches: (patches: CuratorPatch[]) => void;
   addOrUpdateCuratorPatch: (patch: CuratorPatch) => void;
+  setMemoryFacts: (items: SearchFactsResponse["facts"]) => void;
+  setMemoryFactsLoading: (loading: boolean) => void;
+  setMemoryFactsError: (error: string | null) => void;
+  addOrUpdateMemoryFact: (next: FactRecord) => void;
+  setMemoryGraph: (graph: FactGraphResponse | null) => void;
+  setMemoryGraphLoading: (loading: boolean) => void;
+  setAnalytics: (next: AnalyticsSummary | null) => void;
+  setAnalyticsLoading: (loading: boolean) => void;
+  setConfigSnapshot: (next: ConfigSnapshot | null) => void;
+  setConfigSnapshotLoading: (loading: boolean) => void;
 };
 
 function updateSetupConfig(nextConfig: LocalSetupConfig) {
@@ -144,6 +168,15 @@ export const useAppStore = create<AppState>((set, get) => ({
   globalAutonomyLevel: 1,
   lastCuratorReport: null,
   curatorPatches: [],
+  memoryFacts: [],
+  memoryFactsLoading: false,
+  memoryFactsLastError: null,
+  memoryGraph: null,
+  memoryGraphLoading: false,
+  analytics: null,
+  analyticsLoading: false,
+  configSnapshot: null,
+  configSnapshotLoading: false,
   setConfig: (nextConfig) =>
     set(() => ({
       config: updateSetupConfig(nextConfig),
@@ -369,4 +402,24 @@ export const useAppStore = create<AppState>((set, get) => ({
       copy[idx] = { ...copy[idx], ...patch };
       return { curatorPatches: copy };
     }),
+  setMemoryFacts: (items) => set(() => ({ memoryFacts: items })),
+  setMemoryFactsLoading: (loading) => set(() => ({ memoryFactsLoading: loading })),
+  setMemoryFactsError: (error) => set(() => ({ memoryFactsLastError: error })),
+  addOrUpdateMemoryFact: (next) =>
+    set((state) => {
+      const idx = state.memoryFacts.findIndex((f) => f.id === next.id);
+      const copy = [...state.memoryFacts];
+      if (idx === -1) {
+        copy.unshift(next);
+        return { memoryFacts: copy };
+      }
+      copy[idx] = { ...copy[idx], ...next };
+      return { memoryFacts: copy };
+    }),
+  setMemoryGraph: (memoryGraph) => set(() => ({ memoryGraph })),
+  setMemoryGraphLoading: (memoryGraphLoading) => set(() => ({ memoryGraphLoading })),
+  setAnalytics: (analytics) => set(() => ({ analytics })),
+  setAnalyticsLoading: (analyticsLoading) => set(() => ({ analyticsLoading })),
+  setConfigSnapshot: (configSnapshot) => set(() => ({ configSnapshot })),
+  setConfigSnapshotLoading: (configSnapshotLoading) => set(() => ({ configSnapshotLoading })),
 }));

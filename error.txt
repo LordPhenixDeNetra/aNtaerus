@@ -1,0 +1,403 @@
+[{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'snapshotVersion' does not exist on type 'ConfigSnapshot'.",
+	"source": "ts",
+	"startLineNumber": 63,
+	"startColumn": 24,
+	"endLineNumber": 63,
+	"endColumn": 39,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'takenAt' does not exist on type 'ConfigSnapshot'.",
+	"source": "ts",
+	"startLineNumber": 71,
+	"startColumn": 24,
+	"endLineNumber": 71,
+	"endColumn": 31,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'takenAt' does not exist on type 'ConfigSnapshot'.",
+	"source": "ts",
+	"startLineNumber": 71,
+	"startColumn": 52,
+	"endLineNumber": 71,
+	"endColumn": 59,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'sensitive' does not exist on type 'ConfigSetting'.",
+	"source": "ts",
+	"startLineNumber": 120,
+	"startColumn": 36,
+	"endLineNumber": 120,
+	"endColumn": 45,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'sensitive' does not exist on type 'ConfigSetting'.",
+	"source": "ts",
+	"startLineNumber": 121,
+	"startColumn": 37,
+	"endLineNumber": 121,
+	"endColumn": 46,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'sensitive' does not exist on type 'ConfigSetting'.",
+	"source": "ts",
+	"startLineNumber": 128,
+	"startColumn": 32,
+	"endLineNumber": 128,
+	"endColumn": 41,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'sensitive' does not exist on type 'ConfigSetting'.",
+	"source": "ts",
+	"startLineNumber": 133,
+	"startColumn": 31,
+	"endLineNumber": 133,
+	"endColumn": 40,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'source' does not exist on type 'ConfigSetting'.",
+	"source": "ts",
+	"startLineNumber": 136,
+	"startColumn": 31,
+	"endLineNumber": 136,
+	"endColumn": 37,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+}]
+
+============
+
+[{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'observedAt' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 39,
+	"startColumn": 28,
+	"endLineNumber": 39,
+	"endColumn": 38,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'title' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 44,
+	"startColumn": 15,
+	"endLineNumber": 44,
+	"endColumn": 20,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'content' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 44,
+	"startColumn": 29,
+	"endLineNumber": 44,
+	"endColumn": 36,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'content' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 47,
+	"startColumn": 13,
+	"endLineNumber": 47,
+	"endColumn": 20,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'content' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 49,
+	"startColumn": 17,
+	"endLineNumber": 49,
+	"endColumn": 24,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'tags' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 53,
+	"startColumn": 27,
+	"endLineNumber": 53,
+	"endColumn": 31,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'tags' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 53,
+	"startColumn": 41,
+	"endLineNumber": 53,
+	"endColumn": 45,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'tags' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 55,
+	"startColumn": 17,
+	"endLineNumber": 55,
+	"endColumn": 21,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+}]
+
+===========
+
+[{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactGraph.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'title' does not exist on type 'FactRecord'.",
+	"source": "ts",
+	"startLineNumber": 25,
+	"startColumn": 19,
+	"endLineNumber": 25,
+	"endColumn": 24,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactGraph.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'sourceFactId' does not exist on type 'FactRelation'.",
+	"source": "ts",
+	"startLineNumber": 62,
+	"startColumn": 36,
+	"endLineNumber": 62,
+	"endColumn": 48,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactGraph.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'targetFactId' does not exist on type 'FactRelation'.",
+	"source": "ts",
+	"startLineNumber": 63,
+	"startColumn": 36,
+	"endLineNumber": 63,
+	"endColumn": 48,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+}]
+
+==========
+
+[{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/MetricsChart.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'lastValue' does not exist on type 'AnalyticsSeries'.",
+	"source": "ts",
+	"startLineNumber": 81,
+	"startColumn": 31,
+	"endLineNumber": 81,
+	"endColumn": 40,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+}]
+
+======
+
+[{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/Analytics.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'latencyP95Ms' does not exist on type 'AnalyticsSummary'.",
+	"source": "ts",
+	"startLineNumber": 101,
+	"startColumn": 58,
+	"endLineNumber": 101,
+	"endColumn": 70,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/Analytics.tsx",
+	"owner": "typescript",
+	"code": "2551",
+	"severity": 8,
+	"message": "Property 'messagesProcessed' does not exist on type 'AnalyticsSummary'. Did you mean 'totalMessagesProcessed'?",
+	"source": "ts",
+	"startLineNumber": 115,
+	"startColumn": 44,
+	"endLineNumber": 115,
+	"endColumn": 61,
+	"relatedInformation": [
+		{
+			"startLineNumber": 691,
+			"startColumn": 3,
+			"endLineNumber": 691,
+			"endColumn": 25,
+			"message": "'totalMessagesProcessed' is declared here.",
+			"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/lib/api.ts"
+		}
+	],
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+},{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/Analytics.tsx",
+	"owner": "typescript",
+	"code": "2339",
+	"severity": 8,
+	"message": "Property 'factCount' does not exist on type 'AnalyticsSummary'.",
+	"source": "ts",
+	"startLineNumber": 122,
+	"startColumn": 44,
+	"endLineNumber": 122,
+	"endColumn": 53,
+	"origin": "extHost1",
+	"extensionID": "vscode.typescript-language-features"
+}]
+
+=========
+
+[{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/clients/brain_mission_client.go",
+	"owner": "_generated_diagnostic_collection_name_#4",
+	"code": {
+		"value": "default",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/checks/",
+			"scheme": "https",
+			"authority": "staticcheck.dev",
+			"fragment": "S1009"
+		}
+	},
+	"severity": 4,
+	"message": "should omit nil check; len() for nil maps is defined as zero",
+	"source": "S1009",
+	"startLineNumber": 150,
+	"startColumn": 5,
+	"endLineNumber": 150,
+	"endColumn": 35,
+	"origin": "extHost1",
+	"extensionID": "golang.go"
+}]
+
+=========
+
+[{
+	"resource": "/N:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/http/websocket_test.go",
+	"owner": "_generated_diagnostic_collection_name_#4",
+	"code": {
+		"value": "default",
+		"target": {
+			"$mid": 1,
+			"path": "/golang.org/x/tools/go/analysis/passes/copylock",
+			"scheme": "https",
+			"authority": "pkg.go.dev"
+		}
+	},
+	"severity": 4,
+	"message": "assignment copies lock value to *target: antaerus/interfaces/gateway_go/internal/gen/audiopb.VoiceEvent contains google.golang.org/protobuf/runtime/protoimpl.MessageState contains sync.Mutex",
+	"source": "copylocks",
+	"startLineNumber": 622,
+	"startColumn": 12,
+	"endLineNumber": 622,
+	"endColumn": 18,
+	"origin": "extHost1",
+	"extensionID": "golang.go"
+}]
+
+============
+
+[{
+	"resource": "/n:/OneDrive - Université Cheikh Anta DIOP de DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/scheduler/cron.go",
+	"owner": "_generated_diagnostic_collection_name_#4",
+	"code": {
+		"value": "default",
+		"target": {
+			"$mid": 1,
+			"path": "/docs/checks/",
+			"scheme": "https",
+			"authority": "staticcheck.dev",
+			"fragment": "S1039"
+		}
+	},
+	"severity": 4,
+	"message": "unnecessary use of fmt.Sprintf",
+	"source": "S1039",
+	"startLineNumber": 175,
+	"startColumn": 6,
+	"endLineNumber": 175,
+	"endColumn": 25,
+	"origin": "extHost1",
+	"extensionID": "golang.go"
+}]

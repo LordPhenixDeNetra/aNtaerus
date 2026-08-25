@@ -35,6 +35,56 @@ class SearchResponse(BaseModel):
     facts: list[FactRecord]
 
 
+class FactRelationRecord(BaseModel):
+    id: str
+    fact_id: str
+    related_fact_id: str
+    relation_type: str
+    created_at: str
+
+
+class FactGraphResponse(BaseModel):
+    facts: list[FactRecord]
+    relations: list[FactRelationRecord]
+
+
+class AnalyticsMetricPoint(BaseModel):
+    timestamp: str
+    value: float
+
+
+class AnalyticsSeries(BaseModel):
+    name: str
+    points: list[AnalyticsMetricPoint]
+
+
+class AnalyticsSummary(BaseModel):
+    totalTokensSpent: int
+    totalMessagesProcessed: int
+    totalMissionsCompleted: int
+    totalInitiativesRun: int
+    averageLatencyMs: float
+    estimatedCostUsd: float
+    series: list[AnalyticsSeries]
+
+
+class ConfigSetting(BaseModel):
+    key: str
+    value: object
+    defaultValue: object | None = None
+    description: str | None = None
+    type: str
+    category: str
+    readOnly: bool = False
+
+
+class ConfigSnapshot(BaseModel):
+    generatedAt: str
+    version: str
+    environment: str
+    settings: list[ConfigSetting]
+
+
 ChatRole = Literal["system", "user", "assistant"]
 
 

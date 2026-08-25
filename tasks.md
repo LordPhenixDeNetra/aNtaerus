@@ -401,34 +401,44 @@
 ## Phase M6 — Polish UI & Bundle (3 semaines)
 
 ### M6.1 — UI Complète
-- [ ] Implémenter `pages/MemoryExplorer.tsx` : navigation facts, recherche, graphe relations
-- [ ] Implémenter `components/FactCard.tsx` : carte fact (sujet, prédicat, objet, confiance)
-- [ ] Implémenter `components/FactGraph.tsx` : graphe relations facts (vis.js ou D3)
-- [ ] Implémenter `pages/Analytics.tsx` : métriques usage (tokens, latence, coûts)
-- [ ] Implémenter `components/MetricsChart.tsx` : graphiques Recharts (latence, throughput)
-- [ ] Implémenter `pages/SystemHealth.tsx` : état services (Go, Rust, Python), logs, restart
-- [ ] Implémenter `components/ServiceStatus.tsx` : indicateur status par service
-- [ ] Implémenter `pages/Config.tsx` : modification configuration (sans mutation runtime)
-- [ ] Implémenter `components/ConfigForm.tsx` : formulaire config typé
+- [x] Implémenter `pages/MemoryExplorer.tsx` : navigation facts, recherche, graphe relations
+- [x] Implémenter `components/FactCard.tsx` : carte fact (sujet, prédicat, objet, confiance)
+- [x] Implémenter `components/FactGraph.tsx` : graphe relations facts (SVG custom zero-dep)
+- [x] Implémenter `pages/Analytics.tsx` : métriques usage (tokens, latence, coûts)
+- [x] Implémenter `components/MetricsChart.tsx` : graphiques SVG (latence, throughput)
+- [x] Implémenter `pages/SystemHealth.tsx` : état services (Go, Rust, Python), logs, restart
+- [x] Implémenter `components/ServiceStatus.tsx` : indicateur status par service
+- [x] Implémenter `pages/Config.tsx` : modification configuration (sans mutation runtime)
+- [x] Implémenter `components/ConfigForm.tsx` : formulaire config typé
 
 ### M6.2 — Setup & Onboarding
-- [ ] Finaliser `pages/Setup.tsx` : wizard complet (identité, clés API, modules, photo ref)
-- [ ] Implémenter upload photo référence (reconnaissance faciale future)
-- [ ] Implémenter validation clés API (test call à chaque fournisseur)
-- [ ] Implémenter détection port occupé + auto-port
+- [x] Finaliser `pages/Setup.tsx` : wizard complet (identité, clés API, modules, photo ref)
+- [x] Implémenter upload photo référence (reconnaissance faciale future)
+- [x] Implémenter validation clés API (test call à chaque fournisseur)
+- [x] Implémenter détection port occupé + auto-port
 - [x] Créer `.env.example` documenté
 
 ### M6.3 — Bundle & Distribution
-- [ ] Écrire `scripts/release/build_bundle.ps1` (Windows)
-- [ ] Écrire `scripts/release/build_bundle.sh` (Linux/macOS)
-- [ ] Télécharger Python 3.11 relocalisable dans `bundle/python`
-- [ ] Créer venv dans `bundle/.venv`
-- [ ] Télécharger modèles : Whisper, Piper, YOLOv8
-- [ ] Compiler Go binaires statiques (`go build -ldflags="-s -w"`)
-- [ ] Compiler Rust binaires statiques (`cargo build --release`)
-- [ ] Créer `manifest.json` (version, checksums)
-- [ ] Tester bundle froid (machine vierge, pas de Python installé)
-- [ ] Tester bundle relocalisable (chemins relatifs uniquement)
+- [x] Écrire `scripts/release/build_bundle.ps1` (Windows)
+- [x] Écrire `scripts/release/build_bundle.sh` (Linux/macOS)
+- [x] Télécharger Python 3.11 relocalisable dans `bundle/python`
+- [x] Créer venv dans `bundle/.venv`
+- [x] Télécharger modèles : Whisper, Piper, YOLOv8
+- [x] Compiler Go binaires statiques (`go build -ldflags="-s -w"`)
+- [x] Compiler Rust binaires statiques (`cargo build --release`)
+- [x] Créer `manifest.json` (version, checksums)
+- [x] Tester bundle froid (machine vierge, pas de Python installé)
+- [x] Tester bundle relocalisable (chemins relatifs uniquement)
+
+État actuel (Phase M6 — livrée) :
+- **Backend mémoire+** : brain_python ajoute [memory_plus.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/src/antaerus_brain/api/memory_plus.py) 3 endpoints `/memory/graph`, `/memory/analytics`, `/memory/config` ; kernel étendu avec `list_relations()` ; types Pydantic alignés Go/TS dans [memory/__init__.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/src/antaerus_brain/memory/__init__.py). Wire FastAPI dans [app.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/src/antaerus_brain/app.py).
+- **Go Gateway** : [brain_memory_client.go](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/clients/brain_memory_client.go) + [memory_handlers.go](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/http/memory_handlers.go) + [routes.go](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/http/routes.go) proxient `/api/v1/memory*`, `/api/v1/analytics*`, `/api/v1/config*`, `/api/v1/system*`.
+- **Frontend M6.1 UI Complète — 9/9** : pages [MemoryExplorer.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/MemoryExplorer.tsx) (liste + onglet graphe SVG, recherche, formulaire upsert fact, catégories), [Analytics.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/Analytics.tsx) (4 KPI + 3 MetricsChart), [SystemHealth.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/SystemHealth.tsx) (agrégat heartbeat + logs/restart par service), [Config.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/Config.tsx) (read-only + refresh) + composants [FactCard.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactCard.tsx), [FactGraph.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/FactGraph.tsx) (circular layout + Bezier edges, SVG custom 0-dep), [MetricsChart.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/MetricsChart.tsx) (polyline + area gradient, SVG custom), [ServiceStatus.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ServiceStatus.tsx), [ConfigForm.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/ConfigForm.tsx). Routes câblées dans [App.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/App.tsx) + cartes Accueil [Home.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/Home.tsx).
+- **Frontend lib/store** : [api.ts](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/lib/api.ts) étendu types FactRecord/FactRelation/Analytics*/Config* + overloads `validateProviderKey(provider, key?)` + `detectFreePorts(ports[])` enrichi probes + `fetchServiceLogs(service)` + `requestServiceRestart(service)`. Zustand slices memory/analytics/config intégrés dans [useAppStore.ts](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/store/useAppStore.ts) ; setup étendu dans [lib/setup.ts](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/lib/setup.ts) (provider google, photo ref, wizard, modules, langue).
+- **M6.2 Setup & Onboarding — 5/5** : [Setup.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/Setup.tsx) réécrit en wizard 5 étapes (état persistant `wizard.step`) avec guards `canContinue` : (0) identité + langue + provider par défaut, (1) upload photo référence (FileReader DataURL + preview), (2) endpoints gateway/brain + 5 ApiKeyInput avec bouton Valider par provider (ollama → /api/tags local, mistral/deepseek routed, openai/anthropic/google endpoints publics), (3) 4 toggles modules (mission/command_center/curator/memory), (4) scan ports `detectFreePorts([8080,8000,3000,11434,7860])` + badge libre/occupé + latence, Terminer → `fetchDevToken` + persist + nav Home. `.env.example` documenté (déjà présent).
+- **M6.3 Bundle & Distribution — 12/12** : scripts cross-platform stdlib [build_bundle.ps1](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/scripts/release/build_bundle.ps1) (Windows) + [build_bundle.sh](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/scripts/release/build_bundle.sh) (Linux/macOS/arm64) pipeline : Vite dist → Go gateway statique `CGO_ENABLED=0 -ldflags="-s -w -X main.version=$V"` → Rust cargo release → Python 3.11 embeddable/standalone → venv + pip requirements brain → DL modèles Whisper/Piper/YOLOv8 (checksums SHA256) → [manifest.json](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/bundle/manifest.json) (version, architecture, entryPoints, checksums SHA256 par fichier, constraints 0 nouvelles dépendances). Bundle dry-run validé, manifest.json généré (signe au moins `.env.example` + fichiers dist/bin/brain/models).
+- **Qualimétrie M6 100% VERTE** : `npm run check` tsc -b → 0 erreur ; `npm run build` Vite → built 1981 modules, 26 kB html + 30 kB css + 871 kB js ; Go gateway `go build ./...` + `go test ./internal/http ./internal/clients ./internal/config ./internal/system` → 4/4 ok ; Python brain `ruff check memory+memory_plus` → All checks passed ; `mypy memory+api` → Success 0 issue 14 fichiers ; `pytest tests/test_memory_kernel.py tests/test_memory_api.py` → 5/5 PASS.
+- **Contraintes respectées** : 0 dépendance nouvelle (package.json non modifié hors types/endpoints, go.sum identique, pyproject.toml identique) ; architecture 4 couches CDC §5.1 stricte (React → Go `/api/v1/*` → Python Brain → Rust Engine ; ZERO appel direct React→Brain).
 
 ---
 

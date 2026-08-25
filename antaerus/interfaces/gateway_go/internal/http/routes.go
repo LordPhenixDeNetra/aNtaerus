@@ -36,15 +36,21 @@ func newMux(
 	chatHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	missionHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	proactiveHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
+	memoryHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	healthService := system.NewHealthService(cfg, healthHTTPClient)
 	authenticator := NewAuthenticator(cfg)
 	rateLimiter := NewRateLimiter(cfg)
 	brainChat := clients.NewBrainChatClient(chatHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	missionClient := clients.NewBrainMissionClient(missionHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	proactiveClient := clients.NewBrainProactiveClient(proactiveHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
+	memoryClient := clients.NewBrainMemoryClient(memoryHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	hub := NewHub(cfg, authenticator, rateLimiter, brainChat, voiceFactory, healthService)
 	missionHandlers := NewMissionHandlers(missionClient, hub)
 	proactiveHandlers := NewProactiveHandlers(proactiveClient, hub)
+	memoryHandlers := NewMemoryHandlers(cfg, memoryClient)
+	analyticsHandlers := NewAnalyticsHandlers(cfg, memoryClient)
+	configHandlers := NewConfigHandlers(cfg, memoryClient)
+	systemPlus := NewSystemHandlersPlus(cfg, handlers)
 	proactiveBroadcast := func(msg contracts.ServerMessage) {
 		select {
 		case hub.broadcast <- msg:
@@ -61,8 +67,7 @@ func newMux(
 
 	mux.HandleFunc("/health", handlers.HandleHealth)
 	apiMux.HandleFunc("/api/v1/health", handlers.HandleAggregatedHealth)
-	apiMux.HandleFunc("/api/v1/system/services", handlers.HandleServices)
-	apiMux.HandleFunc("/api/v1/system/status", handlers.HandleSystemStatus)
+	apiMux.HandleFunc("/api/v1/system/", systemPlus.ServeHTTP)
 	apiMux.HandleFunc("/api/v1/auth/dev-token", NewDevTokenHandler(cfg, authenticator))
 	apiMux.HandleFunc("/api/v1/chat/sessions/", NewChatHistoryHandler(brainChat))
 	apiMux.HandleFunc("/api/v1/ws", hub.ServeWS)
@@ -70,6 +75,12 @@ func newMux(
 	apiMux.HandleFunc("/api/v1/missions/", missionHandlers.ServeHTTP)
 	apiMux.HandleFunc("/api/v1/proactive", proactiveHandlers.ServeHTTP)
 	apiMux.HandleFunc("/api/v1/proactive/", proactiveHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/memory", memoryHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/memory/", memoryHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/analytics", analyticsHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/analytics/", analyticsHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/config", configHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/config/", configHandlers.ServeHTTP)
 	mux.Handle("/api/", withCORS(cfg, apiMux))
 
 	if staticHandler := newFrontendStaticHandler(); staticHandler != nil {
