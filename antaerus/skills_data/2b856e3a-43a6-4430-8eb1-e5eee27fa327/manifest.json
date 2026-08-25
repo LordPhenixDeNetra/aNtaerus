@@ -1,0 +1,15 @@
+{
+  "id": "2b856e3a-43a6-4430-8eb1-e5eee27fa327",
+  "name": "echo-json-test",
+  "version": "0.1.0",
+  "description": "test install skill",
+  "runtime": "python",
+  "category": "assistant",
+  "author": "curated-demo",
+  "installed_at": "2026-08-25T18:40:04.154562Z",
+  "checksum": "04a49b010bbf512c56c312b7c5bb543366dee48760279525184b0ff3142eff9f",
+  "status": "installed",
+  "source_code": "def main(args): return {'ok':True}",
+  "created_at": "2026-08-25T18:40:04.154562Z",
+  "updated_at": "2026-08-25T18:40:04.154562Z"
+}

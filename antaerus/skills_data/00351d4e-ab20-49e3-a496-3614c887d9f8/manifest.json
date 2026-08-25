@@ -1,0 +1,15 @@
+{
+  "id": "00351d4e-ab20-49e3-a496-3614c887d9f8",
+  "name": "echo-json",
+  "version": "0.1.0",
+  "description": "Skill echo stdlib : retourne args + timestamp iso.",
+  "runtime": "python",
+  "category": "assistant",
+  "author": "curated-demo",
+  "installed_at": "2026-08-25T18:37:47.323795Z",
+  "checksum": "4913ca9fdc1d0d650256f40da956d1eb7014d807bc91be800ee53e729550aedc",
+  "status": "installed",
+  "source_code": "import json\nimport datetime\n\n\ndef main(args: dict) -> dict:\n    return {\n        \"ok\": True,\n        \"echo\": args,\n        \"now\": datetime.datetime.utcnow().isoformat() + \"Z\",\n    }\n\n\nif __name__ == \"__main__\":\n    import sys\n\n    payload = {}\n    if len(sys.argv) > 1:\n        payload = json.loads(sys.argv[1])\n    print(json.dumps(main(payload)))\n",
+  "created_at": "2026-08-25T18:37:47.323795Z",
+  "updated_at": "2026-08-25T18:37:47.323795Z"
+}
