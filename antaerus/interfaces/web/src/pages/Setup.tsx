@@ -159,7 +159,7 @@ export default function Setup() {
       case 0:
         return config.displayName.trim().length >= 2;
       case 1:
-        return !!config.referencePhotoDataUrl;
+        return true;
       case 2:
         return Object.values(validated).some(Boolean) || config.defaultProvider === "ollama";
       case 3:

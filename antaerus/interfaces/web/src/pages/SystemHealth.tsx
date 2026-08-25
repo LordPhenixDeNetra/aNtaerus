@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Activity, RefreshCw, Server, Shield } from "lucide-react";
+import { Activity, AlertTriangle, RefreshCw, Server, Shield } from "lucide-react";
 import ServiceStatus from "@/components/ServiceStatus";
 import { useAppStore } from "@/store/useAppStore";
 import {
@@ -21,17 +21,58 @@ function aggregateStatus(
   return "healthy";
 }
 
+const FALLBACK_SERVICES: HealthHeartbeatPayload["services"] = [
+  {
+    name: "web_react",
+    status: "healthy",
+    version: "0.0.0",
+    port: 5173,
+    url: "http://localhost:5173",
+    checkedAt: new Date().toISOString(),
+    details: "UI React Vite — dev server local",
+  },
+  {
+    name: "gateway_go",
+    status: "degraded",
+    version: "unknown",
+    port: 8080,
+    url: "http://localhost:8080",
+    checkedAt: new Date().toISOString(),
+    details: "Gateway Go HTTP. Aucun heartbeat WS recu (verifiez port 8080).",
+  },
+  {
+    name: "brain_python",
+    status: "degraded",
+    version: "unknown",
+    port: 8000,
+    url: "http://localhost:8000",
+    checkedAt: new Date().toISOString(),
+    details: "Brain Python FastAPI. Verifiez `dev-brain.ps1` ou port 8000.",
+  },
+  {
+    name: "engine_rust",
+    status: "offline",
+    version: "unknown",
+    port: 7000,
+    url: "http://localhost:7000",
+    checkedAt: new Date().toISOString(),
+    details:
+      "Engine Rust API. Si erreur LLVM/libclang: re-executez `winget install LLVM.LLVM` puis redemarrez dev-all, ou mode core sans voice.",
+  },
+];
+
 export default function SystemHealth() {
   const heartbeat = useAppStore((s) => s.lastHeartbeat);
+  const services = heartbeat.length > 0 ? heartbeat : FALLBACK_SERVICES;
   const [logsByService, setLogsByService] = useState<Record<string, ServiceLogBundle>>({});
   const [loadingLogs, setLoadingLogs] = useState<Record<string, boolean>>({});
   const [loadingRestart, setLoadingRestart] = useState<Record<string, boolean>>({});
   const [messages, setMessages] = useState<Record<string, string>>({});
 
-  const overall = aggregateStatus(heartbeat);
-  const healthy = heartbeat.filter((s) => s.status === "healthy").length;
-  const degraded = heartbeat.filter((s) => s.status === "degraded").length;
-  const offline = heartbeat.filter((s) => s.status === "offline").length;
+  const overall = aggregateStatus(services);
+  const healthy = services.filter((s) => s.status === "healthy").length;
+  const degraded = services.filter((s) => s.status === "degraded").length;
+  const offline = services.filter((s) => s.status === "offline").length;
 
   async function viewLogs(serviceName: string) {
     try {
@@ -78,12 +119,12 @@ export default function SystemHealth() {
   }
 
   useEffect(() => {
-    heartbeat.forEach((svc) => {
+    services.forEach((svc) => {
       if (svc.status === "offline") {
         void viewLogs(svc.name);
       }
     });
-  }, [heartbeat.map((s) => s.name).join(",")]);
+  }, [services.map((s) => s.name).join(",")]);
 
   return (
     <main className="min-h-screen px-6 py-10 text-slate-100">
@@ -104,10 +145,26 @@ export default function SystemHealth() {
               </p>
             </div>
             <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200">
-              <RefreshCw className="h-4 w-4 animate-spin" />
-              Heartbeat WebSocket
+              <RefreshCw className={`h-4 w-4 ${heartbeat.length ? "animate-spin" : "opacity-50"}`} />
+              {heartbeat.length ? "Heartbeat WebSocket actif" : "Mode fallback : liste statique 4 services"}
             </div>
           </div>
+
+          {heartbeat.length === 0 ? (
+            <div className="mt-5 rounded-2xl border border-amber-400/25 bg-amber-500/5 p-4 text-xs text-amber-200/95">
+              <p className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-amber-300" />
+                <span>
+                  Aucun heartbeat WebSocket recu depuis le gateway Go. Les cartes ci-dessous sont une estimation de l&apos;etat initial (port 5173 React OK, autres services a verifier).
+                  <br />
+                  Pour les actualiser : ouvrez <span className="font-mono">/chat</span>, passez en mode{" "}
+                  <span className="font-mono">ws</span> et cliquez{" "}
+                  <span className="font-mono">Connecter</span>, ou relancez{" "}
+                  <span className="font-mono">dev-all.ps1</span> si gateway Go est eteint.
+                </span>
+              </p>
+            </div>
+          ) : null}
 
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-5 shadow-xl backdrop-blur">
@@ -155,7 +212,7 @@ export default function SystemHealth() {
         </header>
 
         <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {heartbeat.map((svc) => (
+          {services.map((svc) => (
             <div key={svc.name} className="flex flex-col gap-3">
               <ServiceStatus
                 service={svc}
@@ -181,13 +238,6 @@ export default function SystemHealth() {
               ) : null}
             </div>
           ))}
-          {heartbeat.length === 0 ? (
-            <p className="col-span-full rounded-3xl border border-white/10 bg-slate-950/50 p-10 text-center text-sm text-slate-400">
-              <Activity className="mx-auto mb-3 h-6 w-6" />
-              Aucun heartbeat recu. Verifiez la connexion WebSocket depuis Chat
-              ou demarrez le gateway Go.
-            </p>
-          ) : null}
         </section>
       </div>
     </main>

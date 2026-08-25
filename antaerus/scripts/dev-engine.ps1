@@ -64,19 +64,23 @@ function Test-Is64BitPEFile {
         [string]$FilePath
     )
 
-    $stream = [System.IO.File]::Open($FilePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
-    $reader = [System.IO.BinaryReader]::new($stream)
-
     try {
-        $stream.Position = 0x3C
-        $peHeaderOffset = $reader.ReadInt32()
-        $stream.Position = $peHeaderOffset + 4
-        $machine = $reader.ReadUInt16()
-        return $machine -eq 0x8664
-    }
-    finally {
-        $reader.Dispose()
-        $stream.Dispose()
+        $stream = [System.IO.File]::Open($FilePath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::ReadWrite)
+        $reader = [System.IO.BinaryReader]::new($stream)
+
+        try {
+            $stream.Position = 0x3C
+            $peHeaderOffset = $reader.ReadInt32()
+            $stream.Position = $peHeaderOffset + 4
+            $machine = $reader.ReadUInt16()
+            return $machine -eq 0x8664
+        }
+        finally {
+            $reader.Dispose()
+            $stream.Dispose()
+        }
+    } catch {
+        return $false
     }
 }
 
@@ -121,7 +125,12 @@ function Get-CommonLibClangDirectories {
     )
 }
 
+$voiceFeatureEnabled = $true
+
 function Initialize-EngineBuildEnvironment {
+    param(
+        [ref]$VoiceEnabledRef
+    )
     $dotEnv = Get-DotEnvValues -FilePath $envFile
 
     foreach ($mapping in @(
@@ -142,7 +151,9 @@ function Initialize-EngineBuildEnvironment {
     if (-not [string]::IsNullOrWhiteSpace($configuredLibClang)) {
         $resolvedLibClang = Resolve-LibClangDirectory -Candidate $configuredLibClang
         if (-not $resolvedLibClang) {
-            throw "LIBCLANG_PATH/ANTAERUS_ENGINE_LIBCLANG_PATH pointe vers '$configuredLibClang', mais libclang.dll est absent ou non compatible 64 bits. Utilisez un dossier 64 bits valide, par exemple C:\\Program Files\\LLVM\\bin."
+            Write-Warning "[aNtaerus] LIBCLANG_PATH pointe vers '$configuredLibClang' mais libclang.dll absent/invalide 64 bits. Feature 'voice' DESACTIVEE, demarrage en mode core. Pour la voix : installez LLVM (winget install LLVM.LLVM) puis relancez dev-all."
+            $VoiceEnabledRef.Value = $false
+            return
         }
 
         [Environment]::SetEnvironmentVariable("LIBCLANG_PATH", $resolvedLibClang)
@@ -157,9 +168,17 @@ function Initialize-EngineBuildEnvironment {
         }
     }
 
-    throw "Aucun libclang.dll 64 bits n'a ete trouve. Installez LLVM pour Windows (`winget install LLVM.LLVM`) puis renseignez LIBCLANG_PATH dans votre session PowerShell ou ANTAERUS_ENGINE_LIBCLANG_PATH dans antaerus/.env."
+    Write-Warning "[aNtaerus] Aucun libclang.dll 64 bits trouve (LLVM). Feature 'voice' DESACTIVEE, demarrage en mode core. Correctif : winget install LLVM.LLVM, ou renseignez ANTAERUS_ENGINE_LIBCLANG_PATH dans antaerus/.env."
+    $VoiceEnabledRef.Value = $false
 }
 
-Initialize-EngineBuildEnvironment
+Initialize-EngineBuildEnvironment -VoiceEnabledRef ([ref]$voiceFeatureEnabled)
 Set-Location (Join-Path $root "providers\\engine_rust")
-cargo run --features voice
+
+if ($voiceFeatureEnabled) {
+    Write-Host "[aNtaerus] Démarrage engine_rust AVEC feature 'voice' (libclang OK)." -ForegroundColor Cyan
+    cargo run --features voice
+} else {
+    Write-Host "[aNtaerus] Démarrage engine_rust mode CORE (sans voice). Endpoint /health sera joignable sur http://localhost:7000." -ForegroundColor Yellow
+    cargo run
+}

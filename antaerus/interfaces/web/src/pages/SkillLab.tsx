@@ -324,6 +324,25 @@ export default function SkillLab() {
         </section>
       )}
 
+      {state.skillsError ? (
+        <section className="rounded-3xl border border-rose-400/25 bg-rose-500/5 p-5 backdrop-blur">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 flex-none text-rose-300" />
+            <div className="flex-1 space-y-1">
+              <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-rose-200/90">
+                Erreur Skill Registry
+              </p>
+              <p className="text-sm text-rose-100">{state.skillsError}</p>
+              <p className="text-xs text-rose-200/80">
+                Cause habituelle : Gateway Go :8080 eteint, ou endpoint{" "}
+                <span className="font-mono">/api/v1/skills</span> absent. Cliquez
+                Actualiser dans le Marketplace pour retenter.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {rejectingSkillId && (
         <section
           className="fixed inset-0 z-40 grid place-items-center bg-slate-950/80 backdrop-blur-sm p-4"

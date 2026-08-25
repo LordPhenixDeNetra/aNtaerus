@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Settings2, Wifi, WifiOff } from "lucide-react";
+import { Activity, AlertTriangle, Settings2, Wifi, WifiOff, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import MessageBubble from "@/components/MessageBubble";
 import MessageInput from "@/components/MessageInput";
@@ -27,8 +27,10 @@ const queryOptions = {
 export default function Chat() {
   const { sessionId, resetSession } = useSession();
   const config = useAppStore((state) => state.config);
+  const updateConfig = useAppStore((state) => state.updateConfig);
   const messages = useAppStore((state) => state.messages);
   const lastError = useAppStore((state) => state.lastError);
+  const setLastError = useAppStore((state) => state.setLastError);
   const lastHeartbeat = useAppStore((state) => state.lastHeartbeat);
   const addUserMessage = useAppStore((state) => state.addUserMessage);
   const clearMessages = useAppStore((state) => state.clearMessages);
@@ -53,6 +55,8 @@ export default function Chat() {
     sendVoiceStop,
     sendVoiceBargeIn,
   });
+
+  const [aiThinking, setAiThinking] = useState(false);
 
   const statusQuery = useQuery(queryOptions);
   const providersQuery = useQuery({
@@ -83,15 +87,58 @@ export default function Chat() {
     }
   }, [config.chatTransport, connect]);
 
-  const handleSend = async (content: string) => {
-    addUserMessage(content, config.chatTransport);
+  const lastMessage = useMemo(
+    () => (messages.length > 0 ? messages[messages.length - 1] : null),
+    [messages],
+  );
 
-    if (config.chatTransport === "sse-dev") {
-      await streamPrompt(content);
+  useEffect(() => {
+    if (isStreaming) {
+      setAiThinking(true);
       return;
     }
+    if (!lastMessage) {
+      setAiThinking(false);
+      return;
+    }
+    if (lastMessage.role === "user") {
+      setAiThinking(true);
+    } else {
+      setAiThinking(false);
+    }
+  }, [lastMessage, isStreaming, messages.length]);
 
-    await sendChatMessage(content);
+  async function toggleTransport() {
+    const nextTransport = config.chatTransport === "ws" ? "sse-dev" : "ws";
+    updateConfig({ chatTransport: nextTransport });
+    setLastError(null);
+    if (nextTransport === "ws") {
+      setTimeout(() => void connect(), 50);
+    } else {
+      disconnect();
+    }
+  }
+
+  const handleSend = async (content: string) => {
+    addUserMessage(content, config.chatTransport);
+    setAiThinking(true);
+
+    try {
+      if (config.chatTransport === "sse-dev") {
+        await streamPrompt(content);
+        return;
+      }
+
+      await sendChatMessage(content);
+    } finally {
+      setTimeout(() => {
+        const latest = useAppStore.getState().messages;
+        const tail = latest.length > 0 ? latest[latest.length - 1] : null;
+        if (tail && tail.role === "user") {
+          setAiThinking(false);
+        }
+      }, 600);
+    }
   };
 
   return (
@@ -126,6 +173,22 @@ export default function Chat() {
                 <Settings2 className="h-4 w-4" />
                 Setup
               </Link>
+              <button
+                type="button"
+                onClick={toggleTransport}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
+                  config.chatTransport === "ws"
+                    ? "border-violet-400/40 bg-violet-500/10 text-violet-100 hover:bg-violet-500/20"
+                    : "border-emerald-400/40 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/20"
+                }`}
+                title="Basculer entre SSE direct Brain et WebSocket Gateway (voix WS seulement)"
+              >
+                <Zap className="h-4 w-4" />
+                Mode:{" "}
+                <span className="font-mono uppercase tracking-[0.15em]">
+                  {config.chatTransport}
+                </span>
+              </button>
             </nav>
           </div>
         </header>
@@ -179,9 +242,50 @@ export default function Chat() {
 
             {lastError && (
               <div className="rounded-3xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                {lastError}
+                <div className="flex flex-wrap items-start gap-3">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-rose-200" />
+                  <div className="flex-1 space-y-2">
+                    <p className="font-medium">{lastError}</p>
+                    {lastError.toLowerCase().includes("websocket") ? (
+                      <ul className="list-disc space-y-1 pl-5 text-xs text-rose-200/90">
+                        <li>
+                          Verifiez que le gateway Go est bien demarre sur le port 8080
+                          (onglet dev-all PowerShell "starting gateway_go on :8080").
+                        </li>
+                        <li>
+                          Cliquez sur le bouton <span className="font-mono">Connecter</span>{" "}
+                          ci-dessous pour retenter.
+                        </li>
+                        <li>
+                          Si besoin, cliquez sur{" "}
+                          <span className="font-mono">Générer JWT dev</span> pour forcer un
+                          nouveau jeton.
+                        </li>
+                      </ul>
+                    ) : null}
+                  </div>
+                  {lastError.toLowerCase().includes("websocket") ? (
+                    <button
+                      type="button"
+                      onClick={() => void connect()}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-rose-300/30 bg-rose-400/10 px-3 py-1.5 text-xs font-medium text-rose-100 hover:bg-rose-400/20"
+                    >
+                      <Wifi className="h-3.5 w-3.5" />
+                      Reconnecter
+                    </button>
+                  ) : null}
+                </div>
               </div>
             )}
+
+            {!lastError && config.chatTransport === "sse-dev" ? (
+              <div className="rounded-3xl border border-emerald-400/20 bg-emerald-500/5 px-4 py-2.5 text-xs text-emerald-200/90">
+                Mode SSE dev actif : la voix est{" "}
+                <span className="font-semibold text-amber-200">desactivee</span>. Utilisez le
+                bouton <span className="font-mono">Mode: sse-dev</span> pour basculer en
+                WebSocket.
+              </div>
+            ) : null}
 
             <div className="flex-1 space-y-4 overflow-y-auto pr-2">
               {historyQuery.isLoading && (
@@ -198,6 +302,24 @@ export default function Chat() {
                   <MessageBubble key={message.id} message={message} />
                 ))
               )}
+
+              {aiThinking ? (
+                <div className="flex items-end gap-3">
+                  <div className="flex h-8 w-8 flex-none items-center justify-center rounded-2xl border border-violet-400/25 bg-violet-500/10">
+                    <span className="text-[10px] font-bold text-violet-200">IA</span>
+                  </div>
+                  <div className="rounded-3xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-3 text-slate-200 shadow-sm">
+                    <div className="flex items-center gap-1.5" aria-label="IA ecrit">
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-violet-400 [animation-delay:-0.3s]"></span>
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-violet-300 [animation-delay:-0.15s]"></span>
+                      <span className="h-2 w-2 animate-bounce rounded-full bg-violet-200"></span>
+                      <span className="ml-3 text-xs text-slate-400">
+                        aNtaerus ecrit une reponse...
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <MessageInput

@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Activity, MessageSquare, Gauge, Sparkles, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Activity, AlertTriangle, MessageSquare, Gauge, Sparkles, RefreshCw } from "lucide-react";
 import MetricsChart from "@/components/MetricsChart";
 import { useAppStore } from "@/store/useAppStore";
 import { fetchAnalytics, type AnalyticsSeries } from "@/lib/api";
@@ -44,14 +44,40 @@ const palette: Record<AnalyticsSeries["name"] | string, string> = {
   default: "#f59e0b",
 };
 
+const EMPTY_SERIES: AnalyticsSeries[] = [
+  {
+    name: "latencyMs",
+    lastValue: 0,
+    points: [],
+  },
+  {
+    name: "tokensPerMinute",
+    lastValue: 0,
+    points: [],
+  },
+  {
+    name: "messagesPerMinute",
+    lastValue: 0,
+    points: [],
+  },
+];
+
 export default function Analytics() {
   const { analytics, analyticsLoading, setAnalytics, setAnalyticsLoading } = useAppStore();
+  const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
     try {
+      setError(null);
       setAnalyticsLoading(true);
       const data = await fetchAnalytics();
       setAnalytics(data);
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Impossible de recuperer les metriques analytiques.",
+      );
     } finally {
       setAnalyticsLoading(false);
     }
@@ -61,10 +87,14 @@ export default function Analytics() {
     void refresh();
   }, []);
 
-  const series: AnalyticsSeries[] = analytics?.series ?? [];
-  const latency = series.find((s) => s.name === "latencyMs");
-  const tokens = series.find((s) => s.name === "tokensPerMinute");
-  const messages = series.find((s) => s.name === "messagesPerMinute");
+  const series: AnalyticsSeries[] = analytics?.series && analytics.series.length > 0
+    ? analytics.series
+    : analytics?.series ?? EMPTY_SERIES;
+  const latency = series.find((s) => s.name === "latencyMs") ?? EMPTY_SERIES[0];
+  const tokens = series.find((s) => s.name === "tokensPerMinute") ?? EMPTY_SERIES[1];
+  const messages = series.find((s) => s.name === "messagesPerMinute") ?? EMPTY_SERIES[2];
+  const displayPlaceholder =
+    !analytics && !analyticsLoading;
 
   return (
     <main className="min-h-screen px-6 py-10 text-slate-100">
@@ -89,10 +119,38 @@ export default function Analytics() {
               onClick={refresh}
               className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${analyticsLoading ? "animate-spin" : ""}`} />
               Actualiser
             </button>
           </div>
+
+          {error ? (
+            <div className="mt-5 rounded-2xl border border-rose-400/25 bg-rose-500/5 px-4 py-3 text-sm text-rose-200/95">
+              <p className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-rose-300" />
+                <span>
+                  <span className="font-medium">Donnees analytiques indisponibles</span> : {error}
+                  <br />
+                  Cause habituelle : endpoint <span className="font-mono">/api/v1/analytics</span> du
+                  gateway Go non implemente ou gateway eteint. Reessayez plus tard ou cliquez
+                  Actualiser.
+                </span>
+              </p>
+            </div>
+          ) : null}
+
+          {displayPlaceholder && !error ? (
+            <div className="mt-5 rounded-2xl border border-amber-400/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/95">
+              <p className="flex items-start gap-2">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-none text-amber-300" />
+                <span>
+                  <span className="font-medium">Aucune donnee recue pour le moment</span> : les
+                  graphiques ci-dessous affichent une structure vide en attendant les premieres
+                  mesures (24h de donnees). Les KPI vont s&apos;actualiser automatiquement.
+                </span>
+              </p>
+            </div>
+          ) : null}
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Kpi
@@ -132,20 +190,18 @@ export default function Analytics() {
           </p>
         ) : (
           <section className="grid gap-6 lg:grid-cols-2">
-            {latency ? (
-              <MetricsChart series={latency} color={palette.latencyMs} />
-            ) : null}
-            {tokens ? (
-              <MetricsChart series={tokens} color={palette.tokensPerMinute} />
-            ) : null}
-            {messages ? (
-              <MetricsChart series={messages} color={palette.messagesPerMinute} />
-            ) : null}
-            {!latency && !tokens && !messages ? (
-              <p className="col-span-full rounded-3xl border border-white/10 bg-slate-950/50 p-10 text-center text-sm text-slate-400">
-                Aucune serie disponible pour le moment.
-              </p>
-            ) : null}
+            <MetricsChart
+              series={latency}
+              color={palette.latencyMs}
+            />
+            <MetricsChart
+              series={tokens}
+              color={palette.tokensPerMinute}
+            />
+            <MetricsChart
+              series={messages}
+              color={palette.messagesPerMinute}
+            />
           </section>
         )}
       </div>

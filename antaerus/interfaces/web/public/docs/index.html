@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Guide utilisateur aNtaerus</title>
+<meta name="description" content="Documentation utilisateur complete aNtaerus : installation, configuration .env, demarrage, 10 ecrans UI, Skill Lab M7, voix, missions, FAQ." />
+<link rel="stylesheet" href="./styles.css" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+</head>
+<body>
+
+<button id="sidebarToggle" class="sidebar-toggle" aria-label="Ouvrir la navigation">
+  <span></span><span></span><span></span>
+</button>
+<div id="sidebarBackdrop" class="backdrop"></div>
+
+<aside id="sidebar" class="sidebar">
+  <div class="brand">
+    <div class="brand-badge">AN</div>
+    <div>
+      <h1>aNtaerus</h1>
+      <p>Guide utilisateur</p>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <input id="searchInput" type="search" placeholder="Rechercher dans la doc..." aria-label="Rechercher" />
+  </div>
+
+  <nav id="toc" aria-label="Navigation du guide">
+    <ul>
+      <li><a href="#intro" class="toc-link">1. Introduction</a></li>
+      <li><a href="#prerequis" class="toc-link">2. Prérequis</a></li>
+      <li><a href="#telecharger" class="toc-link">3. Télécharger le code</a></li>
+      <li><a href="#dependances" class="toc-link">4. Installer dépendances</a></li>
+      <li><a href="#env" class="toc-link">5. Configuration .env</a></li>
+      <li><a href="#demarrer" class="toc-link">6. Démarrer l'app</a></li>
+      <li><a href="#ecrans" class="toc-link">7. Les 10 ecrans UI</a>
+        <ul class="toc-sublist">
+          <li><a href="#setup" class="toc-link">7.1 Setup initial</a></li>
+          <li><a href="#chat" class="toc-link">7.2 Chat texte</a></li>
+          <li><a href="#voice" class="toc-link">7.3 Voix temps réel</a></li>
+          <li><a href="#missions" class="toc-link">7.4 Missions</a></li>
+          <li><a href="#memory" class="toc-link">7.5 Memory Explorer</a></li>
+          <li><a href="#command" class="toc-link">7.6 Command Center</a></li>
+          <li><a href="#analytics" class="toc-link">7.7 Analytics</a></li>
+          <li><a href="#health" class="toc-link">7.8 System Health</a></li>
+          <li><a href="#config" class="toc-link">7.9 Config</a></li>
+          <li><a href="#skill" class="toc-link">7.10 Skill Lab M7</a></li>
+        </ul>
+      </li>
+      <li><a href="#skill-lab" class="toc-link">8. Skill Lab pas à pas</a></li>
+      <li><a href="#qualimetrie" class="toc-link">9. Commandes qualimétrie</a></li>
+      <li><a href="#faq" class="toc-link">10. FAQ dépannage</a></li>
+      <li><a href="#architecture" class="toc-link">11. Architecture 4 couches</a></li>
+      <li><a href="#liens" class="toc-link">12. Liens utiles</a></li>
+    </ul>
+  </nav>
+
+  <div class="sidebar-footer">
+    <p class="version">Version M7 — 25/08/2026</p>
+    <p class="copyright">&copy; aNtaerus · MIT</p>
+  </div>
+</aside>
+
+<main id="main" class="main">
+
+  <section id="intro" class="section hero">
+    <span class="tag">Plateforme IA self-hosted</span>
+    <h2>Bienvenue sur aNtaerus</h2>
+    <p class="lead">
+      Assistant personnel IA open source, multi-langages, gouverné par niveaux d'autonomie.
+      React Web UI · Go Gateway · Python Brain · Rust Engine.
+    </p>
+    <div class="hero-grid">
+      <div class="card-stat">
+        <span class="card-stat-num">10</span>
+        <span class="card-stat-label">Modules UI</span>
+      </div>
+      <div class="card-stat">
+        <span class="card-stat-num">4</span>
+        <span class="card-stat-label">Couches logicielles</span>
+      </div>
+      <div class="card-stat">
+        <span class="card-stat-num">M0-M7</span>
+        <span class="card-stat-label">Jalons livrés</span>
+      </div>
+      <div class="card-stat">
+        <span class="card-stat-num">0</span>
+        <span class="card-stat-label">Nouvelle dépendance M7</span>
+      </div>
+    </div>
+    <div class="hero-cta">
+      <a href="#prerequis" class="btn btn-primary">Commencer l'installation</a>
+      <a href="#ecrans" class="btn btn-ghost">Voir les ecrans UI</a>
+    </div>
+  </section>
+
+  <section id="prerequis" class="section">
+    <header class="section-header">
+      <span class="section-idx">02</span>
+      <h3>Prérequis d'installation</h3>
+    </header>
+
+    <div class="tabs" id="prerequis-tabs">
+      <div class="tabs-btns" role="tablist">
+        <button role="tab" class="tab-btn active" data-tab="tab-win">Windows 10 / 11</button>
+        <button role="tab" class="tab-btn" data-tab="tab-lin">Linux Ubuntu 22.04 / 24.04</button>
+      </div>
+
+      <div id="tab-win" class="tab-panel active">
+        <table class="tbl">
+          <thead><tr><th>Outil</th><th>Version min.</th><th>Commande vérification</th><th>Installer</th></tr></thead>
+          <tbody>
+            <tr><td>Node.js (React Vite)</td><td>20.11 LTS</td><td><code>node -v</code></td><td>nodejs.org/fr (LTS + cocher tools)</td></tr>
+            <tr><td>npm</td><td>10.2</td><td><code>npm -v</code></td><td>Inclus Node.js</td></tr>
+            <tr><td>Go</td><td>1.22</td><td><code>go version</code></td><td>go.dev/dl (win-amd64.msi)</td></tr>
+            <tr><td>Python</td><td>3.11.x</td><td><code>py -3.11 --version</code></td><td>python.org, cocher <b>Add to PATH</b></td></tr>
+            <tr><td>Rust + Cargo</td><td>1.77</td><td><code>rustc --version ; cargo --version</code></td><td>rustup.rs + Build Tools VS C++ x64</td></tr>
+            <tr><td>git</td><td>2.40</td><td><code>git --version</code></td><td>git-scm.com</td></tr>
+            <tr><td><i>(Optionnel) Docker Desktop</i></td><td>Engine 24+</td><td><code>docker ps</code></td><td>docker.com (WSL 2 recommandé)</td></tr>
+            <tr><td><i>(Optionnel) LLVM Clang 64-bit</i></td><td>17+</td><td><code>clang --version</code></td><td>winlibs.com, var. <code>LIBCLANG_PATH</code></td></tr>
+            <tr><td><i>(Optionnel) Ollama LLM local</i></td><td>0.1.30</td><td><code>ollama --version</code></td><td>ollama.com</td></tr>
+          </tbody>
+        </table>
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> node -v ; npm -v ; go version ; py -3.11 --version ; rustc --version ; cargo --version ; git --version</pre>
+      </div>
+
+      <div id="tab-lin" class="tab-panel">
+        <pre class="cmd-box"><span class="cmd-prompt">$</span> <span class="comment"># Node 20 LTS</span>
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs
+<span class="comment"># Go 1.22</span>
+wget https://go.dev/dl/go1.22.8.linux-amd64.tar.gz && sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.22.8.linux-amd64.tar.gz
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc ; source ~/.bashrc
+<span class="comment"># Python 3.11 + dev</span>
+sudo apt update && sudo apt install -y python3.11 python3.11-venv python3-pip python3.11-dev git curl build-essential
+<span class="comment"># Rust</span>
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y ; source "$HOME/.cargo/env"
+<span class="comment"># Docker (optionnel sandbox)</span>
+curl -fsSL https://get.docker.com | sudo sh ; sudo usermod -aG docker $USER ; newgrp docker
+<span class="comment"># LLVM Clang (optionnel voix M3)</span>
+sudo apt install -y llvm-18 libclang-18-dev ; export LIBCLANG_PATH=/usr/lib/llvm-18/lib</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="telecharger" class="section">
+    <header class="section-header">
+      <span class="section-idx">03</span>
+      <h3>Télécharger le code source</h3>
+    </header>
+    <pre class="cmd-box"><span class="cmd-prompt">PS</span> mkdir "$env:USERPROFILE\PycharmProjects" -Force | Out-Null
+cd "$env:USERPROFILE\PycharmProjects"
+git clone https://github.com/LordPhenixDeNetra/aNtaerus.git aNtaerus
+cd aNtaerus ; ls .\antaerus   <span class="comment"># Doit afficher: kernel  engine  interfaces  providers</span></pre>
+  </section>
+
+  <section id="dependances" class="section">
+    <header class="section-header">
+      <span class="section-idx">04</span>
+      <h3>Installer les dépendances (par langage, 1 seule fois)</h3>
+    </header>
+
+    <div class="grid-2">
+      <div class="card">
+        <h4><span class="chip chip-cyan">React Web</span></h4>
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus\interfaces\web
+npm install</pre>
+      </div>
+      <div class="card">
+        <h4><span class="chip chip-emerald">Brain Python</span></h4>
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus\providers\brain_python
+py -3.11 -m pip install -r requirements.txt
+
+<span class="comment"># Linux avec venv recommandé:</span>
+<span class="cmd-prompt">$</span> python3.11 -m venv .venv
+source .venv/bin/activate ; pip install -r requirements.txt</pre>
+      </div>
+      <div class="card">
+        <h4><span class="chip chip-violet">Gateway Go</span></h4>
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus\interfaces\gateway_go
+go mod download   <span class="comment"># Rien dautres, modules automatiques</span></pre>
+      </div>
+      <div class="card">
+        <h4><span class="chip chip-amber">Engine Rust</span></h4>
+        <p class="hint">Règle Windows OneDrive: évite erreurs build 3rd-party en déplaçant target dir hors OneDrive.</p>
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> $env:CARGO_TARGET_DIR = "$env:TEMP\cargo-engine-rust-2026"
+<span class="comment"># (Optionnel, permanent)</span>
+[System.Environment]::SetEnvironmentVariable("CARGO_TARGET_DIR","$env:TEMP\cargo-engine-rust-2026","User")</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="env" class="section">
+    <header class="section-header">
+      <span class="section-idx">05</span>
+      <h3>Configuration du fichier .env</h3>
+    </header>
+    <div class="callout callout-danger">
+      <p><b>Règle forte projet :</b> Le fichier <code>.env</code> DOIT se trouver DANS <code>antaerus/.env</code> (PAS à la racine, PAS dans gateway_go ni brain_python).</p>
+    </div>
+
+    <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus
+Copy-Item .env.example .env</pre>
+
+    <h4 class="h4">5.1 — Fournisseur de modèle IA (OBLIGATOIRE, choisissez 1)</h4>
+
+    <div class="accordion" id="llm-accordion">
+      <button class="acc-btn active" data-acc="acc-1">
+        <span><b>Cas 1</b> · OpenAI (cloud, rapide, facturation tokens)</span>
+        <span class="acc-icon">+</span>
+      </button>
+      <div class="acc-panel active" id="acc-1">
+        <pre class="cmd-box">ANTAERUS_BRAIN_DEFAULT_PROVIDER=openai
+ANTAERUS_BRAIN_OPENAI_MODEL=openai/gpt-4o-mini
+<span class="comment"># + ligne suivante a ajouter MANUELLEMENT dans .env (pas dans example):</span>
+<span class="comment"># OPENAI_API_KEY=sk-votre_cle_sans_guillemets_ni_espaces</span></pre>
+      </div>
+
+      <button class="acc-btn" data-acc="acc-2">
+        <span><b>Cas 2</b> · Anthropic Claude 3.5 Sonnet (raisonnement)</span>
+        <span class="acc-icon">+</span>
+      </button>
+      <div class="acc-panel" id="acc-2">
+        <pre class="cmd-box">ANTAERUS_BRAIN_DEFAULT_PROVIDER=anthropic
+ANTAERUS_BRAIN_ANTHROPIC_MODEL=anthropic/claude-3-5-sonnet-latest
+<span class="comment"># + ANTHROPIC_API_KEY=sk-ant-xxxx</span></pre>
+      </div>
+
+      <button class="acc-btn" data-acc="acc-3">
+        <span><b>Cas 3</b> · Ollama local 0 coût (CPU / GPU 8GB+)</span>
+        <span class="acc-icon">+</span>
+      </button>
+      <div class="acc-panel" id="acc-3">
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> ollama pull llama3.1:8b    <span class="comment"># Dans un terminal Ollama</span>
+
+<span class="comment"># Puis dans antaerus/.env :</span>
+ANTAERUS_BRAIN_DEFAULT_PROVIDER=ollama
+ANTAERUS_BRAIN_OLLAMA_BASE_URL=http://localhost:11434
+ANTAERUS_BRAIN_OLLAMA_MODEL=llama3.1:8b</pre>
+      </div>
+
+      <button class="acc-btn" data-acc="acc-4">
+        <span><b>Cas 4</b> · DeepSeek / Mistral / OpenRouter</span>
+        <span class="acc-icon">+</span>
+      </button>
+      <div class="acc-panel" id="acc-4">
+        <pre class="cmd-box"><span class="comment"># Variables d'API key standards a ajouter:</span>
+DEEPSEEK_API_KEY=sk-xxxx
+MISTRAL_API_KEY=sk-xxxx
+OPENROUTER_API_KEY=sk-or-xxxx</pre>
+      </div>
+    </div>
+
+    <h4 class="h4">5.2 — (Optionnel) Sécurité + M5 proactif</h4>
+    <pre class="cmd-box"><span class="comment"># Remplacer secrets par chaines aleatoires min 32 octets en PRODUCTION</span>
+ANTAERUS_GATEWAY_JWT_SECRET=votre_chaine_aleatoire_min_32_octets
+ANTAERUS_BRAIN_API_SECRET=autre_chaine_differente
+<span class="comment"># Heure UTC curateur nocturne M5 (defaut 2h du matin)</span>
+ANTAERUS_GATEWAY_PROACTIVE_CRON_HOUR=2</pre>
+  </section>
+
+  <section id="demarrer" class="section">
+    <header class="section-header">
+      <span class="section-idx">06</span>
+      <h3>Démarrer l'application web</h3>
+    </header>
+
+    <div class="grid-3">
+      <div class="card card-highlight">
+        <h4><span class="chip chip-emerald">Mode 1 · UN CLIC (dev Win)</span></h4>
+        <p class="hint">Lance 4 services d'un coup (brain, gateway, engine, UI).</p>
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus\scripts
+powershell -ExecutionPolicy Bypass -File .\dev-all.ps1</pre>
+        <div class="ports">
+          <span>Web <code>:5173</code></span>
+          <span>Gateway <code>:8080</code></span>
+          <span>Brain <code>:8000</code></span>
+          <span>Engine <code>:7000/7001</code></span>
+        </div>
+        <a class="btn btn-primary btn-block" target="_blank" href="http://localhost:5173/">Ouvrir http://localhost:5173 ↗</a>
+      </div>
+
+      <div class="card">
+        <h4><span class="chip chip-red">Mode 1b · Arrêter tout</span></h4>
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus\scripts
+powershell -ExecutionPolicy Bypass -File .\stop-all.ps1</pre>
+        <p class="hint">PIDs sauvegardés dans <code>%TEMP%\antaerus-dev-all-processes.json</code>.</p>
+      </div>
+
+      <div class="card">
+        <h4><span class="chip chip-violet">Mode 2 · Build + Bundle prod</span></h4>
+        <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus\scripts\release
+powershell -ExecutionPolicy Bypass -File .\build_bundle.ps1
+
+<span class="cmd-prompt">$</span> bash ./build_bundle.sh   <span class="comment"># Linux</span></pre>
+        <p class="hint">Dossier <code>aNtaerus/bundle/</code> : zip + MANIFEST + SHA256.</p>
+      </div>
+    </div>
+
+    <h4 class="h4">Mode 3 · Docker run direct UI statique (démo sans backend)</h4>
+    <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus\interfaces\web ; npm run build
+docker run -d --name antaerus-web --rm -p 80:80 -v "C:\chemin\dist:/usr/share/nginx/html:ro" nginx:1.27-alpine</pre>
+  </section>
+
+  <section id="ecrans" class="section">
+    <header class="section-header">
+      <span class="section-idx">07</span>
+      <h3>Les 10 écrans de l'interface web</h3>
+    </header>
+
+    <article id="setup" class="sub-section">
+      <h4 class="h4"><span class="chip chip-violet">7.1 Setup</span> · Configuration initiale</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/setup">http://localhost:5173/setup ↗</a></p>
+      <p>Wizard 5 étapes : (1) Licence MIT, (2) Chemins sauvegarde mémoire, (3) Fournisseur + Test connexion LLM, (4) Voix, (5) Terminer.</p>
+    </article>
+
+    <article id="chat" class="sub-section">
+      <h4 class="h4"><span class="chip chip-cyan">7.2 Chat texte</span> · Conversations LLM</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/chat">http://localhost:5173/chat ↗</a></p>
+      <p>Streaming token par token SSE, historique multi-session SQLite. <code>Ctrl+Enter</code> pour envoyer. Menu sur chaque message (Copier / Réessayer / Supprimer).</p>
+    </article>
+
+    <article id="voice" class="sub-section">
+      <h4 class="h4"><span class="chip chip-pink">7.3 Voix temps réel (M3)</span> · Micro → Transcription</h4>
+      <p>Depuis Chat, icône micro. <b>VoiceButton</b> (record start/stop), <b>VoiceVisualizer</b> (waveform SVG live), <b>VoiceTranscript</b> mot par mot. VAD auto (silence > 1.5s = stop).</p>
+      <div class="callout callout-info"><p>Note : micro interdit par Chrome sur IP non-localhost. Utilisez HTTPS ou drapeau <code>#unsafely-treat-insecure-origin-as-secure</code>.</p></div>
+    </article>
+
+    <article id="missions" class="sub-section">
+      <h4 class="h4"><span class="chip chip-violet">7.4 Missions (M2/M4)</span> · Objectifs + DAG tâches</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/missions">http://localhost:5173/missions ↗</a></p>
+      <p>3 onglets : Toutes / Créer / Détail avec <b>TaskGraph SVG DAG</b> (0-dépendance, dépendances flèches colorées par état).</p>
+    </article>
+
+    <article id="memory" class="sub-section">
+      <h4 class="h4"><span class="chip chip-cyan">7.5 Memory Explorer (M1/M6)</span> · Graphe mémoire</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/memory-explorer">http://localhost:5173/memory-explorer ↗</a></p>
+      <p>SVG circular layout + Bézier curves (0-dépendance). Cliquez un nœud → <b>FactCard</b> side panel. Recherche plein texte, Export JSON.</p>
+    </article>
+
+    <article id="command" class="sub-section">
+      <h4 class="h4"><span class="chip chip-amber">7.6 Command Center (M5)</span> · Autonomie + Initiatives</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/command-center">http://localhost:5173/command-center ↗</a></p>
+      <p><b>AutonomySlider</b> niveaux 0 (manuel) → 5 (total). Cards <b>InitiativeCard</b> (catégorie · risque · budget) avec boutons Approuver / Rejeter (motif min 8 chars).</p>
+      <pre class="cmd-box"><span class="comment"># Declencher curateur manuellement (sinon 2h UTC):</span>
+<span class="cmd-prompt">PS</span> Invoke-RestMethod -Method POST http://localhost:8080/api/v1/proactive/curator/run-now -Headers @{Authorization="Bearer dev-jwt-gateway"}</pre>
+    </article>
+
+    <article id="analytics" class="sub-section">
+      <h4 class="h4"><span class="chip chip-pink">7.7 Analytics (M6)</span> · KPIs + graphiques SVG</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/analytics">http://localhost:5173/analytics ↗</a></p>
+      <p><b>MetricsChart</b> custom SVG (barres + lignes). 4 blocs : missions / mémoire / voice minutes / fuel sandbox M7. Export CSV.</p>
+    </article>
+
+    <article id="health" class="sub-section">
+      <h4 class="h4"><span class="chip chip-emerald">7.8 System Health (M6)</span> · Services temps réel</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/system-health">http://localhost:5173/system-health ↗</a></p>
+      <p>4 cards <b>ServiceStatusCard</b> (Web / Gateway / Brain / Engine) voyant vert/orange/rouge. Refresh auto 5s. Logs 100 lignes admin.</p>
+    </article>
+
+    <article id="config" class="sub-section">
+      <h4 class="h4"><span class="chip chip-gray">7.9 Config</span> · Modifier après setup</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/config">http://localhost:5173/config ↗</a></p>
+      <p>Formulaire complet <b>ConfigForm</b>. Sauvegarder = push immédiat gateway → brain (persisté dans .env runtime).</p>
+    </article>
+
+    <article id="skill" class="sub-section">
+      <h4 class="h4"><span class="chip chip-emerald">7.10 Skill Lab (M7 ⭐ NOUVEAU)</span> · Marketplace / Editor / Tester</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/skill-lab">http://localhost:5173/skill-lab ↗</a></p>
+      <p>3 onglets en haut. Bandeau approbations <b>pending</b> visible immédiat si skills en attente. Voir section 8 pour pas à pas détaillé.</p>
+    </article>
+  </section>
+
+  <section id="skill-lab" class="section">
+    <header class="section-header">
+      <span class="section-idx">08</span>
+      <h3>Skill Lab M7 — pas à pas (compétences custom)</h3>
+    </header>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-n">1</span>
+        <div>
+          <h5>Marketplace — packages curated</h5>
+          <p>3 skills inclus par défaut : <code>echo-json</code> (python), <code>sha256</code> (stdlib), <code>wasm-add-forty-two</code> (WASM Rust +42). Cliquer carte → panel → Installer / Aperçu code.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-n">2</span>
+        <div>
+          <h5>Skill Editor — 0 dépendance</h5>
+          <p>Editeur textarea custom : line-numbers synchronisés scroll, Tab = 2 espaces, <b>Ctrl+S</b> sauvegarde draft localStorage. Bouton « Générer depuis usage » appelle <code>/skills/generate</code> (ou fallback local JS).</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-n">3</span>
+        <div>
+          <h5>Créer skill hello-somme (exemple)</h5>
+          <pre class="cmd-box"><span class="comment"># Nom: hello-somme · Runtime: python</span>
+<span class="comment"># Usage: "Prend a,b JSON → renvoie somme"</span>
+import json, sys
+def main() -> dict:
+    p = json.loads(sys.argv[1] if len(sys.argv)>1 else "{}")
+    return {"result": int(p.get("a",0)) + int(p.get("b",0)), "skill": "hello-somme"}
+if __name__ == "__main__":
+    print(json.dumps(main(), ensure_ascii=False))</pre>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-n">4</span>
+        <div>
+          <h5>Bandeau approbations (Approuver / Rejeter)</h5>
+          <p>En attente → <b>Approuver</b> devient <code>installed</code> (disponible Tester). <b>Rejeter</b> → <b>motif min 8 caractères</b> (double garde : frontend + backend 400 si < 8).</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-n">5</span>
+        <div>
+          <h5>Skill Tester — Run sandbox isolé</h5>
+          <p>Choisir skill + Arguments JSON (ex: <code>{"a":18,"b":24}</code>) + Mode sandbox (Auto / Forcer local / Docker). Résultat badges : <code>exitCode</code>, <code>durationMs</code>, <code>fuel</code>, <code>sandboxKind</code>.</p>
+          <pre class="cmd-box"><span class="comment"># Exemple reponse badge OK + JSON:</span>
+exitCode=0  durationMs=145  fuel=382  sandboxKind=python-local-fallback
+<span class="comment"># Corps:</span>
+{"result": 42, "status": "ok", "skill": "hello-somme"}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="qualimetrie" class="section">
+    <header class="section-header">
+      <span class="section-idx">09</span>
+      <h3>Commandes qualimétrie complète</h3>
+    </header>
+    <pre class="cmd-box"><span class="comment"># ===== REACT UI =====</span>
+<span class="cmd-prompt">PS</span> cd antaerus\interfaces\web
+npm run check            <span class="comment"># TypeScript 0 erreur</span>
+npm run build            <span class="comment"># Vite build dist/</span>
+npm run test -- --run    <span class="comment"># Vitest</span>
+npm run lint ; npm run format:check
+
+<span class="comment"># ===== GATEWAY GO =====</span>
+cd ..\..\interfaces\gateway_go
+go build ./...
+go test ./... -v
+
+<span class="comment"># ===== BRAIN PYTHON =====</span>
+cd ..\..\providers\brain_python
+py -3.11 -m ruff check src tests
+py -3.11 -m mypy src --ignore-missing-imports
+py -3.11 -m pytest tests -v      <span class="comment"># 12 tests skills + memory + mission + proactive</span>
+
+<span class="comment"># ===== ENGINE RUST (feature wasm-runtime M7) =====</span>
+cd ..\..\providers\engine_rust
+$env:CARGO_TARGET_DIR = "$env:TEMP\cargo-engine-rust-2026"
+cargo build --features wasm-runtime
+cargo test --features wasm-runtime --test wasm_executor
+cargo test --features wasm-runtime --lib</pre>
+  </section>
+
+  <section id="faq" class="section">
+    <header class="section-header">
+      <span class="section-idx">10</span>
+      <h3>FAQ dépannage fréquent</h3>
+    </header>
+
+    <div class="accordion" id="faq-accordion">
+      <button class="acc-btn active" data-acc="faq-1"><span>Q1. Home: « Failed to fetch localhost:8080/api/v1/health »</span><span class="acc-icon">+</span></button>
+      <div class="acc-panel active" id="faq-1">
+        <p>Cause : Gateway Go arrêté. Relancez <code>scripts\dev-all.ps1</code> ou autorisez <code>go.exe</code> dans Pare-feu Windows → Règles entrantes.</p>
+      </div>
+      <button class="acc-btn" data-acc="faq-2"><span>Q2. Chat réponse vide « Fournisseur LLM indisponible »</span><span class="acc-icon">+</span></button>
+      <div class="acc-panel" id="faq-2">
+        <p>Vérifiez <code>antaerus/.env</code> clé API SANS espaces/guillemets. Test brain direct: <code>Invoke-RestMethod http://localhost:8000/health</code> → status ok. Si Ollama: <code>ollama list</code>.</p>
+      </div>
+      <button class="acc-btn" data-acc="faq-3"><span>Q3. M7 Skill Docker échec exit 9009 (Windows Store alias)</span><span class="acc-icon">+</span></button>
+      <div class="acc-panel" id="faq-3">
+        <p>Déjà CORRIGÉ code (<code>sys.executable</code> PREMIER ordre). Si encore: Paramètres → Apps → Avancé → Aliases → DÉSACTIVER "python.exe" / "python3.exe". Ou utilisez bouton Tester → "Forcer local".</p>
+      </div>
+      <button class="acc-btn" data-acc="faq-4"><span>Q4. Rust build « output path is not writable » (OneDrive)</span><span class="acc-icon">+</span></button>
+      <div class="acc-panel" id="faq-4">
+        <p>Appliquer <code>$env:CARGO_TARGET_DIR = "$env:TEMP\cargo-engine-rust-2026"</code>. Permanent: Variables d'environnement Utilisateur → CARGO_TARGET_DIR.</p>
+      </div>
+      <button class="acc-btn" data-acc="faq-5"><span>Q5. Voix M3 micro ne marche pas (Pas de peripherique)</span><span class="acc-icon">+</span></button>
+      <div class="acc-panel" id="faq-5">
+        <p>Chrome → Paramètres → Confidentialité → Micro → Autoriser localhost. Sur IP LAN: HTTPS ou drapeau <code>#unsafely-treat-insecure-origin-as-secure</code>.</p>
+      </div>
+      <button class="acc-btn" data-acc="faq-6"><span>Q6. Reject skill demande motif, je tape "non" → erreur 400</span><span class="acc-icon">+</span></button>
+      <div class="acc-panel" id="faq-6">
+        <p>Normal: règlement min 8 caractères. Écrivez ex: « Skill refusé, logique invalide ».</p>
+      </div>
+      <button class="acc-btn" data-acc="faq-7"><span>Q7. Déployer VPS Hostinger Dokploy (Docker run)</span><span class="acc-icon">+</span></button>
+      <div class="acc-panel" id="faq-7">
+<pre class="cmd-box"><span class="comment"># Brain</span>
+docker run -d --name antaerus-brain --restart always \
+  --network antaerus-net \
+  -v /opt/antaerus/brain/data:/app/antaerus/providers/brain_python/memory_data \
+  -v /opt/antaerus/.env:/app/antaerus/.env:ro -p 8000:8000 \
+  your-registry/antaerus-brain:latest uvicorn antaerus_brain.api.main:app --host 0.0.0.0 --port 8000
+
+<span class="comment"># Gateway</span>
+docker run -d --name antaerus-gateway --restart always \
+  --network antaerus-net \
+  -v /opt/antaerus/.env:/app/antaerus/.env:ro -p 8080:8080 \
+  your-registry/antaerus-gateway:latest
+
+<span class="comment"># UI web Nginx HTTPS (LetsEncrypt certbot)</span>
+docker run -d --name antaerus-web --restart always \
+  --network antaerus-net \
+  -v /opt/antaerus/web/dist:/usr/share/nginx/html:ro \
+  -v /opt/antaerus/web/nginx.conf:/etc/nginx/nginx.conf:ro \
+  -p 80:80 -p 443:443 nginx:1.27-alpine</pre>
+      </div>
+      <button class="acc-btn" data-acc="faq-8"><span>Q8. Mettre aNtaerus à jour dernière version</span><span class="acc-icon">+</span></button>
+      <div class="acc-panel" id="faq-8">
+<pre class="cmd-box"><span class="cmd-prompt">PS</span> cd aNtaerus
+git pull origin main
+cd antaerus\interfaces\web ; npm install
+cd ..\..\providers\brain_python ; py -3.11 -m pip install -r requirements.txt --upgrade
+<span class="comment"># Relancer dev-all.ps1. Migrations SQL SQLite auto au start brain.</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="architecture" class="section">
+    <header class="section-header">
+      <span class="section-idx">11</span>
+      <h3>Architecture 4 couches — flux de données</h3>
+    </header>
+
+    <div class="arch">
+      <div class="arch-row arch-web">
+        <span class="arch-tag">L3 Interfaces</span>
+        <div><b>React Web UI (port 5173)</b> — REST /api/v1/* · WebSocket /ws</div>
+      </div>
+      <div class="arch-arrow">↓ JSON REST · JWT auth · Rate limit</div>
+      <div class="arch-row arch-gateway">
+        <span class="arch-tag">L3 Proxy</span>
+        <div><b>Go Gateway (port 8080)</b> — REST /api/v1/* | Brain client HTTP | Engine gRPC</div>
+      </div>
+      <div class="arch-arrow">↓ HTTP interne · headers Brain API secret</div>
+      <div class="arch-row arch-brain">
+        <span class="arch-tag">L2 Providers</span>
+        <div><b>Python Brain FastAPI (port 8000)</b> — LLM · Memory SQLite · Missions · Skills registry · Proactif</div>
+      </div>
+      <div class="arch-arrow">↓ gRPC / appel direct Rust</div>
+      <div class="arch-row arch-engine">
+        <span class="arch-tag">L0 Kernel · L1 Providers</span>
+        <div><b>Rust Engine (ports 7000 HTTP · 7001 gRPC)</b> — WASM sandbox wasmtime · STT/TTS voix · Crypto AES-256-GCM</div>
+      </div>
+    </div>
+
+    <h4 class="h4">Exemple flux complet — M7 Install skill et run sandbox</h4>
+    <ol class="ordered-list">
+      <li>Clique « Installer » Marketplace React → <code>POST /api/v1/skills</code></li>
+      <li>Go Gateway proxy → Brain Python <code>POST /skills</code></li>
+      <li>LifecycleManager : décompactage tarball, vérif <code>../</code> escape → SQLite table skills <code>installed</code></li>
+      <li>Clique Run Tester → <code>POST /api/v1/skills/:id/run</code> → Brain → Engine Rust sandbox docker/local/WASM</li>
+      <li>Réponse JSON Gateway → React : badges <code>exitCode / durationMs / fuel / sandboxKind</code>.</li>
+    </ol>
+  </section>
+
+  <section id="liens" class="section">
+    <header class="section-header">
+      <span class="section-idx">12</span>
+      <h3>Liens utiles dans le projet</h3>
+    </header>
+
+    <div class="grid-2">
+      <div class="card link-card"><b>tasks.md</b><p>Backlog officiel M0–M7 (cases [x] cochées).</p><span>racine /tasks.md</span></div>
+      <div class="card link-card"><b>cahier-des-charges.md</b><p>CDC architecture 4 couches §5.1 invariants.</p><span>racine /cahier-des-charges.md</span></div>
+      <div class="card link-card"><b>.env.example</b><p>Modèle configuration à copier.</p><span>antaerus/.env.example</span></div>
+      <div class="card link-card"><b>README.md</b><p>Présentation officielle projet GitHub.</p><span>racine /README.md</span></div>
+      <div class="card link-card"><b>App.tsx</b><p>Router React (13 pages, routes).</p><span>web/src/App.tsx</span></div>
+      <div class="card link-card"><b>useAppStore.ts</b><p>État global Zustand (8 slices, skills M7).</p><span>web/src/store/useAppStore.ts</span></div>
+      <div class="card link-card"><b>api.ts</b><p>Endpoints TypeScript (missions, memory, skills M7).</p><span>web/src/lib/api.ts</span></div>
+      <div class="card link-card"><b>dev-all.ps1 / stop-all.ps1</b><p>Démarrage 1 clic (4 services).</p><span>antaerus/scripts/*.ps1</span></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <a href="#intro" class="back-to-top" aria-label="Retour en haut">↑ Retour en haut</a>
+    <div class="footer-inner">
+      <p><b>aNtaerus</b> · Documentation utilisateur Web autonome (HTML/CSS/JS, 0 dépendance).</p>
+      <p>MIT License · 2026 · M0→M7 livrés.</p>
+    </div>
+  </footer>
+</main>
+
+<script src="./script.js"></script>
+</body>
+</html>

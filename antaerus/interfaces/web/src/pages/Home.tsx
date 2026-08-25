@@ -4,6 +4,8 @@ import {
   Bot,
   Cpu,
   Database,
+  ExternalLink,
+  FileText,
   GitBranch,
   LineChart,
   Network,
@@ -147,6 +149,53 @@ export default function Home() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
               <Metric icon={Activity} label="Modules" value="10 / 10" />
               <Metric icon={Cpu} label="Couches" value="web · go · python · rust" />
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-sky-400/20 bg-sky-950/30 p-5 shadow-lg shadow-sky-950/30 backdrop-blur">
+          <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="rounded-xl border border-sky-400/20 bg-sky-500/10 p-3">
+                <FileText className="h-5 w-5 text-sky-300" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">
+                  Documentation utilisateur (HTML autonome)
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-300">
+                  Guide complet d&apos;installation (.env), de configuration, de
+                  demarrage 1 clic et d&apos;utilisation des 10 ecrans, de Skill
+                  Lab M7 et FAQ depannage.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => {
+                  window.open("/docs/index.html", "_blank", "noopener,noreferrer");
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-sky-400/30 bg-sky-500/20 px-4 py-2 text-sm font-medium text-sky-100 transition hover:bg-sky-500/30"
+              >
+                <BookOpen className="h-4 w-4" />
+                Ouvrir le guide utilisateur
+                <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  window.open(
+                    "https://github.com/LordPhenixDeNetra/aNtaerus/blob/main/README.md",
+                    "_blank",
+                    "noopener,noreferrer",
+                  );
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/[0.09]"
+              >
+                Voir le README GitHub
+                <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+              </button>
             </div>
           </div>
         </section>

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 use thiserror::Error;
 
 #[cfg(any(test, feature = "wat-compile"))]
@@ -6,7 +7,7 @@ use wat::parse_str as wat_parse_str;
 
 #[cfg(feature = "wasm-runtime")]
 use {
-    std::time::{Duration, Instant},
+    std::time::Instant,
     tokio::time::timeout,
     wasmtime::{Config, Engine, Instance, Linker, Module, Store},
 };
