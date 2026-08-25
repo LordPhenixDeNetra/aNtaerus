@@ -1,4 +1,4 @@
-import { Activity, Bot, Cpu, Network, Rocket, Settings2 } from "lucide-react";
+import { Activity, Bot, Cpu, Network, Rocket, Settings2, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type CardDef = {
@@ -34,6 +34,14 @@ const cards: CardDef[] = [
     title: "Mission Engine",
     tag: "Planification · Execution · Reflexion",
     description: "Creation, pilotage et bilan des missions autonomes : etapes, progression, reprise sur echec, reflexion LLM.",
+  },
+  {
+    to: "/command-center",
+    accent: "border-sky-400/20 shadow-sky-950/20 text-sky-300",
+    icon: Zap,
+    title: "Command Center",
+    tag: "Proactif · Collecteurs · Curateur",
+    description: "Pilotage du moteur proactif : collecteurs meteo/news/systeme, initiatives, autonomie globale et curateur nocturne.",
   },
   {
     to: "/setup",
@@ -84,7 +92,7 @@ export default function Home() {
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1">
-              <Metric icon={Activity} label="Modules" value="4 / 4" />
+              <Metric icon={Activity} label="Modules" value="5 / 5" />
               <Metric icon={Cpu} label="Couches" value="web · go · python · rust" />
             </div>
           </div>

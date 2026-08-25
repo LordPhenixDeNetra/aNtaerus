@@ -40,6 +40,7 @@ testpaths = ["tests"]
 markers = [
   "integration: marks tests requiring a full integration environment"
 ]
+anyio_backends = ["asyncio"]
 
 [tool.ruff]
 line-length = 100

@@ -40,3 +40,34 @@ layers =
     antaerus_brain.mission
 ignore_modules =
     antaerus_brain.api.*
+
+[importlinter:contract:proactive-no-backrefs]
+name = Le module proactive ne doit pas dependre de l'API brain
+type = forbidden
+source_modules =
+    antaerus_brain.proactive
+forbidden_modules =
+    antaerus_brain.api
+
+[importlinter:contract:proactive-correct-deps]
+name = Le module proactive peut importer memory, tools, mission, config, approval, llm
+type = layers
+layers =
+    antaerus_brain.proactive
+    antaerus_brain.mission
+    antaerus_brain.approval
+    antaerus_brain.tools
+    antaerus_brain.memory
+    antaerus_brain.llm
+    antaerus_brain.config
+ignore_modules =
+    antaerus_brain.proactive.*
+
+[importlinter:contract:api-can-import-proactive]
+name = L'API brain peut importer le module proactive
+type = layers
+layers =
+    antaerus_brain.api
+    antaerus_brain.proactive
+ignore_modules =
+    antaerus_brain.api.*

@@ -10,6 +10,7 @@ const (
 	ClientMessageVoiceStop  ClientMessageType = "voice.stop"
 	ClientMessageBargeIn    ClientMessageType = "voice.barge_in"
 	ClientMessageCancel     ClientMessageType = "mission.cancel"
+	ClientMessageScheduler  ClientMessageType = "scheduler.command"
 )
 
 type ServerMessageType string
@@ -22,6 +23,7 @@ const (
 	ServerMessageVoiceVADState         ServerMessageType = "voice.vad_state"
 	ServerMessageVoiceWakeState        ServerMessageType = "voice.wake_state"
 	ServerMessageMissionUpdate         ServerMessageType = "mission.update"
+	ServerMessageInitiativeUpdate      ServerMessageType = "initiative.update"
 	ServerMessageSystemAlert           ServerMessageType = "system.alert"
 	ServerMessageProactiveNotification ServerMessageType = "proactive.notification"
 	ServerMessageHealthHeartbeat       ServerMessageType = "health.heartbeat"
@@ -93,6 +95,23 @@ type MissionUpdatePayload struct {
 	StepStatus     *string `json:"stepStatus,omitempty"`
 	StepResultJSON *string `json:"stepResultJson,omitempty"`
 	Error          *string `json:"error,omitempty"`
+}
+
+type InitiativeUpdatePayload struct {
+	InitiativeID     string  `json:"initiativeId"`
+	Status           string  `json:"status"`
+	AutonomyLevel    *int    `json:"autonomyLevel,omitempty"`
+	BudgetTokens     int     `json:"budgetTokens,omitempty"`
+	BudgetTokensUsed int     `json:"budgetTokensUsed,omitempty"`
+	RanAt            *string `json:"ranAt,omitempty"`
+	CompletedAt      *string `json:"completedAt,omitempty"`
+	Error            *string `json:"error,omitempty"`
+	UpdatedAt        string  `json:"updatedAt"`
+}
+
+type SchedulerCommandPayload struct {
+	Action  string  `json:"action"`
+	CronHour *int   `json:"cronHour,omitempty"`
 }
 
 type SystemAlertPayload struct {

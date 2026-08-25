@@ -57,6 +57,10 @@ class Settings:
     mission_llm_timeout_seconds: float = 30.0
     mission_recovery_enabled: bool = True
     mission_reflexion_enabled: bool = True
+    proactive_enabled: bool = True
+    proactive_max_initiative_budget: int = 50000
+    curator_cron_hour: int = 2
+    curator_autonomy_level: int = 3
 
 
 def _project_root() -> Path:
@@ -147,6 +151,15 @@ def get_settings() -> Settings:
         getenv("ANTAERUS_BRAIN_MISSION_REFLEXION_ENABLED", ""),
         default=True,
     )
+    proactive_enabled = _parse_bool(
+        getenv("ANTAERUS_BRAIN_PROACTIVE_ENABLED", ""),
+        default=True,
+    )
+    proactive_max_initiative_budget = int(
+        getenv("ANTAERUS_BRAIN_PROACTIVE_MAX_BUDGET", "50000")
+    )
+    curator_cron_hour = int(getenv("ANTAERUS_BRAIN_CURATOR_CRON_HOUR", "2"))
+    curator_autonomy_level = int(getenv("ANTAERUS_BRAIN_CURATOR_AUTONOMY_LEVEL", "3"))
     vision_model_raw = getenv("ANTAERUS_BRAIN_VISION_MODEL_PATH", "").strip()
     vision_image_raw = getenv("ANTAERUS_BRAIN_VISION_DEFAULT_IMAGE_PATH", "").strip()
 
@@ -213,6 +226,10 @@ def get_settings() -> Settings:
         mission_llm_timeout_seconds=mission_llm_timeout_seconds,
         mission_recovery_enabled=mission_recovery_enabled,
         mission_reflexion_enabled=mission_reflexion_enabled,
+        proactive_enabled=proactive_enabled,
+        proactive_max_initiative_budget=proactive_max_initiative_budget,
+        curator_cron_hour=curator_cron_hour,
+        curator_autonomy_level=curator_autonomy_level,
     )
 
     if settings.port <= 0:
@@ -259,5 +276,12 @@ def get_settings() -> Settings:
 
     if settings.default_provider == "ollama" and settings.ollama_base_url.strip() == "":
         raise ValueError("ANTAERUS_BRAIN_OLLAMA_BASE_URL must not be empty when provider is ollama")
+
+    if settings.proactive_max_initiative_budget < 0:
+        raise ValueError("ANTAERUS_BRAIN_PROACTIVE_MAX_BUDGET must be >= 0")
+    if not 0 <= settings.curator_cron_hour <= 23:
+        raise ValueError("ANTAERUS_BRAIN_CURATOR_CRON_HOUR must be between 0 and 23")
+    if not 0 <= settings.curator_autonomy_level <= 5:
+        raise ValueError("ANTAERUS_BRAIN_CURATOR_AUTONOMY_LEVEL must be between 0 and 5")
 
     return settings

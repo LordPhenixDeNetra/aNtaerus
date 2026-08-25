@@ -6,9 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"antaerus/interfaces/gateway_go/internal/clients"
 	"antaerus/interfaces/gateway_go/internal/config"
+	"antaerus/interfaces/gateway_go/internal/contracts"
+	"antaerus/interfaces/gateway_go/internal/scheduler"
 	"antaerus/interfaces/gateway_go/internal/system"
 )
 
@@ -32,13 +35,29 @@ func newMux(
 	healthHTTPClient := &http.Client{Timeout: cfg.RequestTimeout}
 	chatHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	missionHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
+	proactiveHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	healthService := system.NewHealthService(cfg, healthHTTPClient)
 	authenticator := NewAuthenticator(cfg)
 	rateLimiter := NewRateLimiter(cfg)
 	brainChat := clients.NewBrainChatClient(chatHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	missionClient := clients.NewBrainMissionClient(missionHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
+	proactiveClient := clients.NewBrainProactiveClient(proactiveHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	hub := NewHub(cfg, authenticator, rateLimiter, brainChat, voiceFactory, healthService)
 	missionHandlers := NewMissionHandlers(missionClient, hub)
+	proactiveHandlers := NewProactiveHandlers(proactiveClient, hub)
+	proactiveBroadcast := func(msg contracts.ServerMessage) {
+		select {
+		case hub.broadcast <- msg:
+		default:
+		}
+	}
+	proactiveScheduler := scheduler.NewCronScheduler(
+		proactiveClient,
+		proactiveBroadcast,
+		60*time.Second,
+		cfg.ProactiveCronHour,
+	)
+	proactiveScheduler.Start()
 
 	mux.HandleFunc("/health", handlers.HandleHealth)
 	apiMux.HandleFunc("/api/v1/health", handlers.HandleAggregatedHealth)
@@ -49,6 +68,8 @@ func newMux(
 	apiMux.HandleFunc("/api/v1/ws", hub.ServeWS)
 	apiMux.HandleFunc("/api/v1/missions", missionHandlers.ServeHTTP)
 	apiMux.HandleFunc("/api/v1/missions/", missionHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/proactive", proactiveHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/proactive/", proactiveHandlers.ServeHTTP)
 	mux.Handle("/api/", withCORS(cfg, apiMux))
 
 	if staticHandler := newFrontendStaticHandler(); staticHandler != nil {

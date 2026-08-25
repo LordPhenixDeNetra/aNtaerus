@@ -358,24 +358,43 @@
 ## Phase M5 — Moteur Proactif (3 semaines)
 
 ### M5.1 — Collecteurs
-- [ ] Implémenter `brain_python/proactive/collectors/weather.py` : briefing météo + alertes
-- [ ] Implémenter `brain_python/proactive/collectors/news.py` : digest RSS
-- [ ] Implémenter `brain_python/proactive/collectors/calendar.py` : rappels calendrier
-- [ ] Implémenter `brain_python/proactive/collectors/system.py` : alertes système (CPU, disque)
-- [ ] Implémenter `brain_python/proactive/collectors/custom.py` : collecteur générique configurable
+- [x] Implémenter `brain_python/proactive/collectors/weather.py` : briefing météo + alertes
+- [x] Implémenter `brain_python/proactive/collectors/news.py` : digest RSS
+- [x] Implémenter `brain_python/proactive/collectors/calendar.py` : rappels calendrier
+- [x] Implémenter `brain_python/proactive/collectors/system.py` : alertes système (CPU, disque)
+- [x] Implémenter `brain_python/proactive/collectors/custom.py` : collecteur générique configurable
+
+État actuel :
+- Les 5 collecteurs existent sous `antaerus/providers/brain_python/src/antaerus_brain/proactive/collectors/` avec base abstraite [base.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/src/antaerus_brain/proactive/collectors/base.py) et registre [_registry.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/src/antaerus_brain/proactive/collectors/_registry.py) ; zéro dépendance nouvelle (stdlib + httpx déjà présent).
+- Qualimétrie Python : `ruff check src/antaerus_brain/proactive` → 0 erreur ; `mypy src/antaerus_brain/proactive src/antaerus_brain/api/proactive.py` → 0 erreur sur 12 fichiers.
+- Tests pytest dédiés dans [test_proactive_collectors.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/tests/test_proactive_collectors.py) couvrent registre, désactivation, severity alias, run/run_all, et create_registry.
 
 ### M5.2 — Command Center
-- [ ] Implémenter `brain_python/proactive/command_center.py` : vue unifiée initiatives
-- [ ] Implémenter `gateway/proactive_handler.go` : routes REST proactif
-- [ ] Implémenter `pages/CommandCenter.tsx` : dashboard initiatives (React)
-- [ ] Implémenter `components/InitiativeCard.tsx` : carte initiative (autonomie, budget, état)
-- [ ] Implémenter `components/AutonomySlider.tsx` : contrôle niveau autonomie 0-5
+- [x] Implémenter `brain_python/proactive/command_center.py` : vue unifiée initiatives
+- [x] Implémenter `gateway/proactive_handler.go` : routes REST proactif
+- [x] Implémenter `pages/CommandCenter.tsx` : dashboard initiatives (React)
+- [x] Implémenter `components/InitiativeCard.tsx` : carte initiative (autonomie, budget, état)
+- [x] Implémenter `components/AutonomySlider.tsx` : contrôle niveau autonomie 0-5
+
+État actuel :
+- Python : [command_center.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/src/antaerus_brain/proactive/command_center.py) expose `InitiativeStore` SQLite avec `create/get/list/count/patch` + 8 index ; 12 endpoints sous `/proactive` via [api/proactive.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/src/antaerus_brain/api/proactive.py).
+- Go Gateway : [proactive_handler.go](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/http/proactive_handler.go) + [brain_proactive_client.go](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/clients/brain_proactive_client.go) proxient `/api/v1/proactive/*` ; `go build ./...` + `go test ./...` verts.
+- React UI : [CommandCenter.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/pages/CommandCenter.tsx), [InitiativeCard.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/InitiativeCard.tsx), [AutonomySlider.tsx](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/components/AutonomySlider.tsx) et hook [useProactive.ts](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/web/src/hooks/useProactive.ts) (polling 10 s, merge WebSocket `initiative.update`).
+- Qualimétrie : `npm run check` (tsc) + `npm run build` (vite) verts ; `pytest tests/test_proactive_command_center.py` 6/6 PASS.
 
 ### M5.3 — Curator Nocturne
-- [ ] Implémenter `brain_python/proactive/curator.py` : job maintenance nocturne
-- [ ] Générer rapport : facts ajoutés/contradictoires, skills inutilisées, coûts
-- [ ] Proposer patches (validation humaine pour niveau ≥ 3)
-- [ ] Planifier via Go scheduler (cron interne)
+- [x] Implémenter `brain_python/proactive/curator.py` : job maintenance nocturne
+- [x] Générer rapport : facts ajoutés/contradictoires, skills inutilisées, coûts
+- [x] Proposer patches (validation humaine pour niveau ≥ 3)
+- [x] Planifier via Go scheduler (cron interne)
+
+État actuel :
+- Python : [curator.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/src/antaerus_brain/proactive/curator.py) implémente `NocturnalCurator` avec lock fichier anti-chevauchement (`mode 'x'`), `CuratorReport` + `CuratorPatch` Pydantic, méthodes `run / get_report / list_patches / decide_patch` (approve/reject).
+- Patchs : auto-appliqués si autonomy_level < 3 et requires_human = False ; validation humaine obligatoire sinon, avec décisions stockées en SQLite (`curator_patches`).
+- Go Gateway : scheduler interne [cron.go](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/scheduler/cron.go) (config `ANTAERUS_GATEWAY_PROACTIVE_CRON_HOUR`, défaut 2h UTC), démarré au bootstrap dans [routes.go](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/interfaces/gateway_go/internal/http/routes.go) ; broadcast `proactive.notification` + `initiative.update` via Hub.
+- Contrats WebSocket étendus : `ClientMessageScheduler = "scheduler.command"` / `ServerMessageInitiativeUpdate = "initiative.update"` + payloads Go/TypeScript alignés.
+- Tests pytest dédiés dans [test_proactive_curator.py](file:///N:/OneDrive%20-%20Université%20Cheikh%20Anta%20DIOP%20de%20DAKAR/PycharmProjects/aNtaerus/antaerus/providers/brain_python/tests/test_proactive_curator.py) couvrent lock fichier, decide_patch, list_patches avec filtres status, et run génération rapport.
+- Qualimétrie : `pytest` full brain 84/84 PASS ; `ruff` + `mypy` verts sur package proactive.
 
 ---
 

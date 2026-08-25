@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Chat from "@/pages/Chat";
+import CommandCenter from "@/pages/CommandCenter";
 import FoundationDashboard from "@/pages/FoundationDashboard";
 import Home from "@/pages/Home";
 import Missions from "@/pages/Missions";
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/setup" element={<Setup />} />
         <Route path="/foundation" element={<FoundationDashboard />} />
         <Route path="/missions" element={<Missions />} />
+        <Route path="/command-center" element={<CommandCenter />} />
       </Routes>
     </Router>
   );

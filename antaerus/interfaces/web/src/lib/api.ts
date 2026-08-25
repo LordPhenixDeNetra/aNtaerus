@@ -313,3 +313,334 @@ export async function listMissionEvents(id: string): Promise<MissionEventsRespon
   }
   return response.json() as Promise<MissionEventsResponse>;
 }
+
+export type CollectorInfo = {
+  name: string;
+  enabled: boolean;
+  lastRanAt: string | null;
+  lastStatus: "idle" | "success" | "error" | null;
+  lastError: string | null;
+};
+
+export type CollectorAlert = {
+  level: "info" | "warning" | "critical";
+  title: string;
+  message: string;
+  source?: string;
+  severity: number;
+  createdAt: string;
+};
+
+export type CollectorBriefing = {
+  title: string;
+  summary: string;
+  source: string;
+  facts: Record<string, unknown>;
+  generatedAt: string;
+};
+
+export type CollectorRunResult = {
+  collectorName: string;
+  status: "success" | "error";
+  ranAt: string;
+  durationMs: number;
+  alerts: CollectorAlert[];
+  briefing: CollectorBriefing | null;
+  error: string | null;
+};
+
+export type Initiative = {
+  id: string;
+  title: string;
+  description: string | null;
+  collectorSource: string | null;
+  triggerType:
+    | "manual"
+    | "schedule"
+    | "alert"
+    | "event"
+    | "curator"
+    | "custom";
+  triggerConfig: Record<string, unknown>;
+  status:
+    | "pending"
+    | "queued"
+    | "running"
+    | "succeeded"
+    | "failed"
+    | "approved"
+    | "rejected";
+  autonomyLevel: number;
+  budgetTokens: number;
+  budgetTokensUsed: number;
+  alertPayload: Record<string, unknown> | null;
+  ranAt: string | null;
+  completedAt: string | null;
+  error: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateInitiativeRequest = {
+  title: string;
+  description?: string;
+  collectorSource?: string;
+  triggerType?: Initiative["triggerType"];
+  triggerConfig?: Record<string, unknown>;
+  autonomyLevel?: number;
+  budgetTokens?: number;
+  alertPayload?: Record<string, unknown>;
+};
+
+export type PatchInitiativeRequest = {
+  status?: Initiative["status"];
+  autonomyLevel?: number;
+  budgetTokens?: number;
+  title?: string;
+  description?: string | null;
+};
+
+export type ListInitiativesResponse = {
+  items: Initiative[];
+  total: number;
+};
+
+export type CuratorReport = {
+  id: string;
+  generatedAt: string;
+  factsCount: number;
+  patchesCount: number;
+  summary: string;
+  notes: string[];
+};
+
+export type CuratorPatch = {
+  id: string;
+  reportId: string;
+  targetType: string;
+  targetRef: string;
+  title: string;
+  rationale: string;
+  decision: "proposed" | "approved" | "rejected" | "applied";
+  requiresHuman: boolean;
+  decidedBy: string | null;
+  decidedAt: string | null;
+  createdAt: string;
+};
+
+export type ListCuratorPatchesResponse = {
+  items: CuratorPatch[];
+  total: number;
+};
+
+export async function listCollectors(): Promise<CollectorInfo[]> {
+  const response = await fetch(apiURL("/api/v1/proactive/collectors"));
+  if (!response.ok) {
+    throw new Error("Impossible de lister les collecteurs.");
+  }
+  return response.json() as Promise<CollectorInfo[]>;
+}
+
+export async function runCollector(name: string): Promise<CollectorRunResult> {
+  const response = await fetch(
+    apiURL(`/api/v1/proactive/collectors/${encodeURIComponent(name)}/run`),
+    { method: "POST" },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de lancer collecteur: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<CollectorRunResult>;
+}
+
+export async function runAllCollectors(): Promise<{
+  completed: number;
+  results: Record<string, CollectorRunResult>;
+  generatedAt: string;
+}> {
+  const response = await fetch(apiURL("/api/v1/proactive/collectors/run-all"), {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de lancer les collecteurs: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<{
+    completed: number;
+    results: Record<string, CollectorRunResult>;
+    generatedAt: string;
+  }>;
+}
+
+export async function listInitiatives(params?: {
+  status?: Initiative["status"];
+  triggerType?: Initiative["triggerType"];
+  limit?: number;
+}): Promise<ListInitiativesResponse> {
+  const response = await fetch(
+    apiURL("/api/v1/proactive/initiatives", {
+      status: params?.status,
+      trigger_type: params?.triggerType,
+      limit: params?.limit,
+    }),
+  );
+  if (!response.ok) {
+    throw new Error("Impossible de lister les initiatives.");
+  }
+  return response.json() as Promise<ListInitiativesResponse>;
+}
+
+export async function createInitiative(
+  req: CreateInitiativeRequest,
+): Promise<Initiative> {
+  const response = await fetch(apiURL("/api/v1/proactive/initiatives"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(req),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de creer initiative: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<Initiative>;
+}
+
+export async function getInitiative(id: string): Promise<Initiative> {
+  const response = await fetch(
+    apiURL(`/api/v1/proactive/initiatives/${encodeURIComponent(id)}`),
+  );
+  if (!response.ok) {
+    throw new Error("Initiative introuvable.");
+  }
+  return response.json() as Promise<Initiative>;
+}
+
+export async function patchInitiative(
+  id: string,
+  patch: PatchInitiativeRequest,
+): Promise<Initiative> {
+  const response = await fetch(
+    apiURL(`/api/v1/proactive/initiatives/${encodeURIComponent(id)}`),
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(patch),
+    },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de mettre a jour initiative: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<Initiative>;
+}
+
+export async function runInitiative(id: string): Promise<Initiative> {
+  const response = await fetch(
+    apiURL(`/api/v1/proactive/initiatives/${encodeURIComponent(id)}/run`),
+    { method: "POST" },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de lancer initiative: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<Initiative>;
+}
+
+export async function getLastCuratorReport(): Promise<CuratorReport | null> {
+  const response = await fetch(apiURL("/api/v1/proactive/curator/report"));
+  if (response.status === 404) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error("Impossible de charger le rapport curator.");
+  }
+  return response.json() as Promise<CuratorReport>;
+}
+
+export async function runCurator(): Promise<CuratorReport> {
+  const response = await fetch(apiURL("/api/v1/proactive/curator/run"), {
+    method: "POST",
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de lancer le curator: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<CuratorReport>;
+}
+
+export async function listCuratorPatches(params?: {
+  reportId?: string;
+  decision?: CuratorPatch["decision"];
+  limit?: number;
+}): Promise<ListCuratorPatchesResponse> {
+  const response = await fetch(
+    apiURL("/api/v1/proactive/curator/patches", {
+      report_id: params?.reportId,
+      decision: params?.decision,
+      limit: params?.limit,
+    }),
+  );
+  if (!response.ok) {
+    throw new Error("Impossible de lister les patches curator.");
+  }
+  return response.json() as Promise<ListCuratorPatchesResponse>;
+}
+
+export async function approveCuratorPatch(patchId: string): Promise<CuratorPatch> {
+  const response = await fetch(
+    apiURL(`/api/v1/proactive/curator/patches/${encodeURIComponent(patchId)}/approve`),
+    { method: "POST" },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible d'approuver le patch: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<CuratorPatch>;
+}
+
+export async function rejectCuratorPatch(patchId: string): Promise<CuratorPatch> {
+  const response = await fetch(
+    apiURL(`/api/v1/proactive/curator/patches/${encodeURIComponent(patchId)}/reject`),
+    { method: "POST" },
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de rejeter le patch: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<CuratorPatch>;
+}
+
+export type SchedulerStatus = {
+  running: boolean;
+  cronHour: number;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+};
+
+export async function getSchedulerStatus(): Promise<SchedulerStatus> {
+  const response = await fetch(apiURL("/api/v1/proactive/scheduler/status"));
+  if (!response.ok) {
+    throw new Error("Impossible de charger le statut du scheduler.");
+  }
+  return response.json() as Promise<SchedulerStatus>;
+}
+
+export async function startScheduler(): Promise<SchedulerStatus> {
+  const response = await fetch(apiURL("/api/v1/proactive/scheduler/start"), {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error("Impossible de demarrer le scheduler.");
+  }
+  return response.json() as Promise<SchedulerStatus>;
+}
+
+export async function stopScheduler(): Promise<SchedulerStatus> {
+  const response = await fetch(apiURL("/api/v1/proactive/scheduler/stop"), {
+    method: "POST",
+  });
+  if (!response.ok) {
+    throw new Error("Impossible d'arreter le scheduler.");
+  }
+  return response.json() as Promise<SchedulerStatus>;
+}

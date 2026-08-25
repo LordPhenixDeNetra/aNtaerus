@@ -35,6 +35,7 @@ const (
 	defaultWSConnectBurst      = 5
 	defaultWSMessageRateRPS    = 20.0
 	defaultWSMessageBurst      = 40
+	defaultProactiveCronHour   = 2
 )
 
 type Config struct {
@@ -63,6 +64,7 @@ type Config struct {
 	WSConnectBurst     int
 	WSMessageRateRPS   float64
 	WSMessageBurst     int
+	ProactiveCronHour  int
 }
 
 func Load() (Config, error) {
@@ -94,6 +96,7 @@ func Load() (Config, error) {
 	v.SetDefault("ANTAERUS_GATEWAY_RATE_LIMIT_WS_CONNECT_BURST", defaultWSConnectBurst)
 	v.SetDefault("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_RPS", defaultWSMessageRateRPS)
 	v.SetDefault("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_BURST", defaultWSMessageBurst)
+	v.SetDefault("ANTAERUS_GATEWAY_PROACTIVE_CRON_HOUR", defaultProactiveCronHour)
 
 	if err := v.ReadInConfig(); err != nil {
 		var configNotFound viper.ConfigFileNotFoundError
@@ -128,6 +131,7 @@ func Load() (Config, error) {
 		WSConnectBurst:     v.GetInt("ANTAERUS_GATEWAY_RATE_LIMIT_WS_CONNECT_BURST"),
 		WSMessageRateRPS:   v.GetFloat64("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_RPS"),
 		WSMessageBurst:     v.GetInt("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_BURST"),
+		ProactiveCronHour:  v.GetInt("ANTAERUS_GATEWAY_PROACTIVE_CRON_HOUR"),
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -212,6 +216,10 @@ func (cfg Config) Validate() error {
 
 	if cfg.WSMessageRateRPS <= 0 || cfg.WSMessageBurst <= 0 {
 		return errors.New("WebSocket message rate limit configuration must be greater than zero")
+	}
+
+	if cfg.ProactiveCronHour < 0 || cfg.ProactiveCronHour > 23 {
+		return fmt.Errorf("proactive cron hour must be between 0 and 23: %d", cfg.ProactiveCronHour)
 	}
 
 	return nil

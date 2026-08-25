@@ -29,6 +29,7 @@ export function useWebSocket(sessionId: string) {
   const setVoiceWakeState = useAppStore((state) => state.setVoiceWakeState);
   const resetVoiceState = useAppStore((state) => state.resetVoiceState);
   const mergeMissionUpdate = useAppStore((state) => state.mergeMissionUpdate);
+  const mergeInitiativeUpdate = useAppStore((state) => state.mergeInitiativeUpdate);
   const socketRef = useRef<WebSocket | null>(null);
   const connectPromiseRef = useRef<Promise<boolean> | null>(null);
 
@@ -179,6 +180,9 @@ export function useWebSocket(sessionId: string) {
           case "mission.update":
             mergeMissionUpdate(message.payload);
             break;
+          case "initiative.update":
+            mergeInitiativeUpdate(message.payload);
+            break;
           default:
             break;
         }
@@ -191,6 +195,7 @@ export function useWebSocket(sessionId: string) {
     config.gatewayBaseUrl,
     ensureDevToken,
     finalizeAssistantMessage,
+    mergeInitiativeUpdate,
     mergeMissionUpdate,
     resetVoiceState,
     setConnectionState,

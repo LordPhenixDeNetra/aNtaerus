@@ -5,13 +5,22 @@ import {
   type ChatMessage,
   type ChatMessageStatus,
 } from "@/lib/chat";
-import type { Mission } from "@/lib/api";
+import type {
+  CollectorInfo,
+  CuratorPatch,
+  CuratorReport,
+  Initiative,
+  Mission,
+} from "@/lib/api";
 import { loadSetupConfig, saveSetupConfig } from "@/lib/storage";
 import {
   type ChatTransportMode,
   type LocalSetupConfig,
 } from "@/lib/setup";
-import type { HealthHeartbeatPayload } from "@/lib/ws";
+import type {
+  HealthHeartbeatPayload,
+  InitiativeUpdatePayload,
+} from "@/lib/ws";
 
 export type ConnectionState = "idle" | "connecting" | "connected" | "error";
 export type VoiceMode = "idle" | "listening" | "speaking";
@@ -42,6 +51,16 @@ type AppState = {
   missionsLoading: boolean;
   missionsLastError: string | null;
   missionsFilter: MissionsFilter;
+  collectors: CollectorInfo[];
+  collectorsLoading: boolean;
+  collectorsLastError: string | null;
+  initiatives: Initiative[];
+  initiativesTotal: number;
+  initiativesLoading: boolean;
+  initiativesLastError: string | null;
+  globalAutonomyLevel: number;
+  lastCuratorReport: CuratorReport | null;
+  curatorPatches: CuratorPatch[];
   setConfig: (nextConfig: LocalSetupConfig) => void;
   updateConfig: (patch: Partial<LocalSetupConfig>) => void;
   setSessionId: (sessionId: string) => void;
@@ -78,6 +97,18 @@ type AppState = {
     stepResultJson?: string;
     error?: string;
   }) => void;
+  setCollectors: (items: CollectorInfo[]) => void;
+  setCollectorsLoading: (loading: boolean) => void;
+  setCollectorsError: (error: string | null) => void;
+  setInitiatives: (items: Initiative[], total: number) => void;
+  setInitiativesLoading: (loading: boolean) => void;
+  setInitiativesError: (error: string | null) => void;
+  addOrUpdateInitiative: (next: Initiative) => void;
+  mergeInitiativeUpdate: (update: InitiativeUpdatePayload) => void;
+  setGlobalAutonomyLevel: (level: number) => void;
+  setLastCuratorReport: (report: CuratorReport | null) => void;
+  setCuratorPatches: (patches: CuratorPatch[]) => void;
+  addOrUpdateCuratorPatch: (patch: CuratorPatch) => void;
 };
 
 function updateSetupConfig(nextConfig: LocalSetupConfig) {
@@ -103,6 +134,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   missionsLoading: false,
   missionsLastError: null,
   missionsFilter: {},
+  collectors: [],
+  collectorsLoading: false,
+  collectorsLastError: null,
+  initiatives: [],
+  initiativesTotal: 0,
+  initiativesLoading: false,
+  initiativesLastError: null,
+  globalAutonomyLevel: 1,
+  lastCuratorReport: null,
+  curatorPatches: [],
   setConfig: (nextConfig) =>
     set(() => ({
       config: updateSetupConfig(nextConfig),
@@ -258,5 +299,74 @@ export const useAppStore = create<AppState>((set, get) => ({
       mission.updatedAt = new Date().toISOString();
       copy[idx] = mission;
       return { missions: copy };
+    }),
+  setCollectors: (items) => set(() => ({ collectors: items })),
+  setCollectorsLoading: (collectorsLoading) => set(() => ({ collectorsLoading })),
+  setCollectorsError: (collectorsLastError) => set(() => ({ collectorsLastError })),
+  setInitiatives: (items, total) =>
+    set(() => ({ initiatives: items, initiativesTotal: total })),
+  setInitiativesLoading: (initiativesLoading) => set(() => ({ initiativesLoading })),
+  setInitiativesError: (initiativesLastError) => set(() => ({ initiativesLastError })),
+  addOrUpdateInitiative: (next) =>
+    set((state) => {
+      const idx = state.initiatives.findIndex((i) => i.id === next.id);
+      const copy = [...state.initiatives];
+      if (idx === -1) {
+        copy.unshift(next);
+        return {
+          initiatives: copy,
+          initiativesTotal: state.initiativesTotal + 1,
+        };
+      }
+      copy[idx] = { ...copy[idx], ...next };
+      return { initiatives: copy };
+    }),
+  mergeInitiativeUpdate: (update) =>
+    set((state) => {
+      const idx = state.initiatives.findIndex((i) => i.id === update.initiativeId);
+      if (idx === -1) {
+        return state;
+      }
+      const copy = [...state.initiatives];
+      const initiative = { ...copy[idx] };
+      if (update.status) {
+        initiative.status = update.status as Initiative["status"];
+      }
+      if (update.autonomyLevel !== undefined) {
+        initiative.autonomyLevel = update.autonomyLevel ?? 0;
+      }
+      if (update.budgetTokens !== undefined) {
+        initiative.budgetTokens = update.budgetTokens;
+      }
+      if (update.budgetTokensUsed !== undefined) {
+        initiative.budgetTokensUsed = update.budgetTokensUsed;
+      }
+      if (update.ranAt !== undefined) {
+        initiative.ranAt = update.ranAt;
+      }
+      if (update.completedAt !== undefined) {
+        initiative.completedAt = update.completedAt;
+      }
+      if (update.error !== undefined) {
+        initiative.error = update.error;
+      }
+      initiative.updatedAt = update.updatedAt || new Date().toISOString();
+      copy[idx] = initiative;
+      return { initiatives: copy };
+    }),
+  setGlobalAutonomyLevel: (globalAutonomyLevel) =>
+    set(() => ({ globalAutonomyLevel: Math.max(0, Math.min(5, globalAutonomyLevel)) })),
+  setLastCuratorReport: (lastCuratorReport) => set(() => ({ lastCuratorReport })),
+  setCuratorPatches: (curatorPatches) => set(() => ({ curatorPatches })),
+  addOrUpdateCuratorPatch: (patch) =>
+    set((state) => {
+      const idx = state.curatorPatches.findIndex((p) => p.id === patch.id);
+      const copy = [...state.curatorPatches];
+      if (idx === -1) {
+        copy.unshift(patch);
+        return { curatorPatches: copy };
+      }
+      copy[idx] = { ...copy[idx], ...patch };
+      return { curatorPatches: copy };
     }),
 }));

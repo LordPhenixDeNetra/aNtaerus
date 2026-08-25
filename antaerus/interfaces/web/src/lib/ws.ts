@@ -3,7 +3,8 @@ export type WebSocketClientMessageType =
   | "voice.start"
   | "voice.stop"
   | "voice.barge_in"
-  | "mission.cancel";
+  | "mission.cancel"
+  | "scheduler.command";
 
 export type WebSocketServerMessageType =
   | "chat.token"
@@ -13,6 +14,7 @@ export type WebSocketServerMessageType =
   | "voice.vad_state"
   | "voice.wake_state"
   | "mission.update"
+  | "initiative.update"
   | "system.alert"
   | "proactive.notification"
   | "health.heartbeat";
@@ -41,7 +43,8 @@ export type WebSocketClientMessage =
   | Envelope<"voice.start", SessionControlPayload>
   | Envelope<"voice.stop", SessionControlPayload>
   | Envelope<"voice.barge_in", SessionControlPayload>
-  | Envelope<"mission.cancel", MissionCancelPayload>;
+  | Envelope<"mission.cancel", MissionCancelPayload>
+  | Envelope<"scheduler.command", SchedulerCommandPayload>;
 
 export type ChatTokenPayload = {
   sessionId: string;
@@ -83,6 +86,23 @@ export type MissionUpdatePayload = {
   error?: string;
 };
 
+export type InitiativeUpdatePayload = {
+  initiativeId: string;
+  status: string;
+  autonomyLevel?: number | null;
+  budgetTokens?: number;
+  budgetTokensUsed?: number;
+  ranAt?: string | null;
+  completedAt?: string | null;
+  error?: string | null;
+  updatedAt: string;
+};
+
+export type SchedulerCommandPayload = {
+  command: "start" | "stop" | "status";
+  cronHour?: number;
+};
+
 export type SystemAlertPayload = {
   level: string;
   message: string;
@@ -113,6 +133,7 @@ export type WebSocketServerMessage =
   | Envelope<"voice.vad_state", VoiceVADStatePayload>
   | Envelope<"voice.wake_state", VoiceWakeStatePayload>
   | Envelope<"mission.update", MissionUpdatePayload>
+  | Envelope<"initiative.update", InitiativeUpdatePayload>
   | Envelope<"system.alert", SystemAlertPayload>
   | Envelope<"proactive.notification", ProactiveNotificationPayload>
   | Envelope<"health.heartbeat", HealthHeartbeatPayload>;
