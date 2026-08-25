@@ -49,22 +49,20 @@ function Badge({
 }
 
 export default function SkillLab() {
-  const state = useAppStore((s) => ({
-    skills: s.skills,
-    skillsTotal: s.skillsTotal,
-    skillsLoading: s.skillsLoading,
-    skillsError: s.skillsLastError,
-    skillRunResult: s.skillRunResult,
-    skillRunLoading: s.skillRunLoading,
-    setSkills: s.setSkills,
-    setSkillsLoading: s.setSkillsLoading,
-    setSkillsError: s.setSkillsError,
-    addOrUpdateSkill: s.addOrUpdateSkill,
-    removeSkill: s.removeSkill,
-    setSkillRunResult: s.setSkillRunResult,
-    setSkillRunLoading: s.setSkillRunLoading,
-    setSkillEditorDraft: s.setSkillEditorDraft,
-  }));
+  const skills = useAppStore((s) => s.skills);
+  const skillsTotal = useAppStore((s) => s.skillsTotal);
+  const skillsLoading = useAppStore((s) => s.skillsLoading);
+  const stateSkillsError = useAppStore((s) => s.skillsLastError);
+  const skillRunResult = useAppStore((s) => s.skillRunResult);
+  const skillRunLoading = useAppStore((s) => s.skillRunLoading);
+  const setSkills = useAppStore((s) => s.setSkills);
+  const setSkillsLoading = useAppStore((s) => s.setSkillsLoading);
+  const setSkillsError = useAppStore((s) => s.setSkillsError);
+  const addOrUpdateSkill = useAppStore((s) => s.addOrUpdateSkill);
+  const removeSkill = useAppStore((s) => s.removeSkill);
+  const setSkillRunResult = useAppStore((s) => s.setSkillRunResult);
+  const setSkillRunLoading = useAppStore((s) => s.setSkillRunLoading);
+  const setSkillEditorDraft = useAppStore((s) => s.setSkillEditorDraft);
 
   const [tab, setTab] = useState<TabId>("marketplace");
   const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null);
@@ -75,50 +73,50 @@ export default function SkillLab() {
   const [rejectError, setRejectError] = useState<string | null>(null);
 
   const pendingApprovals = useMemo(
-    () => state.skills.filter((s) => s.status === "pending_approval"),
-    [state.skills],
+    () => skills.filter((s) => s.status === "pending_approval"),
+    [skills],
   );
 
   const selectedSkill = useMemo<SkillRecord | null>(() => {
     if (selectedSkillId) {
-      const found = state.skills.find((s) => s.id === selectedSkillId);
+      const found = skills.find((s) => s.id === selectedSkillId);
       if (found) return found;
     }
-    const installed = state.skills.find((s) => s.status === "installed");
+    const installed = skills.find((s) => s.status === "installed");
     return installed ?? null;
-  }, [selectedSkillId, state.skills]);
+  }, [selectedSkillId, skills]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      state.setSkillsLoading(true);
-      state.setSkillsError(null);
+      setSkillsLoading(true);
+      setSkillsError(null);
       try {
         const list = await listSkills();
         if (cancelled) return;
-        state.setSkills(list.items, list.total);
+        setSkills(list.items, list.total);
       } catch (err) {
         if (cancelled) return;
-        state.setSkillsError(err instanceof Error ? err.message : String(err));
+        setSkillsError(err instanceof Error ? err.message : String(err));
       } finally {
-        if (!cancelled) state.setSkillsLoading(false);
+        if (!cancelled) setSkillsLoading(false);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [state]);
+  }, []);
 
   const refreshSkills = async () => {
-    state.setSkillsLoading(true);
-    state.setSkillsError(null);
+    setSkillsLoading(true);
+    setSkillsError(null);
     try {
       const list = await listSkills();
-      state.setSkills(list.items, list.total);
+      setSkills(list.items, list.total);
     } catch (err) {
-      state.setSkillsError(err instanceof Error ? err.message : String(err));
+      setSkillsError(err instanceof Error ? err.message : String(err));
     } finally {
-      state.setSkillsLoading(false);
+      setSkillsLoading(false);
     }
   };
 
@@ -132,7 +130,7 @@ export default function SkillLab() {
     sourceCode: string;
     trusted: boolean;
   }) => {
-    state.setSkillsError(null);
+    setSkillsError(null);
     const created = await installSkill({
       name: payload.name,
       version: payload.version,
@@ -143,32 +141,32 @@ export default function SkillLab() {
       sourceCode: payload.sourceCode,
       trusted: payload.trusted,
     });
-    state.addOrUpdateSkill(created);
+    addOrUpdateSkill(created);
     if (created.status === "installed") {
       setSelectedSkillId(created.id);
     }
   };
 
   const handleUninstall = async (skillId: string) => {
-    state.setSkillsError(null);
+    setSkillsError(null);
     await uninstallSkill(skillId);
-    state.removeSkill(skillId);
+    removeSkill(skillId);
     if (selectedSkillId === skillId) setSelectedSkillId(null);
   };
 
   const handleRun = async (skillId: string, argsJson: string) => {
-    state.setSkillRunLoading(true);
-    state.setSkillRunResult(null);
+    setSkillRunLoading(true);
+    setSkillRunResult(null);
     try {
       const result = await runSkillInSandbox(skillId, {
         argsJson,
         timeoutMs: 30000,
         fuelLimit: 250000,
       });
-      state.setSkillRunResult(result);
+      setSkillRunResult(result);
       return result;
     } finally {
-      state.setSkillRunLoading(false);
+      setSkillRunLoading(false);
     }
   };
 
@@ -179,7 +177,7 @@ export default function SkillLab() {
         usage,
         preferredRuntime: runtime,
       });
-      state.setSkillEditorDraft(draft.sourceCode);
+      setSkillEditorDraft(draft.sourceCode);
       const next = await installSkill({
         name: draft.name,
         version: draft.version || draft.suggestedVersion || "0.1.0",
@@ -189,20 +187,20 @@ export default function SkillLab() {
         sourceCode: draft.sourceCode,
         trusted: false,
       });
-      state.addOrUpdateSkill(next);
+      addOrUpdateSkill(next);
     } finally {
       setGenerateLoading(false);
     }
   };
 
   const handleApprove = async (skillId: string) => {
-    state.setSkillsError(null);
+    setSkillsError(null);
     try {
       setApproveLoadingId(skillId);
       const updated = await approveSkill(skillId);
-      state.addOrUpdateSkill(updated);
+      addOrUpdateSkill(updated);
     } catch (err) {
-      state.setSkillsError(err instanceof Error ? err.message : String(err));
+      setSkillsError(err instanceof Error ? err.message : String(err));
     } finally {
       setApproveLoadingId(null);
     }
@@ -228,7 +226,7 @@ export default function SkillLab() {
     }
     try {
       const updated = await rejectSkill(rejectingSkillId, trimmed);
-      state.addOrUpdateSkill(updated);
+      addOrUpdateSkill(updated);
       closeRejectDialog();
     } catch (err) {
       setRejectError(err instanceof Error ? err.message : String(err));
@@ -253,7 +251,7 @@ export default function SkillLab() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="emerald">Registre: {state.skillsTotal}</Badge>
+          <Badge tone="emerald">Registre: {skillsTotal}</Badge>
           <Badge tone="amber">Approbations: {pendingApprovals.length}</Badge>
           <Badge tone="cyan">
             Selectionne: {selectedSkill ? selectedSkill.name.slice(0, 20) : "aucun"}
@@ -324,7 +322,7 @@ export default function SkillLab() {
         </section>
       )}
 
-      {state.skillsError ? (
+      {stateSkillsError ? (
         <section className="rounded-3xl border border-rose-400/25 bg-rose-500/5 p-5 backdrop-blur">
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 h-5 w-5 flex-none text-rose-300" />
@@ -332,7 +330,7 @@ export default function SkillLab() {
               <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-rose-200/90">
                 Erreur Skill Registry
               </p>
-              <p className="text-sm text-rose-100">{state.skillsError}</p>
+              <p className="text-sm text-rose-100">{stateSkillsError}</p>
               <p className="text-xs text-rose-200/80">
                 Cause habituelle : Gateway Go :8080 eteint, ou endpoint{" "}
                 <span className="font-mono">/api/v1/skills</span> absent. Cliquez
@@ -430,10 +428,10 @@ export default function SkillLab() {
 
       {tab === "marketplace" && (
         <SkillMarketplace
-          skills={state.skills}
-          loading={state.skillsLoading}
-          total={state.skillsTotal}
-          lastError={state.skillsError}
+          skills={skills}
+          loading={skillsLoading}
+          total={skillsTotal}
+          lastError={stateSkillsError}
           onRefresh={refreshSkills}
           onSelect={(s) => setSelectedSkillId(s.id)}
           selectedId={selectedSkillId}
@@ -444,7 +442,7 @@ export default function SkillLab() {
               version: payload.version || "0.1.0",
               trusted: true,
             });
-            state.addOrUpdateSkill(created);
+            addOrUpdateSkill(created);
             if (created.status === "installed") setSelectedSkillId(created.id);
           }}
           onUninstall={handleUninstall}
@@ -463,8 +461,8 @@ export default function SkillLab() {
         <SkillTester
           skill={selectedSkill}
           onRun={handleRun}
-          lastResult={state.skillRunResult}
-          loading={state.skillRunLoading}
+          lastResult={skillRunResult}
+          loading={skillRunLoading}
         />
       )}
     </div>

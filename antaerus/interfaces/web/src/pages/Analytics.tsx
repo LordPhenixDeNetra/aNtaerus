@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle, MessageSquare, Gauge, Sparkles, RefreshCw } from "lucide-react";
 import MetricsChart from "@/components/MetricsChart";
 import { useAppStore } from "@/store/useAppStore";
@@ -63,7 +63,10 @@ const EMPTY_SERIES: AnalyticsSeries[] = [
 ];
 
 export default function Analytics() {
-  const { analytics, analyticsLoading, setAnalytics, setAnalyticsLoading } = useAppStore();
+  const analytics = useAppStore((s) => s.analytics);
+  const analyticsLoading = useAppStore((s) => s.analyticsLoading);
+  const setAnalytics = useAppStore((s) => s.setAnalytics);
+  const setAnalyticsLoading = useAppStore((s) => s.setAnalyticsLoading);
   const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
@@ -87,14 +90,31 @@ export default function Analytics() {
     void refresh();
   }, []);
 
-  const series: AnalyticsSeries[] = analytics?.series && analytics.series.length > 0
-    ? analytics.series
-    : analytics?.series ?? EMPTY_SERIES;
-  const latency = series.find((s) => s.name === "latencyMs") ?? EMPTY_SERIES[0];
-  const tokens = series.find((s) => s.name === "tokensPerMinute") ?? EMPTY_SERIES[1];
-  const messages = series.find((s) => s.name === "messagesPerMinute") ?? EMPTY_SERIES[2];
-  const displayPlaceholder =
-    !analytics && !analyticsLoading;
+  const series: AnalyticsSeries[] = useMemo(() => {
+    const raw = analytics?.series ?? [];
+    if (raw.length === 0) return EMPTY_SERIES;
+    const byName: Record<string, AnalyticsSeries> = {};
+    for (const s of raw) {
+      byName[s.name] = s;
+    }
+    const latency = byName["latencyMs"] ?? byName["latency_ms"] ?? EMPTY_SERIES[0];
+    const tokens = byName["tokensPerMinute"] ?? byName["tokens_per_hour"] ?? byName["tokens_per_minute"] ?? EMPTY_SERIES[1];
+    const messages = byName["messagesPerMinute"] ?? byName["messages_per_hour"] ?? byName["messages_per_minute"] ?? EMPTY_SERIES[2];
+    return [
+      { ...latency, name: "latencyMs" },
+      { ...tokens, name: "tokensPerMinute" },
+      { ...messages, name: "messagesPerMinute" },
+    ];
+  }, [analytics?.series]);
+  const latency = series[0];
+  const tokens = series[1];
+  const messages = series[2];
+  const displayPlaceholder = !analytics && !analyticsLoading;
+
+  const totalTokens = analytics?.totalTokensSpent ?? 0;
+  const totalMessages = analytics?.messagesProcessed ?? analytics?.totalMessagesProcessed ?? 0;
+  const p95 = analytics?.latencyP95Ms ?? analytics?.averageLatencyMs ?? 0;
+  const factCount = analytics?.factCount ?? 0;
 
   return (
     <main className="min-h-screen px-6 py-10 text-slate-100">
@@ -156,28 +176,28 @@ export default function Analytics() {
             <Kpi
               icon={Gauge}
               label="Latence p95"
-              value={analytics ? `${Math.round(analytics.latencyP95Ms)} ms` : "-- ms"}
+              value={analytics ? `${Math.round(p95)} ms` : "-- ms"}
               hint="SLA cible < 800ms"
               accent="text-cyan-300"
             />
             <Kpi
               icon={Sparkles}
               label="Tokens depenses"
-              value={analytics ? analytics.totalTokensSpent.toLocaleString() : "--"}
+              value={analytics ? totalTokens.toLocaleString() : "--"}
               hint="Total dernieres 24h"
               accent="text-violet-300"
             />
             <Kpi
               icon={MessageSquare}
               label="Messages traites"
-              value={analytics ? analytics.messagesProcessed.toLocaleString() : "--"}
+              value={analytics ? totalMessages.toLocaleString() : "--"}
               hint="Inclut voix + texte"
               accent="text-emerald-300"
             />
             <Kpi
               icon={Activity}
               label="Fautes memoire"
-              value={analytics ? analytics.factCount.toLocaleString() : "--"}
+              value={analytics ? factCount.toLocaleString() : "--"}
               hint="Faits semantiques stockes"
               accent="text-amber-300"
             />
