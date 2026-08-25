@@ -34,27 +34,39 @@
       <li><a href="#prerequis" class="toc-link">2. Prérequis</a></li>
       <li><a href="#telecharger" class="toc-link">3. Télécharger le code</a></li>
       <li><a href="#dependances" class="toc-link">4. Installer dépendances</a></li>
-      <li><a href="#env" class="toc-link">5. Configuration .env</a></li>
-      <li><a href="#demarrer" class="toc-link">6. Démarrer l'app</a></li>
-      <li><a href="#ecrans" class="toc-link">7. Les 10 ecrans UI</a>
+      <li><a href="#env" class="toc-link">5. Configuration .env</a>
         <ul class="toc-sublist">
-          <li><a href="#setup" class="toc-link">7.1 Setup initial</a></li>
-          <li><a href="#chat" class="toc-link">7.2 Chat texte</a></li>
-          <li><a href="#voice" class="toc-link">7.3 Voix temps réel</a></li>
-          <li><a href="#missions" class="toc-link">7.4 Missions</a></li>
-          <li><a href="#memory" class="toc-link">7.5 Memory Explorer</a></li>
-          <li><a href="#command" class="toc-link">7.6 Command Center</a></li>
-          <li><a href="#analytics" class="toc-link">7.7 Analytics</a></li>
-          <li><a href="#health" class="toc-link">7.8 System Health</a></li>
-          <li><a href="#config" class="toc-link">7.9 Config</a></li>
-          <li><a href="#skill" class="toc-link">7.10 Skill Lab M7</a></li>
+          <li><a href="#env-llm" class="toc-link">5.1 Fournisseurs LLM</a></li>
+          <li><a href="#env-securite" class="toc-link">5.2 Sécurité + proactif</a></li>
+          <li><a href="#env-oauth" class="toc-link">5.3 OAuth Gmail / Calendar</a></li>
+          <li><a href="#env-tools" class="toc-link">5.4 Outils et whitelist</a></li>
         </ul>
       </li>
-      <li><a href="#skill-lab" class="toc-link">8. Skill Lab pas à pas</a></li>
-      <li><a href="#qualimetrie" class="toc-link">9. Commandes qualimétrie</a></li>
-      <li><a href="#faq" class="toc-link">10. FAQ dépannage</a></li>
-      <li><a href="#architecture" class="toc-link">11. Architecture 4 couches</a></li>
-      <li><a href="#liens" class="toc-link">12. Liens utiles</a></li>
+      <li><a href="#demarrer" class="toc-link">6. Démarrer l'app</a></li>
+      <li><a href="#ecrans" class="toc-link">7. Les 13 ecrans UI</a>
+        <ul class="toc-sublist">
+          <li><a href="#home" class="toc-link">7.1 Accueil HUD JARVIS</a></li>
+          <li><a href="#dashboard" class="toc-link">7.2 Dashboard 10 modules</a></li>
+          <li><a href="#foundation" class="toc-link">7.3 Foundation</a></li>
+          <li><a href="#setup" class="toc-link">7.4 Setup initial</a></li>
+          <li><a href="#chat" class="toc-link">7.5 Chat texte</a></li>
+          <li><a href="#voice" class="toc-link">7.6 Voix temps réel</a></li>
+          <li><a href="#missions" class="toc-link">7.7 Missions</a></li>
+          <li><a href="#memory" class="toc-link">7.8 Memory Explorer</a></li>
+          <li><a href="#command" class="toc-link">7.9 Command Center</a></li>
+          <li><a href="#analytics" class="toc-link">7.10 Analytics</a></li>
+          <li><a href="#health" class="toc-link">7.11 Santé système</a></li>
+          <li><a href="#config" class="toc-link">7.12 Configuration runtime</a></li>
+          <li><a href="#skill" class="toc-link">7.13 Skill Lab M7</a></li>
+        </ul>
+      </li>
+      <li><a href="#copier-coller" class="toc-link">8. 15 phrases pour tester (copier-coller)</a></li>
+      <li><a href="#outils" class="toc-link">9. Les 8 outils intégrés</a></li>
+      <li><a href="#skill-lab" class="toc-link">10. Skill Lab pas à pas</a></li>
+      <li><a href="#qualimetrie" class="toc-link">11. Qualimétrie</a></li>
+      <li><a href="#faq" class="toc-link">12. FAQ dépannage</a></li>
+      <li><a href="#architecture" class="toc-link">13. Architecture 4 couches</a></li>
+      <li><a href="#liens" class="toc-link">14. Liens utiles</a></li>
     </ul>
   </nav>
 
@@ -73,24 +85,24 @@
       Assistant personnel IA open source, multi-langages, gouverné par niveaux d'autonomie.
       React Web UI · Go Gateway · Python Brain · Rust Engine.
     </p>
-    <div class="hero-grid">
-      <div class="card-stat">
-        <span class="card-stat-num">10</span>
-        <span class="card-stat-label">Modules UI</span>
+      <div class="hero-grid">
+        <div class="card-stat">
+          <span class="card-stat-num">13</span>
+          <span class="card-stat-label">Modules UI</span>
+        </div>
+        <div class="card-stat">
+          <span class="card-stat-num">4</span>
+          <span class="card-stat-label">Couches logicielles</span>
+        </div>
+        <div class="card-stat">
+          <span class="card-stat-num">8</span>
+          <span class="card-stat-label">Outils integrés</span>
+        </div>
+        <div class="card-stat">
+          <span class="card-stat-num">0</span>
+          <span class="card-stat-label">Nouvelle dépendance M7</span>
+        </div>
       </div>
-      <div class="card-stat">
-        <span class="card-stat-num">4</span>
-        <span class="card-stat-label">Couches logicielles</span>
-      </div>
-      <div class="card-stat">
-        <span class="card-stat-num">M0-M7</span>
-        <span class="card-stat-label">Jalons livrés</span>
-      </div>
-      <div class="card-stat">
-        <span class="card-stat-num">0</span>
-        <span class="card-stat-label">Nouvelle dépendance M7</span>
-      </div>
-    </div>
     <div class="hero-cta">
       <a href="#prerequis" class="btn btn-primary">Commencer l'installation</a>
       <a href="#ecrans" class="btn btn-ghost">Voir les ecrans UI</a>
@@ -204,7 +216,7 @@ go mod download   <span class="comment"># Rien dautres, modules automatiques</sp
     <pre class="cmd-box"><span class="cmd-prompt">PS</span> cd antaerus
 Copy-Item .env.example .env</pre>
 
-    <h4 class="h4">5.1 — Fournisseur de modèle IA (OBLIGATOIRE, choisissez 1)</h4>
+    <h4 id="env-llm" class="h4">5.1 — Fournisseur de modèle IA (OBLIGATOIRE, choisissez 1)</h4>
 
     <div class="accordion" id="llm-accordion">
       <button class="acc-btn active" data-acc="acc-1">
@@ -253,12 +265,60 @@ OPENROUTER_API_KEY=sk-or-xxxx</pre>
       </div>
     </div>
 
-    <h4 class="h4">5.2 — (Optionnel) Sécurité + M5 proactif</h4>
+    <h4 id="env-securite" class="h4">5.2 — (Optionnel) Sécurité + M5 proactif</h4>
     <pre class="cmd-box"><span class="comment"># Remplacer secrets par chaines aleatoires min 32 octets en PRODUCTION</span>
 ANTAERUS_GATEWAY_JWT_SECRET=votre_chaine_aleatoire_min_32_octets
 ANTAERUS_BRAIN_API_SECRET=autre_chaine_differente
 <span class="comment"># Heure UTC curateur nocturne M5 (defaut 2h du matin)</span>
 ANTAERUS_GATEWAY_PROACTIVE_CRON_HOUR=2</pre>
+
+    <h4 id="env-oauth" class="h4">5.3 — (Optionnel) Connecter Gmail et Google Calendar (OAuth 2.0)</h4>
+    <div class="callout callout-info"><p>Permet à aNtaerus de lire/écrire tes mails et tes rendez-vous. Sans ce paramétrage, les outils Gmail et Calendar restent disponibles mais renvoient une erreur tant qu'aucun compte n'est associé.</p></div>
+    <ol class="ordered-list">
+      <li>Ouvrez <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com ↗</a>, créez un nouveau projet.</li>
+      <li>Menu APIs et services → <b>Activer les APIs et services</b> : activer <b>Gmail API</b> puis <b>Google Calendar API</b>.</li>
+      <li>Écran de consentement OAuth → <b>Type d'utilisateur = Externe</b>, nom de l'app : <code>aNtaerus-local</code>, email support = ton email.</li>
+      <li>À l'étape <b>Etendues / Scopes</b>, ajouter ces trois lignes :
+        <pre class="cmd-box">https://www.googleapis.com/auth/gmail.send
+https://www.googleapis.com/auth/gmail.readonly
+https://www.googleapis.com/auth/calendar.events</pre>
+      </li>
+      <li>À l'étape <b>Utilisateurs de test</b>, ajoutez <b>votre adresse Gmail</b> (obligatoire en mode External Testing).</li>
+      <li>Identifiants → <b>Créer des identifiants</b> → ID client OAuth → <b>Application de bureau</b>, nommer <code>aNtaerus-local-desktop</code>.</li>
+      <li>Télécharger le JSON → l'enregistrer dans <code>antaerus/config/google_credentials.json</code>.</li>
+      <li>Ajouter au fichier <code>antaerus/.env</code> :
+        <pre class="cmd-box">ANTAERUS_GOOGLE_CREDENTIALS_FILE=config/google_credentials.json
+ANTAERUS_GOOGLE_TOKEN_FILE=config/google_token.json</pre>
+      </li>
+      <li>Lancez <code>scripts/dev-all.ps1</code>, puis envoyez dans le Chat : <em>« Quels sont mes 3 derniers mails ? »</em>. Une URL s'affichera → copiez-la dans votre navigateur → validez les autorisations → la connexion persiste dans <code>google_token.json</code>.</li>
+    </ol>
+
+    <h4 id="env-tools" class="h4">5.4 — (Optionnel) Personnaliser les autorisations des outils</h4>
+    <p>Les accès disque et shell sont limités par défaut pour la sécurité. Éditez <code>antaerus/config/tools.yaml</code> puis redémarrez brain + engine.</p>
+    <pre class="cmd-box"><span class="comment"># Exemple: ajouter votre dossier Documents et autoriser Node.js / ffmpeg:</span>
+filesystem:
+  allowed_roots:
+    - docs
+    - memory_data
+    - providers/brain_python
+    - C:/Users/VOTRE_NOM/Documents   <span class="comment"># ← AJOUT</span>
+cli:
+  allowed_commands:
+    - python
+    - py
+    - git
+    - go
+    - cargo
+    - uv
+    - npm
+    - node     <span class="comment"># ← AJOUT</span>
+    - ffmpeg   <span class="comment"># ← AJOUT</span>
+voice:
+  enabled: true
+  vad_threshold: 0.5
+vision:
+  enabled: true
+  confidence: 0.4</pre>
   </section>
 
   <section id="demarrer" class="section">
@@ -307,75 +367,171 @@ docker run -d --name antaerus-web --rm -p 80:80 -v "C:\chemin\dist:/usr/share/ng
   <section id="ecrans" class="section">
     <header class="section-header">
       <span class="section-idx">07</span>
-      <h3>Les 10 écrans de l'interface web</h3>
+      <h3>Les 13 écrans de l'interface web</h3>
     </header>
 
+    <article id="home" class="sub-section">
+      <h4 class="h4"><span class="chip chip-cyan">7.1 Accueil HUD JARVIS</span> · Par défaut</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/">http://localhost:5173/ ↗</a> (route <code>/</code>)</p>
+      <p>Écran d'accueil style "JARVIS" : <b>sphère animée de particules 3D (Canvas 2D · 1800 points)</b> au centre, horloge date top-right, barre de 6 icônes top-left. L'icône tout à gauche (<span class="chip chip-violet">Modules</span>) bascule sur le Dashboard. Barre de prompt en bas à droite (bouton GO) pour parler rapidement à aNtaerus.</p>
+    </article>
+
+    <article id="dashboard" class="sub-section">
+      <h4 class="h4"><span class="chip chip-violet">7.2 Dashboard 10 modules</span> · Vue classique</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/dashboard">http://localhost:5173/dashboard ↗</a> (ou icône Modules dans Home)</p>
+      <p>Ancienne page d'accueil. Contient : hero arrondi avec 2 métriques, <b>bannière documentation utilisateur</b> (2 boutons : Guide utilisateur / README GitHub), puis <b>grille des 10 cartes modules</b> (Chat, Foundation, Mission Engine, Command Center, Configuration, Mémoire, Analytique, Santé système, Inventaire config, Skill Lab).</p>
+    </article>
+
+    <article id="foundation" class="sub-section">
+      <h4 class="h4"><span class="chip chip-emerald">7.3 Foundation</span> · Supervision 4 couches</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/foundation">http://localhost:5173/foundation ↗</a></p>
+      <p>Écran de supervision de fondation. Affiche les endpoints fondamentaux et les <b>capacités déclarées</b> par chaque couche (schéma JSON <code>service-capabilities.schema.json</code>). Utile pour déboguer une couche déconnectée.</p>
+    </article>
+
     <article id="setup" class="sub-section">
-      <h4 class="h4"><span class="chip chip-violet">7.1 Setup</span> · Configuration initiale</h4>
+      <h4 class="h4"><span class="chip chip-violet">7.4 Setup</span> · Configuration initiale</h4>
       <p>URL : <a target="_blank" href="http://localhost:5173/setup">http://localhost:5173/setup ↗</a></p>
       <p>Wizard 5 étapes : (1) Licence MIT, (2) Chemins sauvegarde mémoire, (3) Fournisseur + Test connexion LLM, (4) Voix, (5) Terminer.</p>
     </article>
 
     <article id="chat" class="sub-section">
-      <h4 class="h4"><span class="chip chip-cyan">7.2 Chat texte</span> · Conversations LLM</h4>
+      <h4 class="h4"><span class="chip chip-cyan">7.5 Chat texte</span> · IA conversationnelle + outils</h4>
       <p>URL : <a target="_blank" href="http://localhost:5173/chat">http://localhost:5173/chat ↗</a></p>
-      <p>Streaming token par token SSE, historique multi-session SQLite. <code>Ctrl+Enter</code> pour envoyer. Menu sur chaque message (Copier / Réessayer / Supprimer).</p>
+      <p><b>⭐ LE PLUS IMPORTANT POUR UN UTILISATEUR SIMPLE.</b></p>
+      <ul>
+        <li>Parle à aNtaerus <b>en langage naturel</b> comme à un humain.</li>
+        <li><b>Appel automatique des outils</b> : aNtaerus décide tout seul d'utiliser météo, mémoire, fichiers, navigateur, shell, Gmail, Calendar selon ta phrase. <b>Aucune commande technique à taper.</b></li>
+        <li>Streaming token par token SSE. Historique multi-session SQLite. <code>Ctrl+Enter</code> pour envoyer. Menu message : Copier / Réessayer / Supprimer.</li>
+      </ul>
+      <div class="callout callout-info">
+        <p><b>5 phrases d'exemple prêtes à copier-coller</b> dans le Chat :
+        <pre class="cmd-box">Quelle est la météo à Dakar ?
+Note que j'aime pas les réunions avant 10h
+Lis le fichier providers/brain_python/README.md
+Cherche sur internet le prix du RTX 4080 Super
+Quelle version de Go est installée sur mon PC ?</pre>
+      </p></div>
     </article>
 
     <article id="voice" class="sub-section">
-      <h4 class="h4"><span class="chip chip-pink">7.3 Voix temps réel (M3)</span> · Micro → Transcription</h4>
+      <h4 class="h4"><span class="chip chip-pink">7.6 Voix temps réel (M3)</span> · Micro → Transcription</h4>
       <p>Depuis Chat, icône micro. <b>VoiceButton</b> (record start/stop), <b>VoiceVisualizer</b> (waveform SVG live), <b>VoiceTranscript</b> mot par mot. VAD auto (silence > 1.5s = stop).</p>
       <div class="callout callout-info"><p>Note : micro interdit par Chrome sur IP non-localhost. Utilisez HTTPS ou drapeau <code>#unsafely-treat-insecure-origin-as-secure</code>.</p></div>
     </article>
 
     <article id="missions" class="sub-section">
-      <h4 class="h4"><span class="chip chip-violet">7.4 Missions (M2/M4)</span> · Objectifs + DAG tâches</h4>
+      <h4 class="h4"><span class="chip chip-violet">7.7 Missions (M2/M4)</span> · Projets multi-étapes autonomes</h4>
       <p>URL : <a target="_blank" href="http://localhost:5173/missions">http://localhost:5173/missions ↗</a></p>
-      <p>3 onglets : Toutes / Créer / Détail avec <b>TaskGraph SVG DAG</b> (0-dépendance, dépendances flèches colorées par état).</p>
+      <p>Pour quand tu veux un projet complet sur plusieurs étapes : aNtaerus découpe, planifie, exécute, reprend sur échec. Exemples :
+      <pre class="cmd-box">Récupère la météo de Dakar, note-la en mémoire, et rédige un rapport 2 lignes.
+Trie toutes mes photos 2024 par date dans des dossiers.
+Prépare mon déménagement : checklist + budget + alerte mail.</pre>
+      3 onglets : Toutes / Créer / Détail avec <b>TaskGraph SVG DAG</b> (0-dépendance, dépendances flèches colorées par état).</p>
     </article>
 
     <article id="memory" class="sub-section">
-      <h4 class="h4"><span class="chip chip-cyan">7.5 Memory Explorer (M1/M6)</span> · Graphe mémoire</h4>
-      <p>URL : <a target="_blank" href="http://localhost:5173/memory-explorer">http://localhost:5173/memory-explorer ↗</a></p>
-      <p>SVG circular layout + Bézier curves (0-dépendance). Cliquez un nœud → <b>FactCard</b> side panel. Recherche plein texte, Export JSON.</p>
+      <h4 class="h4"><span class="chip chip-cyan">7.8 Memory Explorer (M1/M6)</span> · Graphe mémoire</h4>
+      <p>URL : <a target="_blank" href="http://localhost:5173/memory">http://localhost:5173/memory ↗</a></p>
+      <p>SVG circular layout + Bézier curves (0-dépendance). Clique un nœud → <b>FactCard</b> side panel. Recherche plein texte, Export JSON, ingest de documents, mirror mémoire live.</p>
     </article>
 
     <article id="command" class="sub-section">
-      <h4 class="h4"><span class="chip chip-amber">7.6 Command Center (M5)</span> · Autonomie + Initiatives</h4>
+      <h4 class="h4"><span class="chip chip-amber">7.9 Command Center (M5)</span> · Autonomie + Initiatives</h4>
       <p>URL : <a target="_blank" href="http://localhost:5173/command-center">http://localhost:5173/command-center ↗</a></p>
-      <p><b>AutonomySlider</b> niveaux 0 (manuel) → 5 (total). Cards <b>InitiativeCard</b> (catégorie · risque · budget) avec boutons Approuver / Rejeter (motif min 8 chars).</p>
+      <p><b>AutonomySlider</b> niveaux 0 (manuel) → 5 (total). Cards <b>InitiativeCard</b> (catégorie · risque · budget) avec boutons Approuver / Rejeter. 5 collecteurs : météo, actualités RSS, système, calendrier, HTTP custom.</p>
       <pre class="cmd-box"><span class="comment"># Declencher curateur manuellement (sinon 2h UTC):</span>
 <span class="cmd-prompt">PS</span> Invoke-RestMethod -Method POST http://localhost:8080/api/v1/proactive/curator/run-now -Headers @{Authorization="Bearer dev-jwt-gateway"}</pre>
     </article>
 
     <article id="analytics" class="sub-section">
-      <h4 class="h4"><span class="chip chip-pink">7.7 Analytics (M6)</span> · KPIs + graphiques SVG</h4>
+      <h4 class="h4"><span class="chip chip-pink">7.10 Analytics (M6)</span> · KPIs + graphiques SVG</h4>
       <p>URL : <a target="_blank" href="http://localhost:5173/analytics">http://localhost:5173/analytics ↗</a></p>
       <p><b>MetricsChart</b> custom SVG (barres + lignes). 4 blocs : missions / mémoire / voice minutes / fuel sandbox M7. Export CSV.</p>
     </article>
 
     <article id="health" class="sub-section">
-      <h4 class="h4"><span class="chip chip-emerald">7.8 System Health (M6)</span> · Services temps réel</h4>
+      <h4 class="h4"><span class="chip chip-emerald">7.11 Santé système (M6)</span> · Services temps réel</h4>
       <p>URL : <a target="_blank" href="http://localhost:5173/system-health">http://localhost:5173/system-health ↗</a></p>
-      <p>4 cards <b>ServiceStatusCard</b> (Web / Gateway / Brain / Engine) voyant vert/orange/rouge. Refresh auto 5s. Logs 100 lignes admin.</p>
+      <p>4 cards <b>ServiceStatusCard</b> (Web / Gateway / Brain / Engine) voyant vert/orange/rouge. Refresh auto 5s. Logs 100 lignes admin. Demande de redémarrage par service.</p>
     </article>
 
     <article id="config" class="sub-section">
-      <h4 class="h4"><span class="chip chip-gray">7.9 Config</span> · Modifier après setup</h4>
+      <h4 class="h4"><span class="chip chip-gray">7.12 Config</span> · Lecture seule snapshot runtime</h4>
       <p>URL : <a target="_blank" href="http://localhost:5173/config">http://localhost:5173/config ↗</a></p>
-      <p>Formulaire complet <b>ConfigForm</b>. Sauvegarder = push immédiat gateway → brain (persisté dans .env runtime).</p>
+      <p>Inventaire <b>lecture seule</b> de la configuration actuelle des 4 couches. Toutes les <b>clés API sensibles sont automatiquement masquées</b> (****). Impossible de modifier depuis ici (voir section 5 ou Setup).</p>
     </article>
 
     <article id="skill" class="sub-section">
-      <h4 class="h4"><span class="chip chip-emerald">7.10 Skill Lab (M7 ⭐ NOUVEAU)</span> · Marketplace / Editor / Tester</h4>
+      <h4 class="h4"><span class="chip chip-emerald">7.13 Skill Lab (M7 ⭐ NOUVEAU)</span> · Marketplace / Editor / Tester</h4>
       <p>URL : <a target="_blank" href="http://localhost:5173/skill-lab">http://localhost:5173/skill-lab ↗</a></p>
-      <p>3 onglets en haut. Bandeau approbations <b>pending</b> visible immédiat si skills en attente. Voir section 8 pour pas à pas détaillé.</p>
+      <p>Apprends à aNtaerus de <b>nouvelles compétences</b>. 3 onglets en haut. Bandeau approbations <b>pending</b> visible immédiat si skills en attente. Voir section 10 pour pas à pas détaillé.</p>
     </article>
+  </section>
+
+  <section id="copier-coller" class="section">
+    <header class="section-header">
+      <span class="section-idx">08</span>
+      <h3>15 phrases pour tester TOUT de suite (copier-coller)</h3>
+    </header>
+    <p class="lead">Ouvre simplement le <b>Chat</b> et colle ces phrases. aNtaerus détecte tout seul l'outil à utiliser. Aucune configuration technique.</p>
+
+    <div class="grid-2">
+      <div class="card"><h5>🌤️ Météo & Info</h5>
+        <pre class="cmd-box">1. Quelle est la météo à Dakar ?
+2. Météo à Paris demain matin
+3. Vent actuel à Toulouse ?</pre>
+      </div>
+      <div class="card"><h5>🧠 Mémoire personnelle</h5>
+        <pre class="cmd-box">4. Note que j'aime Python à Java
+5. Rappelle-moi: budget max PC 1500€
+6. Ma fille s'appelle Aminata, 10 ans
+7. Rendez-vous dentiste 12 septembre 10h</pre>
+      </div>
+      <div class="card"><h5>💻 Contrôle machine sûr</h5>
+        <pre class="cmd-box">8. Quelle version de Go j'ai ?
+9. Ma version Python + Node ?
+10. Lister les dépendances npm du projet web</pre>
+      </div>
+      <div class="card"><h5>📁 Fichiers locaux (whitelist)</h5>
+        <pre class="cmd-box">11. Lis providers/brain_python/README.md
+12. Montre le fichier antaerus/.env.example</pre>
+      </div>
+      <div class="card"><h5>🌐 Internet & recherche</h5>
+        <pre class="cmd-box">13. Cherche prix RTX 4080 sur internet
+14. Résume https://fr.wikipedia.org/wiki/Intelligence_artificielle</pre>
+      </div>
+      <div class="card"><h5>📧 Mail & Agenda (OAuth section 5.3)</h5>
+        <pre class="cmd-box">15. Mes 3 derniers mails non lus +
+Quels rendez-vous j'ai demain ?</pre>
+      </div>
+    </div>
+  </section>
+
+  <section id="outils" class="section">
+    <header class="section-header">
+      <span class="section-idx">09</span>
+      <h3>Les 8 outils intégrés — référence rapide</h3>
+    </header>
+    <p class="lead">Ce qu'aNtaerus sait faire concrètement sur ta machine / tes comptes. Tous sont appelés <b>automatiquement</b> quand tu poses une question en langage naturel dans le Chat.</p>
+
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Outil</th><th>Disponibilité par défaut</th><th>Action possible</th><th>Configuration requise</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><b>weather</b></td><td><span class="chip chip-emerald">IMMEDIAT</span></td><td>Température, humidité, vent, ville, coordonnées. Open-Meteo API sans clé.</td><td>Rien.</td></tr>
+        <tr><td>2</td><td><b>browser</b></td><td><span class="chip chip-emerald">IMMEDIAT</span></td><td><code>fetch</code> extraire texte d'une URL / <code>search</code> recherche web.</td><td>Rien.</td></tr>
+        <tr><td>3</td><td><b>memory_tool</b></td><td><span class="chip chip-emerald">IMMEDIAT</span></td><td>Écrire / Lire des faits personnels SQLite (triple sujet/prédicat/objet).</td><td>Rien.</td></tr>
+        <tr><td>4</td><td><b>cli</b></td><td><span class="chip chip-amber">WHITELISTÉ</span></td><td>Exécuter commandes shell autorisées : <code>python, py, git, go, cargo, uv, npm</code>.</td><td>Whitelist <code>antaerus/config/tools.yaml</code> section 5.4.</td></tr>
+        <tr><td>5</td><td><b>filesystem</b></td><td><span class="chip chip-amber">WHITELISTÉ</span></td><td>Lire des fichiers dans : <code>docs/</code>, <code>memory_data/</code>, <code>providers/brain_python/</code>.</td><td>Ajouter allowed roots <code>tools.yaml</code>.</td></tr>
+        <tr><td>6</td><td><b>gmail</b></td><td><span class="chip chip-red">OAUTH</span></td><td>Lire liste mails récents / envoyer email.</td><td>Google Console OAuth. Voir section 5.3.</td></tr>
+        <tr><td>7</td><td><b>calendar</b></td><td><span class="chip chip-red">OAUTH</span></td><td>Lire événements 24h / créer rendez-vous simple.</td><td>Même OAuth Gmail, scopes Calendar.</td></tr>
+        <tr><td>8</td><td><b>vision</b></td><td><span class="chip chip-amber">INSTALL 1x</span></td><td>Détection d'objets sur image locale (ultralytics YOLO).</td><td><code>py -3.11 -m pip install ultralytics</code> dans brain.</td></tr>
+      </tbody>
+    </table>
   </section>
 
   <section id="skill-lab" class="section">
     <header class="section-header">
-      <span class="section-idx">08</span>
+      <span class="section-idx">10</span>
       <h3>Skill Lab M7 — pas à pas (compétences custom)</h3>
     </header>
 
@@ -431,7 +587,7 @@ exitCode=0  durationMs=145  fuel=382  sandboxKind=python-local-fallback
 
   <section id="qualimetrie" class="section">
     <header class="section-header">
-      <span class="section-idx">09</span>
+      <span class="section-idx">11</span>
       <h3>Commandes qualimétrie complète</h3>
     </header>
     <pre class="cmd-box"><span class="comment"># ===== REACT UI =====</span>
@@ -462,7 +618,7 @@ cargo test --features wasm-runtime --lib</pre>
 
   <section id="faq" class="section">
     <header class="section-header">
-      <span class="section-idx">10</span>
+      <span class="section-idx">12</span>
       <h3>FAQ dépannage fréquent</h3>
     </header>
 
@@ -526,7 +682,7 @@ cd ..\..\providers\brain_python ; py -3.11 -m pip install -r requirements.txt --
 
   <section id="architecture" class="section">
     <header class="section-header">
-      <span class="section-idx">11</span>
+      <span class="section-idx">13</span>
       <h3>Architecture 4 couches — flux de données</h3>
     </header>
 
@@ -564,7 +720,7 @@ cd ..\..\providers\brain_python ; py -3.11 -m pip install -r requirements.txt --
 
   <section id="liens" class="section">
     <header class="section-header">
-      <span class="section-idx">12</span>
+      <span class="section-idx">14</span>
       <h3>Liens utiles dans le projet</h3>
     </header>
 
