@@ -8,6 +8,7 @@ import FoundationDashboard from "@/pages/FoundationDashboard";
 import Home from "@/pages/Home";
 import MemoryExplorer from "@/pages/MemoryExplorer";
 import Missions from "@/pages/Missions";
+import Settings from "@/pages/Settings";
 import Setup from "@/pages/Setup";
 import SkillLab from "@/pages/SkillLab";
 import SystemHealth from "@/pages/SystemHealth";
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/system-health" element={<SystemHealth />} />
         <Route path="/config" element={<Config />} />
         <Route path="/skill-lab" element={<SkillLab />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Router>
   );

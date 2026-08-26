@@ -1282,3 +1282,143 @@ if __name__ == "__main__":
         };
   return minimal;
 }
+
+// ==============================================================================
+// Tools endpoints: filesystem allowed_roots CRUD + summary
+// ==============================================================================
+
+export type ToolDescriptor = {
+  name: string;
+  description?: string;
+  version?: string;
+  category?: string;
+  tags?: string[];
+  inputs?: Record<string, unknown>;
+  outputSchema?: Record<string, unknown>;
+  enabled?: boolean;
+};
+
+export type ToolsListResponse = {
+  tools: ToolDescriptor[];
+};
+
+export type FilesystemAllowedRootsSource = {
+  yaml: number;
+  overlay: number;
+  env: number;
+  user_preferences_sql: number;
+};
+
+export type FilesystemAllowedRootsResponse = {
+  allowed_roots: string[];
+  source: FilesystemAllowedRootsSource;
+  overlay_path: string;
+  note?: string;
+};
+
+export type FilesystemAllowedRootValidateResponse = {
+  input: string;
+  normalized: string;
+  exists: boolean;
+  is_dir: boolean;
+  readable: boolean;
+};
+
+export type ToolsSummaryResponse = {
+  tools: ToolsListResponse;
+  filesystem: FilesystemAllowedRootsResponse;
+  cli_enabled: boolean;
+  filesystem_enabled: boolean;
+  tools_config_path: string;
+  overlay_path: string;
+};
+
+export async function fetchToolsSummary(): Promise<ToolsSummaryResponse> {
+  const response = await fetch(apiURL("/api/v1/tools/summary"));
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de charger le summary tools: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<ToolsSummaryResponse>;
+}
+
+export async function fetchFilesystemAllowedRoots(): Promise<FilesystemAllowedRootsResponse> {
+  const response = await fetch(apiURL("/api/v1/tools/filesystem/allowed-roots"));
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de lister allowed_roots: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<FilesystemAllowedRootsResponse>;
+}
+
+export async function validateFilesystemAllowedRoot(
+  path: string,
+): Promise<FilesystemAllowedRootValidateResponse> {
+  const response = await fetch(
+    apiURL("/api/v1/tools/filesystem/allowed-roots/validate", { path }),
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Validation path impossible: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<FilesystemAllowedRootValidateResponse>;
+}
+
+export async function addFilesystemAllowedRoot(path: string): Promise<{
+  added: string;
+  allowed_roots: string[];
+  overlay_written: boolean;
+}> {
+  const response = await fetch(apiURL("/api/v1/tools/filesystem/allowed-roots"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path }),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible d'ajouter le dossier: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<{
+    added: string;
+    allowed_roots: string[];
+    overlay_written: boolean;
+  }>;
+}
+
+export async function removeFilesystemAllowedRoot(path: string): Promise<{
+  removed: string;
+  existed: boolean;
+  allowed_roots: string[];
+  overlay_written: boolean;
+}> {
+  const response = await fetch(apiURL("/api/v1/tools/filesystem/allowed-roots"), {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path }),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de supprimer le dossier: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<{
+    removed: string;
+    existed: boolean;
+    allowed_roots: string[];
+    overlay_written: boolean;
+  }>;
+}
+
+export async function setFilesystemAllowedRoots(
+  allowed_roots: string[],
+): Promise<FilesystemAllowedRootsResponse> {
+  const response = await fetch(apiURL("/api/v1/tools/filesystem/allowed-roots"), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ allowed_roots }),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de sauvegarder allowed_roots: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<FilesystemAllowedRootsResponse>;
+}

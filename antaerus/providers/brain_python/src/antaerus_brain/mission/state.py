@@ -352,6 +352,62 @@ class MissionStateStore:
         rows = await cur.fetchall()
         return [_row_to_step(row) for row in rows]
 
+    async def get_json_pref(
+        self,
+        key: str,
+        default: Any = None,
+        *,
+        user_id: str = "local",
+    ) -> Any:
+        async with aiosqlite.connect(self.database_path) as conn:
+            conn.row_factory = aiosqlite.Row
+            cur = await conn.execute(
+                "SELECT value_json FROM user_preferences WHERE key = ? AND user_id = ? LIMIT 1",
+                (key, user_id),
+            )
+            row = await cur.fetchone()
+            if row is None:
+                return default
+            try:
+                return json.loads(row["value_json"])
+            except (TypeError, ValueError):
+                return default
+
+    async def set_json_pref(
+        self,
+        key: str,
+        value: Any,
+        *,
+        user_id: str = "local",
+    ) -> None:
+        payload_json = json.dumps(value, ensure_ascii=False, sort_keys=True)
+        async with aiosqlite.connect(self.database_path) as conn:
+            await conn.execute(
+                """
+                INSERT INTO user_preferences (key, user_id, value_json, updated_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(key, user_id) DO UPDATE SET
+                    value_json = excluded.value_json,
+                    updated_at = excluded.updated_at
+                """,
+                (key, user_id, payload_json, _utcnow()),
+            )
+            await conn.commit()
+
+    async def delete_pref(
+        self,
+        key: str,
+        *,
+        user_id: str = "local",
+    ) -> bool:
+        async with aiosqlite.connect(self.database_path) as conn:
+            cur = await conn.execute(
+                "DELETE FROM user_preferences WHERE key = ? AND user_id = ?",
+                (key, user_id),
+            )
+            await conn.commit()
+            return cur.rowcount > 0
+
 
 def _row_to_mission(row: Any, steps: list[MissionStep]) -> Mission:
     return Mission(

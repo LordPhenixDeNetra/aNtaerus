@@ -61,7 +61,10 @@ pub enum CliSandboxError {
 
 impl CliSandbox {
     pub fn from_settings(settings: &Settings) -> Result<Self, CliSandboxError> {
-        let config = load_tools_config_or_default(settings.tools_config_path.as_path());
+        let config = load_tools_config_or_default_with_sandbox(
+            settings.tools_config_path.as_path(),
+            settings.tools_sandbox_root.as_path(),
+        );
         Self::from_config(
             settings.tools_sandbox_root.clone(),
             &config.cli,

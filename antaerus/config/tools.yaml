@@ -20,13 +20,19 @@ vision:
 
 filesystem:
   enabled: true
+  # ℹ️ PAR DÉFAUT: AUCUN dossier personnel n'est autorisé.
+  #    Autorisez des dossiers via (par PRIORITÉ, la plus haute écrase) :
+  #     1. 🧑‍💻 UI Paramètres → "Dossiers autorisés" (RECOMMANDÉ pour utilisateur lambda)
+  #        → Persisté dans SQLite table user_preferences (antaerus_memory.db)
+  #     2. 👩‍💼 Variable ENV (déploiement / Docker / CI) :
+  #        Windows: ANTAERUS_TOOLS_FS_ALLOWED_ROOTS=C:\Users\TOI\Musique;D:\Partages
+  #        Linux/macOS: ANTAERUS_TOOLS_FS_ALLOWED_ROOTS=/home/toi/Musique:/srv/partages
+  #        (Séparateur UNIVERSEL tous OS: ;; )
+  #     3. 👨‍💻 Ce fichier tools.yaml (baseline développeurs, push sur Git OK)
   allowed_roots:
     - docs
     - memory_data
     - providers/brain_python
-    - C:/Users/DELL/Music
-    - C:/Users/DELL/Videos
-    - C:/Users/DELL/Downloads
   max_bytes: 65536
 
 memory_tool:

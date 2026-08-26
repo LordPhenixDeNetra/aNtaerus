@@ -46,6 +46,14 @@ func newMux(
 	proactiveClient := clients.NewBrainProactiveClient(proactiveHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	memoryClient := clients.NewBrainMemoryClient(memoryHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	skillsClient := clients.NewBrainSkillsClient(skillsHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
+	brainProxy := NewBrainProxyHandlers(
+		cfg.BrainBaseURL,
+		cfg.WriteTimeout,
+		map[string]time.Duration{
+			// Tools endpoints can block on path validation + YAML reload.
+			"tools": cfg.WriteTimeout,
+		},
+	)
 	hub := NewHub(cfg, authenticator, rateLimiter, brainChat, voiceFactory, healthService)
 	missionHandlers := NewMissionHandlers(missionClient, hub)
 	proactiveHandlers := NewProactiveHandlers(proactiveClient, hub)
@@ -86,6 +94,8 @@ func newMux(
 	apiMux.HandleFunc("/api/v1/config/", configHandlers.ServeHTTP)
 	apiMux.HandleFunc("/api/v1/skills", skillsHandlers.ServeHTTP)
 	apiMux.HandleFunc("/api/v1/skills/", skillsHandlers.ServeHTTP)
+	apiMux.HandleFunc("/api/v1/tools", brainProxy.ServeTools)
+	apiMux.HandleFunc("/api/v1/tools/", brainProxy.ServeTools)
 	mux.Handle("/api/", withCORS(cfg, apiMux))
 
 	if staticHandler := newFrontendStaticHandler(); staticHandler != nil {

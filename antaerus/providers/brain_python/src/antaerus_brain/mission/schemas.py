@@ -194,4 +194,13 @@ MISSION_SCHEMA_STATEMENTS: list[str] = [
     "CREATE INDEX IF NOT EXISTS idx_missions_session_status ON missions(session_id, status)",
     "CREATE INDEX IF NOT EXISTS idx_mission_steps_mission_idx ON mission_steps(mission_id, idx)",
     "CREATE INDEX IF NOT EXISTS idx_mission_events_mission_kind ON mission_events(mission_id, kind)",
+    """
+    CREATE TABLE IF NOT EXISTS user_preferences (
+        key TEXT NOT NULL,
+        user_id TEXT NOT NULL DEFAULT 'local',
+        value_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (key, user_id)
+    )
+    """,
 ]
