@@ -38,3 +38,17 @@ bin/
 .env.test.local
 .env.production.local
 *.log
+
+# --- Google OAuth secrets (NE JAMAIS VERSIONNER : client_secret + refresh_token PERMANENT) ---
+antaerus/config/google_credentials.json
+antaerus/config/google_token.json
+antaerus/config/old_google_credentials.json
+# fallback si quelqu'un place ces fichiers a la racine workspace (anticipation)
+**/google_credentials.json
+**/google_token.json
+**/old_google_credentials.json
+# --- Autres fichiers config sensibles qui resteraient locaux ---
+antaerus/config/*.local.json
+antaerus/config/secrets*.json
+antaerus/config/*credentials*.json
+antaerus/config/*token*.json

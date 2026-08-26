@@ -27,24 +27,62 @@ class CalendarTool(BaseTool):
     input_model = CalendarToolInput
     operations = ("list_upcoming", "create_event")
 
+    def _google_oauth_url(self) -> str | None:
+        cid = self.settings.google_client_id
+        ruri = self.settings.google_redirect_uri
+        if not cid or not ruri:
+            return None
+        scopes = (
+            "https://www.googleapis.com/auth/calendar.readonly "
+            "https://www.googleapis.com/auth/calendar.events "
+            "https://www.googleapis.com/auth/userinfo.email"
+        )
+        from urllib.parse import urlencode
+
+        params = {
+            "client_id": cid,
+            "redirect_uri": ruri,
+            "response_type": "code",
+            "scope": scopes,
+            "access_type": "offline",
+            "prompt": "consent",
+        }
+        return "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
+
     def _availability(self) -> ToolAvailability:
         if not self.settings.google_client_id:
             return ToolAvailability(
                 enabled=True,
                 available=False,
-                reason="google client id not configured",
+                reason=(
+                    "google client id not configured — vérifier la variable "
+                    "ANTAERUS_GOOGLE_CLIENT_ID dans .env OU le fichier "
+                    "config/google_credentials.json (clé web.client_id / installed.client_id)"
+                ),
             )
         if not self.settings.google_client_secret.get_secret_value():
             return ToolAvailability(
                 enabled=True,
                 available=False,
-                reason="google client secret not configured",
+                reason=(
+                    "google client secret not configured — vérifier la variable "
+                    "ANTAERUS_GOOGLE_CLIENT_SECRET dans .env OU le fichier "
+                    "config/google_credentials.json (clé web.client_secret / installed.client_secret)"
+                ),
             )
         if not self.settings.google_refresh_token.get_secret_value():
+            auth_url = self._google_oauth_url()
+            reason = (
+                "google refresh token not configured — lancer l'autorisation OAuth2 une fois "
+                "et conserver le refresh_token dans ANTAERUS_GOOGLE_REFRESH_TOKEN (.env) OU "
+                "config/google_token.json (clé refresh_token)."
+            )
+            if auth_url:
+                reason += f" URL d'autorisation : {auth_url}"
             return ToolAvailability(
                 enabled=True,
                 available=False,
-                reason="google refresh token not configured",
+                reason=reason,
             )
         return ToolAvailability(enabled=True, available=True)
 

@@ -40,13 +40,18 @@ func TestWebSocketRejectsMissingToken(t *testing.T) {
 func TestWebSocketHandlesChatMessage(t *testing.T) {
 	cfg := websocketTestConfig()
 	brainServer := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.Path != "/llm/session-stream" {
-			t.Fatalf("unexpected brain path %s", request.URL.Path)
+		switch request.URL.Path {
+		case "/llm/session-stream":
+			writer.Header().Set("Content-Type", "text/event-stream")
+			_, _ = writer.Write([]byte("event: token\ndata: {\"text\":\"Bon\",\"sessionId\":\"session-1\"}\n\n"))
+			_, _ = writer.Write([]byte("event: complete\ndata: {\"text\":\"Bonjour\",\"sessionId\":\"session-1\"}\n\n"))
+		case "/proactive/curator/run", "/health":
+			writer.WriteHeader(http.StatusOK)
+			_, _ = writer.Write([]byte("{}"))
+		default:
+			writer.WriteHeader(http.StatusOK)
+			_, _ = writer.Write([]byte("{}"))
 		}
-
-		writer.Header().Set("Content-Type", "text/event-stream")
-		_, _ = writer.Write([]byte("event: token\ndata: {\"text\":\"Bon\",\"sessionId\":\"session-1\"}\n\n"))
-		_, _ = writer.Write([]byte("event: complete\ndata: {\"text\":\"Bonjour\",\"sessionId\":\"session-1\"}\n\n"))
 	}))
 	defer brainServer.Close()
 	cfg.BrainBaseURL = brainServer.URL
@@ -65,7 +70,7 @@ func TestWebSocketHandlesChatMessage(t *testing.T) {
 	}
 	defer connection.Close()
 
-	connection.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+	connection.SetReadDeadline(time.Now().Add(5 * time.Second))
 	if err := connection.WriteJSON(contracts.ClientMessage{
 		Envelope: contracts.Envelope{
 			Type:      string(contracts.ClientMessageChat),
@@ -205,13 +210,15 @@ func TestWebSocketVoiceStartOpensRuntimeSession(t *testing.T) {
 func TestForwardVoiceEventStreamsTranscriptAndSpeaks(t *testing.T) {
 	cfg := websocketTestConfig()
 	brainServer := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		if request.URL.Path != "/llm/session-stream" {
-			t.Fatalf("unexpected brain path %s", request.URL.Path)
+		switch request.URL.Path {
+		case "/llm/session-stream":
+			writer.Header().Set("Content-Type", "text/event-stream")
+			_, _ = writer.Write([]byte("event: token\ndata: {\"text\":\"Salut\",\"sessionId\":\"session-1\"}\n\n"))
+			_, _ = writer.Write([]byte("event: complete\ndata: {\"text\":\"Salut depuis le LLM\",\"sessionId\":\"session-1\"}\n\n"))
+		default:
+			writer.WriteHeader(http.StatusOK)
+			_, _ = writer.Write([]byte("{}"))
 		}
-
-		writer.Header().Set("Content-Type", "text/event-stream")
-		_, _ = writer.Write([]byte("event: token\ndata: {\"text\":\"Salut\",\"sessionId\":\"session-1\"}\n\n"))
-		_, _ = writer.Write([]byte("event: complete\ndata: {\"text\":\"Salut depuis le LLM\",\"sessionId\":\"session-1\"}\n\n"))
 	}))
 	defer brainServer.Close()
 

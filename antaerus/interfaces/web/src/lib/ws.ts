@@ -9,6 +9,7 @@ export type WebSocketClientMessageType =
 export type WebSocketServerMessageType =
   | "chat.token"
   | "chat.complete"
+  | "chat.error"
   | "voice.transcript"
   | "voice.audio"
   | "voice.vad_state"
@@ -54,6 +55,12 @@ export type ChatTokenPayload = {
 export type ChatCompletePayload = {
   sessionId: string;
   message: string;
+};
+
+export type ChatErrorPayload = {
+  sessionId: string;
+  message: string;
+  code?: string;
 };
 
 export type VoiceTranscriptPayload = {
@@ -128,6 +135,7 @@ export type HealthHeartbeatPayload = {
 export type WebSocketServerMessage =
   | Envelope<"chat.token", ChatTokenPayload>
   | Envelope<"chat.complete", ChatCompletePayload>
+  | Envelope<"chat.error", ChatErrorPayload>
   | Envelope<"voice.transcript", VoiceTranscriptPayload>
   | Envelope<"voice.audio", VoiceAudioPayload>
   | Envelope<"voice.vad_state", VoiceVADStatePayload>

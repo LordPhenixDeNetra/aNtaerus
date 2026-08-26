@@ -8,63 +8,66 @@ import (
 	"time"
 
 	"antaerus/kernel/settings"
+
 	"github.com/spf13/viper"
 )
 
 const (
-	defaultEnvironment         = "development"
-	defaultGatewayPort         = 8080
-	defaultGatewayVersion      = "0.1.0"
-	defaultWebURL              = "http://localhost:5173"
-	defaultBrainBaseURL        = "http://localhost:8000"
-	defaultEngineHTTPURL       = "http://localhost:7000"
-	defaultEngineGRPCTarget    = "localhost:7001"
-	defaultRequestTimeoutMS    = 2000
-	defaultReadHeaderTimeoutMS = 5000
-	defaultShutdownTimeoutMS   = 10000
-	defaultIdleTimeoutMS       = 30000
-	defaultWriteTimeoutMS      = 30000
-	defaultJWTSecret           = "development-gateway-jwt-secret"
-	defaultJWTIssuer           = "antaerus.gateway"
-	defaultJWTAudience         = "antaerus.web"
-	defaultJWTTokenTTLMS       = 3600000
-	defaultWSHeartbeatMS       = 30000
-	defaultHTTPRateLimitRPS    = 10.0
-	defaultHTTPRateLimitBurst  = 20
-	defaultWSConnectRateRPS    = 2.0
-	defaultWSConnectBurst      = 5
-	defaultWSMessageRateRPS    = 20.0
-	defaultWSMessageBurst      = 40
-	defaultProactiveCronHour   = 2
+	defaultEnvironment              = "development"
+	defaultGatewayPort              = 8080
+	defaultGatewayVersion           = "0.1.0"
+	defaultWebURL                   = "http://localhost:5173"
+	defaultBrainBaseURL             = "http://localhost:8000"
+	defaultEngineHTTPURL            = "http://localhost:7000"
+	defaultEngineGRPCTarget         = "localhost:7001"
+	defaultRequestTimeoutMS         = 2000
+	defaultReadHeaderTimeoutMS      = 5000
+	defaultShutdownTimeoutMS        = 10000
+	defaultIdleTimeoutMS            = 30000
+	defaultWriteTimeoutMS           = 30000
+	defaultBrainChatStreamTimeoutMS = 180000
+	defaultJWTSecret                = "development-gateway-jwt-secret"
+	defaultJWTIssuer                = "antaerus.gateway"
+	defaultJWTAudience              = "antaerus.web"
+	defaultJWTTokenTTLMS            = 3600000
+	defaultWSHeartbeatMS            = 30000
+	defaultHTTPRateLimitRPS         = 10.0
+	defaultHTTPRateLimitBurst       = 20
+	defaultWSConnectRateRPS         = 2.0
+	defaultWSConnectBurst           = 5
+	defaultWSMessageRateRPS         = 20.0
+	defaultWSMessageBurst           = 40
+	defaultProactiveCronHour        = 2
 )
 
 type Config struct {
-	Environment        string
-	Port               int
-	Version            string
-	WebURL             string
-	BrainBaseURL       string
-	EngineHTTPURL      string
-	EngineGRPCTarget   string
-	RequestTimeout     time.Duration
-	ReadHeaderTimeout  time.Duration
-	ShutdownTimeout    time.Duration
-	IdleTimeout        time.Duration
-	WriteTimeout       time.Duration
-	TLSCertFile        string
-	TLSKeyFile         string
-	JWTSecret          settings.SecretString
-	JWTIssuer          string
-	JWTAudience        string
-	JWTTokenTTL        time.Duration
-	WSHeartbeat        time.Duration
-	HTTPRateLimitRPS   float64
-	HTTPRateLimitBurst int
-	WSConnectRateRPS   float64
-	WSConnectBurst     int
-	WSMessageRateRPS   float64
-	WSMessageBurst     int
-	ProactiveCronHour  int
+	Environment            string
+	Port                   int
+	Version                string
+	WebURL                 string
+	BrainBaseURL           string
+	EngineHTTPURL          string
+	EngineGRPCTarget       string
+	RequestTimeout         time.Duration
+	ReadHeaderTimeout      time.Duration
+	ShutdownTimeout        time.Duration
+	IdleTimeout            time.Duration
+	WriteTimeout           time.Duration
+	BrainChatStreamTimeout time.Duration
+	TLSCertFile            string
+	TLSKeyFile             string
+	JWTSecret              settings.SecretString
+	JWTIssuer              string
+	JWTAudience            string
+	JWTTokenTTL            time.Duration
+	WSHeartbeat            time.Duration
+	HTTPRateLimitRPS       float64
+	HTTPRateLimitBurst     int
+	WSConnectRateRPS       float64
+	WSConnectBurst         int
+	WSMessageRateRPS       float64
+	WSMessageBurst         int
+	ProactiveCronHour      int
 }
 
 func Load() (Config, error) {
@@ -85,6 +88,7 @@ func Load() (Config, error) {
 	v.SetDefault("ANTAERUS_GATEWAY_SHUTDOWN_TIMEOUT_MS", defaultShutdownTimeoutMS)
 	v.SetDefault("ANTAERUS_GATEWAY_IDLE_TIMEOUT_MS", defaultIdleTimeoutMS)
 	v.SetDefault("ANTAERUS_GATEWAY_WRITE_TIMEOUT_MS", defaultWriteTimeoutMS)
+	v.SetDefault("ANTAERUS_GATEWAY_BRAIN_CHAT_STREAM_TIMEOUT_MS", defaultBrainChatStreamTimeoutMS)
 	v.SetDefault("ANTAERUS_GATEWAY_JWT_SECRET", defaultJWTSecret)
 	v.SetDefault("ANTAERUS_GATEWAY_JWT_ISSUER", defaultJWTIssuer)
 	v.SetDefault("ANTAERUS_GATEWAY_JWT_AUDIENCE", defaultJWTAudience)
@@ -106,32 +110,33 @@ func Load() (Config, error) {
 	}
 
 	cfg := Config{
-		Environment:        v.GetString("ANTAERUS_ENV"),
-		Port:               v.GetInt("ANTAERUS_GATEWAY_PORT"),
-		Version:            v.GetString("ANTAERUS_GATEWAY_VERSION"),
-		WebURL:             v.GetString("ANTAERUS_WEB_URL"),
-		BrainBaseURL:       v.GetString("ANTAERUS_BRAIN_URL"),
-		EngineHTTPURL:      v.GetString("ANTAERUS_ENGINE_URL"),
-		EngineGRPCTarget:   v.GetString("ANTAERUS_ENGINE_GRPC_TARGET"),
-		RequestTimeout:     durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_REQUEST_TIMEOUT_MS")),
-		ReadHeaderTimeout:  durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_READ_HEADER_TIMEOUT_MS")),
-		ShutdownTimeout:    durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_SHUTDOWN_TIMEOUT_MS")),
-		IdleTimeout:        durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_IDLE_TIMEOUT_MS")),
-		WriteTimeout:       durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_WRITE_TIMEOUT_MS")),
-		TLSCertFile:        v.GetString("ANTAERUS_GATEWAY_TLS_CERT_FILE"),
-		TLSKeyFile:         v.GetString("ANTAERUS_GATEWAY_TLS_KEY_FILE"),
-		JWTSecret:          settings.SecretString(v.GetString("ANTAERUS_GATEWAY_JWT_SECRET")),
-		JWTIssuer:          v.GetString("ANTAERUS_GATEWAY_JWT_ISSUER"),
-		JWTAudience:        v.GetString("ANTAERUS_GATEWAY_JWT_AUDIENCE"),
-		JWTTokenTTL:        durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_JWT_TOKEN_TTL_MS")),
-		WSHeartbeat:        durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_WS_HEARTBEAT_INTERVAL_MS")),
-		HTTPRateLimitRPS:   v.GetFloat64("ANTAERUS_GATEWAY_RATE_LIMIT_HTTP_RPS"),
-		HTTPRateLimitBurst: v.GetInt("ANTAERUS_GATEWAY_RATE_LIMIT_HTTP_BURST"),
-		WSConnectRateRPS:   v.GetFloat64("ANTAERUS_GATEWAY_RATE_LIMIT_WS_CONNECT_RPS"),
-		WSConnectBurst:     v.GetInt("ANTAERUS_GATEWAY_RATE_LIMIT_WS_CONNECT_BURST"),
-		WSMessageRateRPS:   v.GetFloat64("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_RPS"),
-		WSMessageBurst:     v.GetInt("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_BURST"),
-		ProactiveCronHour:  v.GetInt("ANTAERUS_GATEWAY_PROACTIVE_CRON_HOUR"),
+		Environment:            v.GetString("ANTAERUS_ENV"),
+		Port:                   v.GetInt("ANTAERUS_GATEWAY_PORT"),
+		Version:                v.GetString("ANTAERUS_GATEWAY_VERSION"),
+		WebURL:                 v.GetString("ANTAERUS_WEB_URL"),
+		BrainBaseURL:           v.GetString("ANTAERUS_BRAIN_URL"),
+		EngineHTTPURL:          v.GetString("ANTAERUS_ENGINE_URL"),
+		EngineGRPCTarget:       v.GetString("ANTAERUS_ENGINE_GRPC_TARGET"),
+		RequestTimeout:         durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_REQUEST_TIMEOUT_MS")),
+		ReadHeaderTimeout:      durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_READ_HEADER_TIMEOUT_MS")),
+		ShutdownTimeout:        durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_SHUTDOWN_TIMEOUT_MS")),
+		IdleTimeout:            durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_IDLE_TIMEOUT_MS")),
+		WriteTimeout:           durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_WRITE_TIMEOUT_MS")),
+		BrainChatStreamTimeout: durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_BRAIN_CHAT_STREAM_TIMEOUT_MS")),
+		TLSCertFile:            v.GetString("ANTAERUS_GATEWAY_TLS_CERT_FILE"),
+		TLSKeyFile:             v.GetString("ANTAERUS_GATEWAY_TLS_KEY_FILE"),
+		JWTSecret:              settings.SecretString(v.GetString("ANTAERUS_GATEWAY_JWT_SECRET")),
+		JWTIssuer:              v.GetString("ANTAERUS_GATEWAY_JWT_ISSUER"),
+		JWTAudience:            v.GetString("ANTAERUS_GATEWAY_JWT_AUDIENCE"),
+		JWTTokenTTL:            durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_JWT_TOKEN_TTL_MS")),
+		WSHeartbeat:            durationFromMilliseconds(v.GetInt("ANTAERUS_GATEWAY_WS_HEARTBEAT_INTERVAL_MS")),
+		HTTPRateLimitRPS:       v.GetFloat64("ANTAERUS_GATEWAY_RATE_LIMIT_HTTP_RPS"),
+		HTTPRateLimitBurst:     v.GetInt("ANTAERUS_GATEWAY_RATE_LIMIT_HTTP_BURST"),
+		WSConnectRateRPS:       v.GetFloat64("ANTAERUS_GATEWAY_RATE_LIMIT_WS_CONNECT_RPS"),
+		WSConnectBurst:         v.GetInt("ANTAERUS_GATEWAY_RATE_LIMIT_WS_CONNECT_BURST"),
+		WSMessageRateRPS:       v.GetFloat64("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_RPS"),
+		WSMessageBurst:         v.GetInt("ANTAERUS_GATEWAY_RATE_LIMIT_WS_MESSAGE_BURST"),
+		ProactiveCronHour:      v.GetInt("ANTAERUS_GATEWAY_PROACTIVE_CRON_HOUR"),
 	}
 
 	if err := cfg.Validate(); err != nil {
@@ -180,6 +185,10 @@ func (cfg Config) Validate() error {
 
 	if cfg.WriteTimeout <= 0 {
 		return fmt.Errorf("write timeout must be greater than zero: %s", cfg.WriteTimeout)
+	}
+
+	if cfg.BrainChatStreamTimeout <= 0 {
+		return fmt.Errorf("brain chat stream timeout must be greater than zero: %s", cfg.BrainChatStreamTimeout)
 	}
 
 	if (cfg.TLSCertFile == "") != (cfg.TLSKeyFile == "") {

@@ -13,6 +13,7 @@ import (
 	"antaerus/interfaces/gateway_go/internal/config"
 	"antaerus/interfaces/gateway_go/internal/contracts"
 	"antaerus/interfaces/gateway_go/internal/system"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -217,7 +218,7 @@ func (client *Client) handleMessage(message contracts.ClientMessage) {
 			return
 		}
 
-		client.handleChatMessage(payload)
+		go client.handleChatMessage(payload)
 	case contracts.ClientMessageVoiceStart, contracts.ClientMessageVoiceStop, contracts.ClientMessageBargeIn:
 		var payload contracts.SessionControlPayload
 		if err := json.Unmarshal(message.Payload, &payload); err != nil {
@@ -225,7 +226,7 @@ func (client *Client) handleMessage(message contracts.ClientMessage) {
 			return
 		}
 
-		client.handleVoiceControl(contracts.ClientMessageType(message.Type), payload)
+		go client.handleVoiceControl(contracts.ClientMessageType(message.Type), payload)
 	case contracts.ClientMessageCancel:
 		var payload contracts.MissionCancelPayload
 		if err := json.Unmarshal(message.Payload, &payload); err != nil {
@@ -262,14 +263,26 @@ func (client *Client) handleChatMessage(payload contracts.ChatMessagePayload) {
 					Message:   stringValue(event.Data["text"]),
 				}))
 			case "error":
-				client.enqueue(alertMessage("error", stringValue(event.Data["message"])))
+				errorMsg := stringValue(event.Data["message"])
+				client.enqueue(serverMessage(contracts.ServerMessageChatError, contracts.ChatErrorPayload{
+					SessionID: payload.SessionID,
+					Message:   errorMsg,
+					Code:      "BRAIN_STREAM_EVENT_ERROR",
+				}))
+				client.enqueue(alertMessage("error", errorMsg))
 			}
 
 			return nil
 		},
 	)
 	if err != nil {
-		client.enqueue(alertMessage("error", fmt.Sprintf("Brain chat stream failed: %v", err)))
+		errorMsg := fmt.Sprintf("Brain chat stream failed: %v", err)
+		client.enqueue(serverMessage(contracts.ServerMessageChatError, contracts.ChatErrorPayload{
+			SessionID: payload.SessionID,
+			Message:   errorMsg,
+			Code:      "BRAIN_STREAM_FAILED",
+		}))
+		client.enqueue(alertMessage("error", errorMsg))
 	}
 }
 

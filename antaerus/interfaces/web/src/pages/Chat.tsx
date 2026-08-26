@@ -9,7 +9,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import MessageBubble from "@/components/MessageBubble";
 import MessageInput from "@/components/MessageInput";
@@ -53,9 +53,11 @@ export default function Chat() {
     sendVoiceStart,
     sendVoiceStop,
     sendVoiceBargeIn,
+    wsStreaming,
+    cancelWsStream,
   } = useWebSocket(sessionId);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { isStreaming, streamPrompt } = useChatStream();
+  const { isStreaming, streamPrompt, cancelStream } = useChatStream();
   const { visualizerLevel } = useVAD();
   const voice = useVoiceStream({
     sessionId,
@@ -65,13 +67,23 @@ export default function Chat() {
     sendVoiceBargeIn,
   });
 
-  const [aiThinking, setAiThinking] = useState(false);
+  const [pendingSend, setPendingSend] = useState(false);
+  const aiThinking = useMemo(
+    () => isStreaming || wsStreaming || pendingSend,
+    [isStreaming, wsStreaming, pendingSend],
+  );
+
+  const cancelBoth = useCallback(() => {
+    cancelStream();
+    cancelWsStream("Réponse annulée par l'utilisateur.");
+    setPendingSend(false);
+  }, [cancelStream, cancelWsStream]);
 
   const statusQuery = useQuery(queryOptions);
   const providersQuery = useQuery({
     queryKey: ["brain-providers", config.brainBaseUrl],
     queryFn: () => fetchBrainProviders(config.brainBaseUrl),
-    enabled: config.chatTransport === "sse-dev",
+    enabled: true,
     retry: false,
   });
   const historyQuery = useQuery({
@@ -96,26 +108,16 @@ export default function Chat() {
     }
   }, [config.chatTransport, connect]);
 
-  const lastMessage = useMemo(
-    () => (messages.length > 0 ? messages[messages.length - 1] : null),
-    [messages],
-  );
-
   useEffect(() => {
-    if (isStreaming) {
-      setAiThinking(true);
+    if (!successMessage && !lastError) {
       return;
     }
-    if (!lastMessage) {
-      setAiThinking(false);
-      return;
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* noop */
     }
-    if (lastMessage.role === "user") {
-      setAiThinking(true);
-    } else {
-      setAiThinking(false);
-    }
-  }, [lastMessage, isStreaming, messages.length]);
+  }, [successMessage, lastError]);
 
   async function toggleTransport() {
     const nextTransport = config.chatTransport === "ws" ? "sse-dev" : "ws";
@@ -129,8 +131,13 @@ export default function Chat() {
   }
 
   const handleSend = async (content: string) => {
+    if (aiThinking) {
+      return;
+    }
+    setSuccessMessage(null);
+    setLastError(null);
     addUserMessage(content, config.chatTransport);
-    setAiThinking(true);
+    setPendingSend(true);
 
     try {
       if (config.chatTransport === "sse-dev") {
@@ -138,15 +145,24 @@ export default function Chat() {
         return;
       }
 
-      await sendChatMessage(content);
+      const ok = await sendChatMessage(content);
+      if (!ok) {
+        const hint =
+          connectionState === "error"
+            ? lastError ?? "La connexion WebSocket est en erreur."
+            : connectionState === "idle"
+              ? "La connexion WebSocket n'a pas été établie."
+              : "Échec d'envoi du message.";
+        setLastError(
+          `Impossible d'envoyer le message. ${hint} Cliquez sur « Générer JWT dev » puis « Connecter » pour rétablir la liaison.`,
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Erreur inconnue d'envoi.";
+      setLastError(message);
     } finally {
-      setTimeout(() => {
-        const latest = useAppStore.getState().messages;
-        const tail = latest.length > 0 ? latest[latest.length - 1] : null;
-        if (tail && tail.role === "user") {
-          setAiThinking(false);
-        }
-      }, 600);
+      setTimeout(() => setPendingSend(false), 1200);
     }
   };
 
@@ -358,13 +374,22 @@ export default function Chat() {
                     <span className="text-[10px] font-bold text-violet-200">IA</span>
                   </div>
                   <div className="rounded-3xl rounded-bl-md border border-white/10 bg-white/[0.04] px-4 py-3 text-slate-200 shadow-sm">
-                    <div className="flex items-center gap-1.5" aria-label="IA ecrit">
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-violet-400 [animation-delay:-0.3s]"></span>
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-violet-300 [animation-delay:-0.15s]"></span>
-                      <span className="h-2 w-2 animate-bounce rounded-full bg-violet-200"></span>
-                      <span className="ml-3 text-xs text-slate-400">
-                        aNtaerus ecrit une reponse...
-                      </span>
+                    <div className="flex flex-wrap items-center gap-3" aria-label="IA ecrit">
+                      <div className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-violet-400 [animation-delay:-0.3s]"></span>
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-violet-300 [animation-delay:-0.15s]"></span>
+                        <span className="h-2 w-2 animate-bounce rounded-full bg-violet-200"></span>
+                        <span className="ml-3 text-xs text-slate-400">
+                          aNtaerus ecrit une reponse...
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={cancelBoth}
+                        className="ml-auto inline-flex items-center gap-2 rounded-full border border-slate-500/30 bg-slate-500/10 px-3 py-1 text-xs font-medium text-slate-300 hover:bg-slate-500/20"
+                      >
+                        Annuler
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -372,7 +397,7 @@ export default function Chat() {
             </div>
 
             <MessageInput
-              disabled={isStreaming}
+              disabled={isStreaming || wsStreaming}
               onSend={(content) => handleSend(content)}
               voice={{
                 mode: voice.voiceMode,
@@ -409,12 +434,39 @@ export default function Chat() {
                 <p>Services visibles : {statusQuery.data?.services.length ?? 0}</p>
                 <p>Heartbeat WS : {lastHeartbeat.length}</p>
                 <p>Messages persistés : {historyQuery.data?.messages?.length ?? 0}</p>
-                <p>
-                  Provider défaut local :{" "}
-                  <span className="font-mono text-cyan-200">
-                    {config.defaultProvider}
-                  </span>
-                </p>
+                {providersQuery.data ? (
+                  <p>
+                    Provider (Brain · mode&nbsp;
+                    <code className="rounded bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-100">
+                      {config.chatTransport}
+                    </code>
+                    ) :{" "}
+                    <span className="font-mono text-cyan-200">
+                      {providersQuery.data.defaultProvider}
+                    </span>
+                    {" · "}
+                    <span className="font-mono text-[12px] text-slate-200">
+                      {providersQuery.data.providers.find(
+                        (p) => p.name === providersQuery.data.defaultProvider,
+                      )?.model ?? "modèle inconnu"}
+                    </span>
+                  </p>
+                ) : providersQuery.isLoading ? (
+                  <p>
+                    Provider Brain :{" "}
+                    <span className="text-cyan-200">chargement…</span>
+                  </p>
+                ) : (
+                  <p>
+                    Fallback local (sse-dev) :{" "}
+                    <span className="font-mono text-amber-300">
+                      {config.defaultProvider}
+                    </span>
+                    <span className="ml-2 text-[11px] text-slate-400">
+                      (Brain non joignable sur {config.brainBaseUrl})
+                    </span>
+                  </p>
+                )}
               </div>
             </section>
 
@@ -432,9 +484,13 @@ export default function Chat() {
                     <p className="mt-1 text-xs text-slate-400">{provider.model}</p>
                   </div>
                 ))}
-                {!providersQuery.data && (
-                  <p className="text-slate-400">
-                    Providers chargés uniquement en mode `sse-dev`.
+                {!providersQuery.data && providersQuery.isLoading && (
+                  <p className="text-cyan-200/70">Chargement des providers…</p>
+                )}
+                {!providersQuery.data && !providersQuery.isLoading && (
+                  <p className="text-amber-200/80">
+                    Impossible de charger les providers. Brain Python joignable
+                    sur {config.brainBaseUrl} ?
                   </p>
                 )}
               </div>

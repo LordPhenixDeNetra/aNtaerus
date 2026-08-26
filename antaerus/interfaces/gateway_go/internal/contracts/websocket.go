@@ -18,6 +18,7 @@ type ServerMessageType string
 const (
 	ServerMessageChatToken             ServerMessageType = "chat.token"
 	ServerMessageChatComplete          ServerMessageType = "chat.complete"
+	ServerMessageChatError             ServerMessageType = "chat.error"
 	ServerMessageVoiceTranscript       ServerMessageType = "voice.transcript"
 	ServerMessageVoiceAudio            ServerMessageType = "voice.audio"
 	ServerMessageVoiceVADState         ServerMessageType = "voice.vad_state"
@@ -67,6 +68,12 @@ type ChatCompletePayload struct {
 	Message   string `json:"message"`
 }
 
+type ChatErrorPayload struct {
+	SessionID string `json:"sessionId"`
+	Message   string `json:"message"`
+	Code      string `json:"code,omitempty"`
+}
+
 type VoiceTranscriptPayload struct {
 	SessionID  string `json:"sessionId"`
 	Transcript string `json:"transcript"`
@@ -110,7 +117,7 @@ type InitiativeUpdatePayload struct {
 }
 
 type SchedulerCommandPayload struct {
-	Action  string  `json:"action"`
+	Action   string `json:"action"`
 	CronHour *int   `json:"cronHour,omitempty"`
 }
 

@@ -177,6 +177,68 @@ def get_settings() -> Settings:
     vision_model_raw = getenv("ANTAERUS_BRAIN_VISION_MODEL_PATH", "").strip()
     vision_image_raw = getenv("ANTAERUS_BRAIN_VISION_DEFAULT_IMAGE_PATH", "").strip()
 
+    def _load_google_secrets() -> tuple[str, str, str, str, bool]:
+        import json as _json
+
+        client_id_file = ""
+        client_secret_file = ""
+        redirect_uri_file = ""
+        is_installed = False
+        credentials_file_raw = getenv("ANTAERUS_GOOGLE_CREDENTIALS_FILE", "")
+        if credentials_file_raw:
+            credentials_path = _resolve_project_path(
+                credentials_file_raw, _project_root() / "config" / "google_credentials.json"
+            )
+            if credentials_path.is_file():
+                try:
+                    data = _json.loads(credentials_path.read_text(encoding="utf-8"))
+                except Exception:
+                    data = None
+                if isinstance(data, dict):
+                    is_installed = "installed" in data
+                    obj = data.get("installed") or data.get("web") or {}
+                    if isinstance(obj, dict):
+                        client_id_file = str(obj.get("client_id") or "").strip()
+                        client_secret_file = str(obj.get("client_secret") or "").strip()
+                        ruris = obj.get("redirect_uris") or []
+                        if isinstance(ruris, list) and ruris:
+                            redirect_uri_file = str(ruris[0]).strip()
+
+        refresh_token_file = ""
+        token_file_raw = getenv("ANTAERUS_GOOGLE_TOKEN_FILE", "")
+        if token_file_raw:
+            token_path = _resolve_project_path(
+                token_file_raw, _project_root() / "config" / "google_token.json"
+            )
+            if token_path.is_file():
+                try:
+                    token_data = _json.loads(token_path.read_text(encoding="utf-8"))
+                except Exception:
+                    token_data = None
+                if isinstance(token_data, dict):
+                    refresh_token_file = str(token_data.get("refresh_token") or "").strip()
+
+        return client_id_file, client_secret_file, redirect_uri_file, refresh_token_file, is_installed
+
+    _file_cid, _file_csec, _file_ruri, _file_rtok, _is_installed = _load_google_secrets()
+    _final_cid = getenv("ANTAERUS_GOOGLE_CLIENT_ID", "") or _file_cid
+    _final_csec = getenv("ANTAERUS_GOOGLE_CLIENT_SECRET", "") or _file_csec
+    _final_rtok = getenv("ANTAERUS_GOOGLE_REFRESH_TOKEN", "") or _file_rtok
+    _env_ruri = getenv("ANTAERUS_GOOGLE_REDIRECT_URI", "")
+    if _is_installed:
+        _final_ruri = (
+            _env_ruri
+            or "urn:ietf:wg:oauth:2.0:oob"
+            or _file_ruri
+            or "http://localhost"
+        )
+    else:
+        _final_ruri = (
+            _env_ruri
+            or _file_ruri
+            or "http://localhost/oauth/google/callback"
+        )
+
     settings = Settings(
         service_name="brain_python",
         version=getenv("ANTAERUS_BRAIN_VERSION", "0.1.0"),
@@ -218,13 +280,10 @@ def get_settings() -> Settings:
         ),
         browser_timeout_seconds=browser_timeout_seconds,
         weather_timeout_seconds=weather_timeout_seconds,
-        google_client_id=getenv("ANTAERUS_GOOGLE_CLIENT_ID", ""),
-        google_client_secret=SecretStr(getenv("ANTAERUS_GOOGLE_CLIENT_SECRET", "")),
-        google_refresh_token=SecretStr(getenv("ANTAERUS_GOOGLE_REFRESH_TOKEN", "")),
-        google_redirect_uri=getenv(
-            "ANTAERUS_GOOGLE_REDIRECT_URI",
-            "http://localhost/oauth/google/callback",
-        ),
+        google_client_id=_final_cid,
+        google_client_secret=SecretStr(_final_csec),
+        google_refresh_token=SecretStr(_final_rtok),
+        google_redirect_uri=_final_ruri,
         gmail_sender_email=getenv("ANTAERUS_GMAIL_SENDER_EMAIL", ""),
         vision_model_path=(
             _resolve_project_path(vision_model_raw, _project_root()) if vision_model_raw else None

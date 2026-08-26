@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { fetchDevToken } from "@/lib/api";
 import {
@@ -32,6 +32,17 @@ export function useWebSocket(sessionId: string) {
   const mergeInitiativeUpdate = useAppStore((state) => state.mergeInitiativeUpdate);
   const socketRef = useRef<WebSocket | null>(null);
   const connectPromiseRef = useRef<Promise<boolean> | null>(null);
+  const chunkTimeoutRef = useRef<number | null>(null);
+  const globalTimeoutRef = useRef<number | null>(null);
+  const wsStreamingRef = useRef(false);
+  const streamFinalizedRef = useRef(false);
+  const streamStartedRef = useRef(false);
+  const [wsStreaming, setWsStreamingState] = useState(false);
+
+  const setWsStreaming = useCallback((next: boolean) => {
+    wsStreamingRef.current = next;
+    setWsStreamingState(next);
+  }, []);
 
   const shouldResetVoiceState = useCallback((message: string) => {
     const normalized = message.toLowerCase();
@@ -66,6 +77,18 @@ export function useWebSocket(sessionId: string) {
   ]);
 
   const disconnect = useCallback(() => {
+    if (chunkTimeoutRef.current) {
+      window.clearTimeout(chunkTimeoutRef.current);
+      chunkTimeoutRef.current = null;
+    }
+    if (globalTimeoutRef.current) {
+      window.clearTimeout(globalTimeoutRef.current);
+      globalTimeoutRef.current = null;
+    }
+    streamFinalizedRef.current = false;
+    streamStartedRef.current = false;
+    setWsStreaming(false);
+
     if (socketRef.current) {
       socketRef.current.close();
       socketRef.current = null;
@@ -74,7 +97,45 @@ export function useWebSocket(sessionId: string) {
 
     setConnectionState("idle");
     resetVoiceState();
-  }, [resetVoiceState, setConnectionState]);
+  }, [resetVoiceState, setConnectionState, setWsStreaming]);
+
+  const cancelWsStream = useCallback(
+    (reason?: string) => {
+      if (chunkTimeoutRef.current) {
+        window.clearTimeout(chunkTimeoutRef.current);
+        chunkTimeoutRef.current = null;
+      }
+      if (globalTimeoutRef.current) {
+        window.clearTimeout(globalTimeoutRef.current);
+        globalTimeoutRef.current = null;
+      }
+      if (!wsStreamingRef.current) {
+        return;
+      }
+      if (streamFinalizedRef.current) {
+        setWsStreaming(false);
+        return;
+      }
+      streamFinalizedRef.current = true;
+      setWsStreaming(false);
+      if (reason) {
+        finalizeAssistantMessage(reason, "ws", "error");
+        setLastError(reason);
+      }
+    },
+    [finalizeAssistantMessage, setLastError, setWsStreaming],
+  );
+
+  const refreshChunkTimeout = useCallback(() => {
+    if (chunkTimeoutRef.current) {
+      window.clearTimeout(chunkTimeoutRef.current);
+    }
+    chunkTimeoutRef.current = window.setTimeout(() => {
+      cancelWsStream(
+        "Délai d'attente dépassé (120 s sans nouvelle partie de réponse). aNtaerus n'a pas répondu à temps.",
+      );
+    }, 120_000);
+  }, [cancelWsStream]);
 
   const connect = useCallback(async (): Promise<boolean> => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
@@ -169,6 +230,23 @@ export function useWebSocket(sessionId: string) {
       );
 
       socket.addEventListener("close", () => {
+        if (chunkTimeoutRef.current) {
+          window.clearTimeout(chunkTimeoutRef.current);
+          chunkTimeoutRef.current = null;
+        }
+        if (globalTimeoutRef.current) {
+          window.clearTimeout(globalTimeoutRef.current);
+          globalTimeoutRef.current = null;
+        }
+        if (wsStreamingRef.current && !streamFinalizedRef.current) {
+          streamFinalizedRef.current = true;
+          setWsStreaming(false);
+          finalizeAssistantMessage(
+            "Connexion WebSocket fermée avant la fin de la réponse.",
+            "ws",
+            "error",
+          );
+        }
         socketRef.current = null;
         connectPromiseRef.current = null;
         setConnectionState("idle");
@@ -183,13 +261,52 @@ export function useWebSocket(sessionId: string) {
 
         switch (message.type) {
           case "chat.token":
+            if (streamFinalizedRef.current) {
+              break;
+            }
+            streamStartedRef.current = true;
             appendAssistantChunk(message.payload.token, "ws");
+            refreshChunkTimeout();
             if (useAppStore.getState().voiceSessionActive) {
               setVoiceMode("speaking");
             }
             break;
           case "chat.complete":
+            if (streamFinalizedRef.current) {
+              break;
+            }
+            streamFinalizedRef.current = true;
+            if (chunkTimeoutRef.current) {
+              window.clearTimeout(chunkTimeoutRef.current);
+              chunkTimeoutRef.current = null;
+            }
+            if (globalTimeoutRef.current) {
+              window.clearTimeout(globalTimeoutRef.current);
+              globalTimeoutRef.current = null;
+            }
+            setWsStreaming(false);
             finalizeAssistantMessage(message.payload.message, "ws");
+            setVoiceMode(useAppStore.getState().voiceSessionActive ? "listening" : "idle");
+            break;
+          case "chat.error":
+            if (streamFinalizedRef.current) {
+              break;
+            }
+            streamFinalizedRef.current = true;
+            if (chunkTimeoutRef.current) {
+              window.clearTimeout(chunkTimeoutRef.current);
+              chunkTimeoutRef.current = null;
+            }
+            if (globalTimeoutRef.current) {
+              window.clearTimeout(globalTimeoutRef.current);
+              globalTimeoutRef.current = null;
+            }
+            setWsStreaming(false);
+            finalizeAssistantMessage(
+              String(message.payload?.message ?? "Erreur inconnue de chat."),
+              "ws",
+              "error",
+            );
             setVoiceMode(useAppStore.getState().voiceSessionActive ? "listening" : "idle");
             break;
           case "voice.transcript":
@@ -215,6 +332,16 @@ export function useWebSocket(sessionId: string) {
             if (shouldResetVoiceState(message.payload.message)) {
               resetVoiceState();
             }
+            const alertText = String(message.payload.message ?? "");
+            if (
+              wsStreamingRef.current &&
+              !streamFinalizedRef.current &&
+              (alertText.includes("Brain chat stream failed") ||
+                alertText.includes("context deadline") ||
+                alertText.includes("brain stream returned status"))
+            ) {
+              cancelWsStream(alertText);
+            }
             break;
           case "health.heartbeat":
             setHeartbeat(message.payload.services);
@@ -239,6 +366,7 @@ export function useWebSocket(sessionId: string) {
     finalizeAssistantMessage,
     mergeInitiativeUpdate,
     mergeMissionUpdate,
+    refreshChunkTimeout,
     resetVoiceState,
     setConnectionState,
     setHeartbeat,
@@ -247,6 +375,7 @@ export function useWebSocket(sessionId: string) {
     setVoiceTranscript,
     setVoiceVADState,
     setVoiceWakeState,
+    setWsStreaming,
     shouldResetVoiceState,
   ]);
 
@@ -262,12 +391,26 @@ export function useWebSocket(sessionId: string) {
         return false;
       }
 
+      cancelWsStream();
+      streamFinalizedRef.current = false;
+      streamStartedRef.current = false;
+      setWsStreaming(true);
+
+      if (globalTimeoutRef.current) {
+        window.clearTimeout(globalTimeoutRef.current);
+      }
+      globalTimeoutRef.current = window.setTimeout(() => {
+        cancelWsStream(
+          "Délai global dépassé (180 s). aNtaerus n'a pas produit de réponse complète. Réessayez plus tard.",
+        );
+      }, 180_000);
+
       socketRef.current.send(
         JSON.stringify(createChatMessageEnvelope(sessionId, content)),
       );
       return true;
     },
-    [connect, sessionId, setLastError],
+    [cancelWsStream, connect, sessionId, setLastError, setWsStreaming],
   );
 
   const sendVoiceStart = useCallback(async () => {
@@ -355,5 +498,7 @@ export function useWebSocket(sessionId: string) {
     sendVoiceStop,
     sendVoiceBargeIn,
     connectionState,
+    wsStreaming,
+    cancelWsStream,
   };
 }

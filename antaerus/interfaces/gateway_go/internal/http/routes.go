@@ -33,7 +33,7 @@ func newMux(
 	mux := http.NewServeMux()
 	apiMux := http.NewServeMux()
 	healthHTTPClient := &http.Client{Timeout: cfg.RequestTimeout}
-	chatHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
+	chatHTTPClient := &http.Client{Timeout: cfg.BrainChatStreamTimeout}
 	missionHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	proactiveHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
 	memoryHTTPClient := &http.Client{Timeout: cfg.WriteTimeout}
@@ -41,7 +41,7 @@ func newMux(
 	healthService := system.NewHealthService(cfg, healthHTTPClient)
 	authenticator := NewAuthenticator(cfg)
 	rateLimiter := NewRateLimiter(cfg)
-	brainChat := clients.NewBrainChatClient(chatHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
+	brainChat := clients.NewBrainChatClient(chatHTTPClient, cfg.BrainBaseURL, cfg.BrainChatStreamTimeout)
 	missionClient := clients.NewBrainMissionClient(missionHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	proactiveClient := clients.NewBrainProactiveClient(proactiveHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
 	memoryClient := clients.NewBrainMemoryClient(memoryHTTPClient, cfg.BrainBaseURL, cfg.WriteTimeout)
