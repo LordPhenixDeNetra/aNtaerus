@@ -2,10 +2,10 @@ use std::path::Path;
 
 use super::AudioError;
 
-#[cfg(feature = "voice")]
+#[cfg(feature = "piper_tts")]
 use piper1_rs::Piper;
 
-#[cfg_attr(not(feature = "voice"), allow(dead_code))]
+#[cfg_attr(not(feature = "piper_tts"), allow(dead_code))]
 pub struct TextToSpeech {
     model_path: String,
     config_path: Option<String>,
@@ -32,7 +32,7 @@ impl TextToSpeech {
     }
 
     pub fn synthesize(&self, text: &str) -> Result<(u32, Vec<f32>), AudioError> {
-        #[cfg(feature = "voice")]
+        #[cfg(feature = "piper_tts")]
         {
             let mut piper = Piper::new(
                 self.model_path.clone(),
@@ -69,7 +69,7 @@ impl TextToSpeech {
             return Ok((sample_rate, out));
         }
 
-        #[cfg(not(feature = "voice"))]
+        #[cfg(not(feature = "piper_tts"))]
         {
             let _ = text;
             Err(AudioError::VoiceFeatureDisabled)

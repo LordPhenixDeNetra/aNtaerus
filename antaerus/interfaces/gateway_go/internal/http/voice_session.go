@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"antaerus/interfaces/gateway_go/internal/clients"
 	"antaerus/interfaces/gateway_go/internal/contracts"
 	"antaerus/interfaces/gateway_go/internal/gen/audiopb"
+
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const defaultVoiceLanguage = "fr"
@@ -97,9 +101,13 @@ func (hub *Hub) startVoiceSession(client *Client, sessionID string, language str
 	if sessionID == "" {
 		return fmt.Errorf("sessionId must not be empty")
 	}
+
+	// --- (A) Si une session existe DEJA dans le map Gateway Go: FERMER-la proprement avant de recreer (pas de warning "already active" + return nil)
 	if existing := hub.getVoiceSession(client, sessionID); existing != nil {
-		client.enqueue(alertMessage("warn", "Voice session already active for this sessionId"))
-		return nil
+		client.enqueue(alertMessage("info", "Restart of existing voice session (closing previous)..."))
+		_ = hub.closeVoiceSession(existing, true)
+		// Attendre 250ms que StopVoiceSession Rust ai le temps de propager
+		time.Sleep(250 * time.Millisecond)
 	}
 
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), hub.config.RequestTimeout)
@@ -112,6 +120,24 @@ func (hub *Hub) startVoiceSession(client *Client, sessionID string, language str
 
 	sessionCtx, sessionCancel := context.WithCancel(context.Background())
 	stream, err := runtimeClient.StartVoiceSession(sessionCtx, sessionID, language)
+
+	// --- (B) Si ENGINE RUST renvoie AlreadyExists: session orpheline jamais cleanup par un Stop precedant.
+	//     => STOP old session sur Rust, PUIS retry 1x StartVoiceSession
+	if err != nil && status.Code(err) == codes.AlreadyExists {
+		client.enqueue(alertMessage("info", "Rust engine stale voice session detected: cleaning up before restart..."))
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cleanupCancel()
+		_, stopErr := runtimeClient.StopVoiceSession(cleanupCtx, sessionID)
+		if stopErr != nil {
+			client.enqueue(alertMessage("warn", fmt.Sprintf("Cleanup stale voice session: %v", stopErr)))
+		}
+		time.Sleep(500 * time.Millisecond)
+		// Retry Start
+		sessionCancel()
+		sessionCtx, sessionCancel = context.WithCancel(context.Background())
+		stream, err = runtimeClient.StartVoiceSession(sessionCtx, sessionID, language)
+	}
+
 	if err != nil {
 		sessionCancel()
 		_ = runtimeClient.Close()
@@ -128,12 +154,18 @@ func (hub *Hub) startVoiceSession(client *Client, sessionID string, language str
 		ctx:       sessionCtx,
 		cancel:    sessionCancel,
 	}
+
+	// --- (C) Si concurrent setVoiceSession race: encore une fois, cleanup et REPLACE (pas return nil + warn)
 	if !hub.setVoiceSession(session) {
-		sessionCancel()
-		_, _ = runtimeClient.StopVoiceSession(context.Background(), sessionID)
-		_ = runtimeClient.Close()
-		client.enqueue(alertMessage("warn", "Voice session already active for this sessionId"))
-		return nil
+		// Clean the stale one from map + its runtime
+		stale := hub.getVoiceSession(client, sessionID)
+		if stale != nil {
+			_ = hub.closeVoiceSession(stale, true)
+		}
+		hub.voiceMu.Lock()
+		delete(hub.voiceSessions, session.key)
+		hub.voiceSessions[session.key] = session
+		hub.voiceMu.Unlock()
 	}
 
 	go hub.proxyVoiceSession(session)

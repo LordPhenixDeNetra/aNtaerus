@@ -6,7 +6,7 @@ pub type PcmStreamReceiver = mpsc::Receiver<Vec<f32>>;
 
 pub struct CaptureHandle {
     receiver: PcmStreamReceiver,
-    #[cfg(feature = "voice")]
+    #[cfg(any(feature = "voice", feature = "voice_stt"))]
     _stream: cpal::Stream,
 }
 
@@ -17,7 +17,7 @@ impl CaptureHandle {
 }
 
 pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
-    #[cfg(feature = "voice")]
+    #[cfg(any(feature = "voice", feature = "voice_stt"))]
     {
         use cpal::{Device, HostTrait, Sample, SampleFormat, StreamConfig};
 
@@ -84,7 +84,7 @@ pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
         })
     }
 
-    #[cfg(not(feature = "voice"))]
+    #[cfg(not(any(feature = "voice", feature = "voice_stt")))]
     {
         Err(AudioError::VoiceFeatureDisabled)
     }

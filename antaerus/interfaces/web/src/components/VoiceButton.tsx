@@ -1,4 +1,5 @@
 import { AudioLines, Mic, PauseCircle, Square } from "lucide-react";
+import { useCallback, useState } from "react";
 
 import type { VoiceMode } from "@/store/useAppStore";
 
@@ -39,14 +40,38 @@ export default function VoiceButton({
   onPrimaryAction,
   onBargeIn,
 }: VoiceButtonProps) {
+  const [primaryBusy, setPrimaryBusy] = useState(false);
+  const [bargeInBusy, setBargeInBusy] = useState(false);
+
+  const handlePrimary = useCallback(async () => {
+    if (primaryBusy || disabled) return;
+    try {
+      setPrimaryBusy(true);
+      await Promise.resolve(onPrimaryAction());
+    } finally {
+      // Mini guard 100ms anti-double-click even if promise resolves fast
+      setTimeout(() => setPrimaryBusy(false), 120);
+    }
+  }, [onPrimaryAction, primaryBusy, disabled]);
+
+  const handleBargeIn = useCallback(async () => {
+    if (bargeInBusy || disabled || !onBargeIn) return;
+    try {
+      setBargeInBusy(true);
+      await Promise.resolve(onBargeIn());
+    } finally {
+      setTimeout(() => setBargeInBusy(false), 120);
+    }
+  }, [onBargeIn, bargeInBusy, disabled]);
+
   const Icon = primaryIcons[mode];
 
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button
         type="button"
-        onClick={() => void onPrimaryAction()}
-        disabled={disabled}
+        onClick={handlePrimary}
+        disabled={disabled || primaryBusy}
         aria-pressed={mode !== "idle"}
         aria-label={primaryLabels[mode]}
         className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/5 disabled:text-slate-500 ${primaryStyles[mode]}`}
@@ -58,8 +83,9 @@ export default function VoiceButton({
       {canBargeIn && onBargeIn && (
         <button
           type="button"
-          onClick={() => void onBargeIn()}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+          onClick={handleBargeIn}
+          disabled={disabled || bargeInBusy}
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-500"
           aria-label="Interrompre la réponse vocale"
         >
           <PauseCircle className="h-4 w-4" />

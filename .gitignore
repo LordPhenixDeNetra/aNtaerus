@@ -25,6 +25,15 @@ htmlcov/
 target/
 bundle/
 memory_data/
+# --- aNtaerus fichiers temporaires / builds locaux (NE JAMAIS COMMITTER) ---
+antaerus/tmp/
+# antaerus/debug-voice-feature-disabled-bug.md
+# antaerus/BUGS_ENCOURANTS_*.md
+# crache.txt
+# crache*.txt
+# Builds / Compilations Go local hors bin/ (si quelqu'un build ailleurs)
+antaerus/cmd/**/*.exe
+antaerus/cmd/**/*.dll
 
 bin/
 *.exe

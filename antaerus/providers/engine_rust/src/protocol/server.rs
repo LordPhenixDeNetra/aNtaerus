@@ -75,12 +75,32 @@ impl AudioRuntimeService {
             )))
             .await;
 
-        if !cfg!(feature = "voice") {
+        if !cfg!(any(feature = "voice", feature = "voice_stt")) {
+            // === DEBUG INSTRUMENTATION voice-feature-disabled-bug: message tres verbeux pour UI ===
+            let diag = format!(
+                "[DIAG voice-feature-disabled-bug v2 / server.rs:L{}] cfg(voice|voice_stt)=FALSE. 
+Build cargo n'a AUCUNE feature STT active. Features compile-time:
+  feature voice ......... {}
+  feature voice_stt ..... {}
+  feature piper_tts ..... {}
+  feature wasm-runtime .. {}
+RAPPEL Cargo.toml reorganise: features voice = STT micro; voice_stt = alias STT; piper_tts = TTS optionnel.
+SOLUTION 1 SEUL COMMANDE POUR DEBUG:
+  cd N:\\...\\antaerus\\scripts; .\\stop-all.ps1
+  Remove-Item -Recurse -Force C:\\b\\er
+  Set-Location ..\\providers\\engine_rust
+  cargo run --features voice",
+                line!(),
+                cfg!(any(feature = "voice", feature = "voice_stt")),
+                cfg!(feature = "voice_stt"),
+                cfg!(feature = "piper_tts"),
+                cfg!(feature = "wasm-runtime"),
+            );
             let _ = sender
                 .send(Ok(system_event(
                     session_id,
                     "error",
-                    "voice feature is disabled; rebuild engine_rust with --features voice".to_string(),
+                    diag,
                 )))
                 .await;
             return;
@@ -272,10 +292,29 @@ impl AudioRuntime for AudioRuntimeService {
         let (stop_sender, stop_receiver) = oneshot::channel::<()>();
         {
             let mut sessions = self.sessions.lock().await;
+            // --- (B) SESSION EXIST DEJA: UPSERT (never AlreadyExists error) ---
+            // Si une ancienne session orpheline est encore dans sessions (ex: stream frontend ferme anormalement sans StopVoiceSession),
+            // on STOP proprement l'ancienne PUIS on remplace par la nouvelle.
             if sessions.contains_key(&request.session_id) {
-                return Err(Status::already_exists("session already exists"));
+                // Envoyer signal stop à l'ancienne task de session (elle se cleanup elle-meme via drop/receiver)
+                if let Some(old_stopper) = sessions.remove(&request.session_id) {
+                    let _ = old_stopper.send(());
+                }
+                // Mini sleep 50ms tokio pour laisser ancienne task retirer son stop sender de sessions si concurrence
+                drop(sessions);
+                tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+                // Reprendre lock
+                let mut sessions2 = self.sessions.lock().await;
+                // Double-check: si entre temps quelqu'un re-insert (ne devrait pas arriver)
+                if sessions2.contains_key(&request.session_id) {
+                    if let Some(old2) = sessions2.remove(&request.session_id) {
+                        let _ = old2.send(());
+                    }
+                }
+                sessions2.insert(request.session_id.clone(), stop_sender);
+            } else {
+                sessions.insert(request.session_id.clone(), stop_sender);
             }
-            sessions.insert(request.session_id.clone(), stop_sender);
         }
 
         let (sender, receiver) = mpsc::channel::<Result<VoiceEvent, Status>>(32);
@@ -310,9 +349,9 @@ impl AudioRuntime for AudioRuntimeService {
         &self,
         request: Request<SpeakRequest>,
     ) -> Result<Response<SpeakResponse>, Status> {
-        if !cfg!(feature = "voice") {
+        if !cfg!(feature = "piper_tts") {
             return Err(Status::failed_precondition(
-                "voice feature is disabled; rebuild engine_rust with --features voice",
+                "piper_tts feature is disabled; rebuild engine_rust with --features \"voice,piper_tts\" to enable TTS audio (actuellement STT micro transcription seulement)",
             ));
         }
 

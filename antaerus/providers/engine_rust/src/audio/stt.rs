@@ -2,17 +2,17 @@ use std::path::Path;
 
 use super::AudioError;
 
-#[cfg(feature = "voice")]
+#[cfg(any(feature = "voice", feature = "voice_stt"))]
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
 
 pub struct SpeechToText {
-    #[cfg(feature = "voice")]
+    #[cfg(any(feature = "voice", feature = "voice_stt"))]
     context: WhisperContext,
 }
 
 impl SpeechToText {
     pub fn from_model_path(model_path: &Path) -> Result<Self, AudioError> {
-        #[cfg(feature = "voice")]
+        #[cfg(any(feature = "voice", feature = "voice_stt"))]
         {
             let context = WhisperContext::new_with_params(
                 model_path.to_string_lossy().as_ref(),
@@ -22,7 +22,7 @@ impl SpeechToText {
             return Ok(Self { context });
         }
 
-        #[cfg(not(feature = "voice"))]
+        #[cfg(not(any(feature = "voice", feature = "voice_stt")))]
         {
             let _ = model_path;
             Err(AudioError::VoiceFeatureDisabled)
@@ -30,7 +30,7 @@ impl SpeechToText {
     }
 
     pub fn transcribe_16khz_mono(&self, samples: &[f32]) -> Result<String, AudioError> {
-        #[cfg(feature = "voice")]
+        #[cfg(any(feature = "voice", feature = "voice_stt"))]
         {
             let mut state = self
                 .context
@@ -57,7 +57,7 @@ impl SpeechToText {
             return Ok(text.trim().to_string());
         }
 
-        #[cfg(not(feature = "voice"))]
+        #[cfg(not(any(feature = "voice", feature = "voice_stt")))]
         {
             let _ = samples;
             Err(AudioError::VoiceFeatureDisabled)

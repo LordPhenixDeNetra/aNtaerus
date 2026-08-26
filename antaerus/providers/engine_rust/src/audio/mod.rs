@@ -12,7 +12,7 @@ pub mod wake_word;
 
 #[derive(Debug, thiserror::Error)]
 pub enum AudioError {
-    #[error("voice feature is disabled; rebuild with --features voice")]
+    #[error("voice (STT micro) feature is disabled; rebuild engine_rust with --features voice. Note: voice = STT micro transcription, piper_tts = TTS audio reponse (optionnel).")]
     VoiceFeatureDisabled,
     #[error("missing configuration: {0}")]
     MissingConfig(&'static str),

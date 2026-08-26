@@ -2,29 +2,29 @@ use std::path::Path;
 
 use super::AudioError;
 
-#[cfg(feature = "voice")]
+#[cfg(any(feature = "voice", feature = "voice_stt"))]
 use silero::{Session, SpeechOptions, SpeechSegmenter, StreamState};
 
 pub struct VadDetector {
     threshold: f32,
     speaking: bool,
 
-    #[cfg(feature = "voice")]
+    #[cfg(any(feature = "voice", feature = "voice_stt"))]
     session: Option<Session>,
 
-    #[cfg(feature = "voice")]
+    #[cfg(any(feature = "voice", feature = "voice_stt"))]
     options: Option<SpeechOptions>,
 
-    #[cfg(feature = "voice")]
+    #[cfg(any(feature = "voice", feature = "voice_stt"))]
     stream: Option<StreamState>,
 
-    #[cfg(feature = "voice")]
+    #[cfg(any(feature = "voice", feature = "voice_stt"))]
     segmenter: Option<SpeechSegmenter>,
 }
 
 impl VadDetector {
     pub fn new(_model_path: Option<&Path>, threshold: f32) -> Result<Self, AudioError> {
-        #[cfg(feature = "voice")]
+        #[cfg(any(feature = "voice", feature = "voice_stt"))]
         {
             if let Some(model_path) = _model_path {
                 let session = Session::from_file(model_path)
@@ -46,19 +46,19 @@ impl VadDetector {
         Ok(Self {
             threshold,
             speaking: false,
-            #[cfg(feature = "voice")]
+            #[cfg(any(feature = "voice", feature = "voice_stt"))]
             session: None,
-            #[cfg(feature = "voice")]
+            #[cfg(any(feature = "voice", feature = "voice_stt"))]
             options: None,
-            #[cfg(feature = "voice")]
+            #[cfg(any(feature = "voice", feature = "voice_stt"))]
             stream: None,
-            #[cfg(feature = "voice")]
+            #[cfg(any(feature = "voice", feature = "voice_stt"))]
             segmenter: None,
         })
     }
 
     pub fn push_samples(&mut self, chunk: &[f32]) -> Result<bool, AudioError> {
-        #[cfg(feature = "voice")]
+        #[cfg(any(feature = "voice", feature = "voice_stt"))]
         {
             if self.session.is_some() {
                 let session = self.session.as_mut().unwrap();

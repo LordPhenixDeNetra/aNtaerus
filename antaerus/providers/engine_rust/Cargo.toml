@@ -4,12 +4,19 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
+# Voice principale: Speech-To-Text (micro → texte) — active stt.rs / vad.rs / capture.rs + gRPC StartVoiceSession.
+# Compile uniquement cpal + silero VAD + whisper.cpp (SANS synthèse vocale piper TTS, build + rapide, compatible Windows 100%).
 voice = [
   "dep:cpal",
-  "dep:piper1-rs",
   "dep:silero",
   "dep:whisper-rs",
 ]
+# Voice STT ONLY alias BACKWARD COMPATIBLE (anciens scripts qui utilisaient --features voice_stt).
+# Équivaut exactement à --features voice aujourd'hui.
+voice_stt = ["voice"]
+# (Optionnel) Synthèse vocale TTS Piper (piper1-rs + onnxruntime).
+# N'active PAS automatiquement voice; utilisez: --features "voice,piper_tts"  pour Voice complet STT+TTS.
+piper_tts = ["dep:piper1-rs"]
 wasm-runtime = ["dep:wasmtime", "wat-compile"]
 wat-compile = ["dep:wat"]
 
