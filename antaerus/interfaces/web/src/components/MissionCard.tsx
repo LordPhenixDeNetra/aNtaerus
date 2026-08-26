@@ -31,14 +31,14 @@ const statusLabels: Record<Mission["status"], string> = {
   cancelled: "Annulée",
 };
 
-const statusIconText: Record<Mission["status"], string> = {
-  draft: "📝",
-  planned: "📋",
-  running: "⏳",
-  paused: "⏸️",
-  completed: "✅",
-  failed: "❌",
-  cancelled: "🚫",
+const statusLabelShort: Record<Mission["status"], string> = {
+  draft: "BR",
+  planned: "PL",
+  running: "EN",
+  paused: "PA",
+  completed: "OK",
+  failed: "KO",
+  cancelled: "AN",
 };
 
 function computeProgress(steps: MissionStep[]): { done: number; total: number; percent: number } {
@@ -119,7 +119,7 @@ export default function MissionCard({
               className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.22em] ${statusStyles[mission.status]}`}
               title={`Statut de la mission : ${statusLabels[mission.status]}`}
             >
-              <span className="normal-case tracking-normal text-[11px]" aria-hidden="true">{statusIconText[mission.status]}</span>
+              <span className="normal-case tracking-normal text-[11px]" aria-hidden="true">[{statusLabelShort[mission.status]}]</span>
               {statusLabels[mission.status]}
             </span>
           </div>
