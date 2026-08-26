@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import re
+import uuid
 from typing import Any
 
 from antaerus_brain.approval import append_tool_audit_record, evaluate_tool_gate
@@ -10,12 +12,71 @@ from antaerus_brain.llm import (
     CompletionResult,
     GenerationRequest,
     LLMClient,
+    ToolCall,
+    ToolCallFunction,
     ToolDefinition,
 )
 from antaerus_brain.tools import create_tool_registry
 from antaerus_brain.tools.base import ToolResult
 
-MAX_TOOL_ROUND_TRIPS = 1
+MAX_TOOL_ROUND_TRIPS = 3
+
+_DSML_PREFIX = r"<\s*(?:\|\s*)+DSML\s*(?:\|\s*)+"
+_DSML_PREFIX_CLOSE = r"<\s*\/\s*(?:\|\s*)+DSML\s*(?:\|\s*)+"
+_DSML_SUFFIX_OPEN_TAG = r"(?:\|\s*)*>"
+_DSML_TOOL_CALLS_RE = re.compile(
+    rf"{_DSML_PREFIX}tool_calls\s*{_DSML_SUFFIX_OPEN_TAG}.*?{_DSML_PREFIX_CLOSE}\/?tool_calls\s*{_DSML_SUFFIX_OPEN_TAG}",
+    re.IGNORECASE | re.DOTALL,
+)
+_DSML_INVOKE_RE = re.compile(
+    rf"{_DSML_PREFIX}invoke\s+name\s*=\s*\"(?P<name>[^\"]+)\"\s*{_DSML_SUFFIX_OPEN_TAG}(?P<body>.*?){_DSML_PREFIX_CLOSE}\/?invoke\s*{_DSML_SUFFIX_OPEN_TAG}",
+    re.IGNORECASE | re.DOTALL,
+)
+_DSML_PARAM_RE = re.compile(
+    rf"{_DSML_PREFIX}parameter\s+name\s*=\s*\"(?P<key>[^\"]+)\"\s*(?:string\s*=\s*\"true\")?\s*{_DSML_SUFFIX_OPEN_TAG}(?P<value>.*?){_DSML_PREFIX_CLOSE}\/?parameter\s*{_DSML_SUFFIX_OPEN_TAG}",
+    re.IGNORECASE | re.DOTALL,
+)
+_DSML_ANY_BLOCK_RE = re.compile(
+    rf"{_DSML_PREFIX}.*?(?:\|\s*\|>)?|{_DSML_PREFIX_CLOSE}.*?(?:\|\s*\|>)?",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _strip_dsml_blocks(text: str) -> str:
+    if not text:
+        return ""
+    cleaned = _DSML_TOOL_CALLS_RE.sub("", text)
+    cleaned = _DSML_INVOKE_RE.sub("", cleaned)
+    cleaned = _DSML_PARAM_RE.sub("", cleaned)
+    cleaned = _DSML_ANY_BLOCK_RE.sub("", cleaned)
+    return cleaned.strip()
+
+
+def _extract_dsml_tool_calls(text: str) -> list[ToolCall]:
+    """Fallback pour LLM qui produisent du <|DSML|...invoke|...|> au lieu du format tool_calls natif."""
+    if not text:
+        return []
+    calls: list[ToolCall] = []
+    for m in _DSML_INVOKE_RE.finditer(text):
+        name = m.group("name").strip()
+        body = m.group("body")
+        args: dict[str, Any] = {}
+        for pm in _DSML_PARAM_RE.finditer(body):
+            args[pm.group("key").strip()] = pm.group("value").strip()
+        if not name:
+            continue
+        try:
+            arg_str = json.dumps(args, ensure_ascii=False)
+        except Exception:  # noqa: BLE001
+            arg_str = "{}"
+        calls.append(
+            ToolCall(
+                id=f"call_{uuid.uuid4().hex[:16]}",
+                type="function",
+                function=ToolCallFunction(name=name, arguments=arg_str),
+            )
+        )
+    return calls
 
 
 async def complete_with_tools(
@@ -34,18 +95,29 @@ async def complete_with_tools(
         }
     )
     response = await client.complete(initial_request)
+
     if not response.tool_calls:
+        fallback = _extract_dsml_tool_calls(response.text or "")
+        if fallback:
+            response.tool_calls = fallback
+            response.text = _strip_dsml_blocks(response.text or "")
+            response.finish_reason = "tool_calls"
+
+    if not response.tool_calls:
+        response.text = _strip_dsml_blocks(response.text or "")
         return response
 
     current_messages = list(request.messages)
     current_response = response
     for _ in range(MAX_TOOL_ROUND_TRIPS):
         if not current_response.tool_calls:
+            current_response.text = _strip_dsml_blocks(current_response.text or "")
             return current_response
 
+        assistant_content = _strip_dsml_blocks(current_response.text or "")
         assistant_message = ChatMessage(
             role="assistant",
-            content=current_response.text,
+            content=assistant_content,
             toolCalls=current_response.tool_calls,
         )
         current_messages.append(assistant_message)
@@ -93,6 +165,14 @@ async def complete_with_tools(
         )
         current_response = await client.complete(follow_up_request)
 
+        if not current_response.tool_calls:
+            fb = _extract_dsml_tool_calls(current_response.text or "")
+            if fb:
+                current_response.tool_calls = fb
+                current_response.text = _strip_dsml_blocks(current_response.text or "")
+                current_response.finish_reason = "tool_calls"
+
+    current_response.text = _strip_dsml_blocks(current_response.text or "")
     return current_response
 
 

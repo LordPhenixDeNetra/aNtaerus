@@ -2,6 +2,8 @@ import { create } from "zustand";
 
 import {
   createChatMessage,
+  fromHistoryMessage,
+  sanitizeAssistantText,
   type ChatMessage,
   type ChatMessageStatus,
 } from "@/lib/chat";
@@ -211,10 +213,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
   setSessionId: (sessionId) => set(() => ({ sessionId })),
   clearMessages: () => set(() => ({ messages: [] })),
-  replaceMessages: (messages) => set(() => ({ messages })),
+  replaceMessages: (messages) =>
+    set(() => ({
+      messages: messages.map((m) =>
+        m.role === "assistant"
+          ? { ...m, content: sanitizeAssistantText(m.content) }
+          : m,
+      ),
+    })),
   addMessage: (message) =>
     set((state) => ({
-      messages: [...state.messages, message],
+      messages: [
+        ...state.messages,
+        message.role === "assistant"
+          ? { ...message, content: sanitizeAssistantText(message.content) }
+          : message,
+      ],
     })),
   addUserMessage: (content, transport) =>
     set((state) => ({
@@ -222,44 +236,51 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
   appendAssistantChunk: (chunk, transport) =>
     set((state) => {
+      const safeChunk = sanitizeAssistantText(chunk);
       const lastMessage = state.messages[state.messages.length - 1];
       if (lastMessage?.role === "assistant" && lastMessage.status === "streaming") {
         const nextMessages = [...state.messages];
+        const combined = `${lastMessage.content}${safeChunk}`;
         nextMessages[nextMessages.length - 1] = {
           ...lastMessage,
-          content: `${lastMessage.content}${chunk}`,
+          content: sanitizeAssistantText(combined),
         };
         return { messages: nextMessages };
       }
 
-      return {
-        messages: [
-          ...state.messages,
-          createChatMessage("assistant", chunk, transport, "streaming"),
-        ],
-      };
-    }),
-  finalizeAssistantMessage: (content, transport, status = "complete") =>
-    set((state) => {
-      const lastMessage = state.messages[state.messages.length - 1];
-      if (lastMessage?.role === "assistant" && lastMessage.status === "streaming") {
-        const nextMessages = [...state.messages];
-        nextMessages[nextMessages.length - 1] = {
-          ...lastMessage,
-          content: content ?? lastMessage.content,
-          status,
-        };
-        return { messages: nextMessages };
-      }
-
-      if (!content) {
+      if (!safeChunk) {
         return { messages: state.messages };
       }
 
       return {
         messages: [
           ...state.messages,
-          createChatMessage("assistant", content, transport, status),
+          createChatMessage("assistant", safeChunk, transport, "streaming"),
+        ],
+      };
+    }),
+  finalizeAssistantMessage: (content, transport, status = "complete") =>
+    set((state) => {
+      const safeContent = content !== undefined ? sanitizeAssistantText(content) : undefined;
+      const lastMessage = state.messages[state.messages.length - 1];
+      if (lastMessage?.role === "assistant" && lastMessage.status === "streaming") {
+        const nextMessages = [...state.messages];
+        nextMessages[nextMessages.length - 1] = {
+          ...lastMessage,
+          content: safeContent ?? sanitizeAssistantText(lastMessage.content),
+          status,
+        };
+        return { messages: nextMessages };
+      }
+
+      if (!safeContent) {
+        return { messages: state.messages };
+      }
+
+      return {
+        messages: [
+          ...state.messages,
+          createChatMessage("assistant", safeContent, transport, status),
         ],
       };
     }),
