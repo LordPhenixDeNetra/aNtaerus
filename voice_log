@@ -1,0 +1,407 @@
+whisper_init_from_file_with_params_no_state: loading model from 'C:/ggml-base/ggml-base.bin'
+whisper_init_with_params_no_state: use gpu    = 0
+whisper_init_with_params_no_state: flash attn = 0
+whisper_init_with_params_no_state: gpu_device = 0
+whisper_init_with_params_no_state: dtw        = 0
+whisper_init_with_params_no_state: devices    = 1
+whisper_init_with_params_no_state: backends   = 1
+whisper_model_load: loading model
+whisper_model_load: n_vocab       = 51865
+whisper_model_load: n_audio_ctx   = 1500
+whisper_model_load: n_audio_state = 512
+whisper_model_load: n_audio_head  = 8
+whisper_model_load: n_audio_layer = 6
+whisper_model_load: n_text_ctx    = 448
+whisper_model_load: n_text_state  = 512
+whisper_model_load: n_text_head   = 8
+whisper_model_load: n_text_layer  = 6
+whisper_model_load: n_mels        = 80
+whisper_model_load: ftype         = 1
+whisper_model_load: qntvr         = 0
+whisper_model_load: type          = 2 (base)
+whisper_model_load: adding 1608 extra tokens
+whisper_model_load: n_langs       = 99
+whisper_model_load:          CPU total size =   147.37 MB
+whisper_model_load: model size    =  147.37 MB
+[VOX DIAG audio_samples VAD_FLUSH] len=12480 min=-0.0285 max=0.0295 mean_abs=0.00343
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.787, ts =    [_BEG_],  0.787, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.255, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =  37592, p =  0.408, ts =        [?],  0.023, result_len =    0 'BLANK'
+whisper_full_with_state: id =   3, decoder = 0, token =     62, p =  0.996, ts =        [?],  0.023, result_len =    0 '_'
+whisper_full_with_state: id =   4, decoder = 0, token =  29937, p =  0.997, ts =        [?],  0.031, result_len =    0 'AUDIO'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.999, ts =        [?],  0.052, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50864, p =  0.119, ts =  [_TT_500],  0.119, result_len =    7 '[_TT_500]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.66283, result_len =   7, avg_logprobs = -0.66283, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 77, seek_delta = 77
+[VOX DIAG whisper_transcribe VAD_FLUSH] len=12480 → FINAL_TRANSCRIPT: "[BLANK_AUDIO]"
+[VOX DIAG audio_samples CHUNK] len=960 min=-0.0077 max=0.0066 mean_abs=0.00200 (>=0.005 = ca parle; <0.001 = micro probablement muet)
+[VOX DIAG audio_samples VAD_FLUSH] len=22080 min=-0.0847 max=0.0859 mean_abs=0.01028
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.872, ts =    [_BEG_],  0.872, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.370, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =  37592, p =  0.966, ts =        [?],  0.045, result_len =    0 'BLANK'
+whisper_full_with_state: id =   3, decoder = 0, token =     62, p =  0.996, ts =        [?],  0.022, result_len =    0 '_'
+whisper_full_with_state: id =   4, decoder = 0, token =  29937, p =  0.998, ts =        [?],  0.040, result_len =    0 'AUDIO'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.999, ts =        [?],  0.098, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50864, p =  0.099, ts =        [?],  0.099, result_len =    7 '[_TT_500]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.49753, result_len =   7, avg_logprobs = -0.49753, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 137, seek_delta = 137
+[VOX DIAG whisper_transcribe VAD_FLUSH] len=22080 → FINAL_TRANSCRIPT: "[BLANK_AUDIO]"
+[VOX DIAG audio_samples CHUNK] len=960 min=-0.0168 max=0.0263 mean_abs=0.00699 (>=0.005 = ca parle; <0.001 = micro probablement muet)
+[VOX DIAG audio_samples VAD_FLUSH] len=8640 min=-0.1080 max=0.0799 mean_abs=0.02257
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.894, ts =    [_BEG_],  0.894, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.332, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =  37592, p =  0.952, ts =        [?],  0.049, result_len =    0 'BLANK'
+whisper_full_with_state: id =   3, decoder = 0, token =     62, p =  0.997, ts =        [?],  0.021, result_len =    0 '_'
+whisper_full_with_state: id =   4, decoder = 0, token =  29937, p =  0.998, ts =        [?],  0.034, result_len =    0 'AUDIO'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.999, ts =        [?],  0.093, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50864, p =  0.081, ts =        [?],  0.081, result_len =    7 '[_TT_500]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.54040, result_len =   7, avg_logprobs = -0.54040, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 53, seek_delta = 53
+[VOX DIAG whisper_transcribe VAD_FLUSH] len=8640 → FINAL_TRANSCRIPT: "[BLANK_AUDIO]"
+whisper_init_from_file_with_params_no_state: loading model from 'C:/ggml-base/ggml-base.bin'
+whisper_init_with_params_no_state: use gpu    = 0
+whisper_init_with_params_no_state: flash attn = 0
+whisper_init_with_params_no_state: gpu_device = 0
+whisper_init_with_params_no_state: dtw        = 0
+whisper_init_with_params_no_state: devices    = 1
+whisper_init_with_params_no_state: backends   = 1
+whisper_model_load: loading model
+whisper_model_load: n_vocab       = 51865
+whisper_model_load: n_audio_ctx   = 1500
+whisper_model_load: n_audio_state = 512
+whisper_model_load: n_audio_head  = 8
+whisper_model_load: n_audio_layer = 6
+whisper_model_load: n_text_ctx    = 448
+whisper_model_load: n_text_state  = 512
+whisper_model_load: n_text_head   = 8
+whisper_model_load: n_text_layer  = 6
+whisper_model_load: n_mels        = 80
+whisper_model_load: ftype         = 1
+whisper_model_load: qntvr         = 0
+whisper_model_load: type          = 2 (base)
+whisper_model_load: adding 1608 extra tokens
+whisper_model_load: n_langs       = 99
+whisper_model_load:          CPU total size =   147.37 MB
+whisper_model_load: model size    =  147.37 MB
+[VOX DIAG audio_samples VAD_FLUSH] len=74880 min=-0.1719 max=0.2676 mean_abs=0.00631
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.669, ts =    [_BEG_],  0.669, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.341, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =     33, p =  0.041, ts =        [?],  0.010, result_len =    0 'B'
+whisper_full_with_state: id =   3, decoder = 0, token =   1271, p =  0.143, ts =        [?],  0.016, result_len =    0 'ird'
+whisper_full_with_state: id =   4, decoder = 0, token =     82, p =  0.524, ts =        [?],  0.012, result_len =    0 's'
+whisper_full_with_state: id =   5, decoder = 0, token =  36682, p =  0.365, ts =        [?],  0.014, result_len =    0 ' chirping'
+whisper_full_with_state: id =   6, decoder = 0, token =     60, p =  0.823, ts =        [?],  0.016, result_len =    0 ']'
+whisper_full_with_state: id =   7, decoder = 0, token =  50589, p =  0.033, ts =        [?],  0.033, result_len =    8 '[_TT_225]'
+whisper_full_with_state: id =   8, decoder = 0, token =  50257, p =  0.965, ts =  [_TT_225],  0.704, result_len =    8 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -1.48461, result_len =   8, avg_logprobs = -1.48461, entropy =  2.07944
+whisper_full_with_state: best decoder = 0
+whisper_full_with_state: failed due to avg_logprobs -1.48461 < -1.00000 and no_speech_prob  0.00002 <  0.60000
+
+whisper_full_with_state: failed to decode with temperature = 0.00
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.20
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.966, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =  12199, p =  0.010, ts =        [?],  0.002, result_len =    0 'wind'
+whisper_full_with_state: id =   3, decoder = 0, token =  15068, p =  0.379, ts =        [?],  0.000, result_len =    0 ' blowing'
+whisper_full_with_state: id =   4, decoder = 0, token =     60, p =  1.000, ts =        [?],  0.000, result_len =    0 ']'
+whisper_full_with_state: id =   5, decoder = 0, token =  50564, p =  0.592, ts =  [_TT_200],  0.592, result_len =    6 '[_TT_200]'
+whisper_full_with_state: id =   6, decoder = 0, token =  50257, p =  1.000, ts =  [_TT_200],  1.000, result_len =    6 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -1.02516, result_len =   6, avg_logprobs = -1.02516, entropy =  1.79176
+whisper_full_with_state: best decoder = 0
+whisper_full_with_state: failed due to avg_logprobs -1.02516 < -1.00000 and no_speech_prob  0.00000 <  0.60000
+
+whisper_full_with_state: failed to decode with temperature = 0.20
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.40
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.834, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =     33, p =  0.486, ts =  [_TT_500],  0.107, result_len =    0 'B'
+whisper_full_with_state: id =   3, decoder = 0, token =   3334, p =  0.109, ts =  [_TT_290],  0.162, result_len =    0 'uz'
+whisper_full_with_state: id =   4, decoder = 0, token =   8781, p =  0.522, ts =        [?],  0.001, result_len =    0 'zing'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.934, ts =  [_TT_668],  0.116, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50596, p =  0.065, ts =        [?],  0.065, result_len =    7 '[_TT_232]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.94003, result_len =   7, avg_logprobs = -0.94003, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 467, seek_delta = 467
+[VOX DIAG whisper_transcribe VAD_FLUSH] len=74880 → FINAL_TRANSCRIPT: "[Buzzing]"
+[VOX DIAG audio_samples CHUNK] len=960 min=-0.0123 max=0.0139 mean_abs=0.00404 (>=0.005 = ca parle; <0.001 = micro probablement muet)
+[VOX DIAG audio_samples VAD_FLUSH] len=64320 min=-0.1169 max=0.1391 mean_abs=0.03047
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.866, ts =    [_BEG_],  0.866, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.316, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =  37592, p =  0.491, ts =        [?],  0.019, result_len =    0 'BLANK'
+whisper_full_with_state: id =   3, decoder = 0, token =     62, p =  0.997, ts =        [?],  0.025, result_len =    0 '_'
+whisper_full_with_state: id =   4, decoder = 0, token =  29937, p =  0.998, ts =        [?],  0.036, result_len =    0 'AUDIO'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.999, ts =        [?],  0.055, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50864, p =  0.051, ts =        [?],  0.051, result_len =    7 '[_TT_500]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.71337, result_len =   7, avg_logprobs = -0.71337, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 401, seek_delta = 401
+[VOX DIAG whisper_transcribe VAD_FLUSH] len=64320 → FINAL_TRANSCRIPT: "[BLANK_AUDIO]"
+[VOX DIAG audio_samples CHUNK] len=960 min=-0.0075 max=0.0065 mean_abs=0.00209 (>=0.005 = ca parle; <0.001 = micro probablement muet)
+[VOX DIAG audio_samples VAD_FLUSH] len=8640 min=-0.1032 max=0.0870 mean_abs=0.01857
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.890, ts =    [_BEG_],  0.890, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.362, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =  37592, p =  0.967, ts =        [?],  0.065, result_len =    0 'BLANK'
+whisper_full_with_state: id =   3, decoder = 0, token =     62, p =  0.996, ts =        [?],  0.020, result_len =    0 '_'
+whisper_full_with_state: id =   4, decoder = 0, token =  29937, p =  0.998, ts =        [?],  0.039, result_len =    0 'AUDIO'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.999, ts =    [_BEG_],  0.121, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50864, p =  0.087, ts =        [?],  0.087, result_len =    7 '[_TT_500]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.51636, result_len =   7, avg_logprobs = -0.51636, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 53, seek_delta = 53
+[VOX DIAG whisper_transcribe VAD_FLUSH] len=8640 → FINAL_TRANSCRIPT: "[BLANK_AUDIO]"
+[VOX DIAG audio_samples CHUNK] len=960 min=-0.0029 max=0.0032 mean_abs=0.00093 (>=0.005 = ca parle; <0.001 = micro probablement muet)
+[VOX DIAG audio_samples VAD_FLUSH] len=82560 min=-0.1781 max=0.2167 mean_abs=0.02911
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.594, ts =    [_BEG_],  0.594, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.337, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =     33, p =  0.030, ts =        [?],  0.009, result_len =    0 'B'
+whisper_full_with_state: id =   3, decoder = 0, token =    620, p =  0.070, ts =        [?],  0.014, result_len =    0 'reat'
+whisper_full_with_state: id =   4, decoder = 0, token =    571, p =  0.799, ts =        [?],  0.027, result_len =    0 'hing'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.302, ts =        [?],  0.005, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50614, p =  0.065, ts =        [?],  0.065, result_len =    7 '[_TT_250]'
+whisper_full_with_state: id =   7, decoder = 0, token =  50257, p =  0.977, ts =  [_TT_250],  0.864, result_len =    7 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -1.70435, result_len =   7, avg_logprobs = -1.70435, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+whisper_full_with_state: failed due to avg_logprobs -1.70435 < -1.00000 and no_speech_prob  0.00002 <  0.60000
+
+whisper_full_with_state: failed to decode with temperature = 0.00
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.20
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  1.000, ts =    [_BEG_],  1.000, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.754, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =     33, p =  0.862, ts =        [?],  0.010, result_len =    0 'B'
+whisper_full_with_state: id =   3, decoder = 0, token =   1271, p =  0.406, ts =        [?],  0.059, result_len =    0 'ird'
+whisper_full_with_state: id =   4, decoder = 0, token =     82, p =  1.000, ts =        [?],  0.000, result_len =    0 's'
+whisper_full_with_state: id =   5, decoder = 0, token =  36682, p =  0.998, ts =        [?],  0.000, result_len =    0 ' chirping'
+whisper_full_with_state: id =   6, decoder = 0, token =     60, p =  1.000, ts =        [?],  0.000, result_len =    0 ']'
+whisper_full_with_state: id =   7, decoder = 0, token =  50614, p =  0.991, ts =  [_TT_250],  0.991, result_len =    8 '[_TT_250]'
+whisper_full_with_state: id =   8, decoder = 0, token =  50257, p =  1.000, ts =  [_TT_250],  0.932, result_len =    8 '[_EOT_]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.16802, result_len =   8, avg_logprobs = -0.16802, entropy =  2.07944
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 515, seek_delta = 515
+[VOX DIAG whisper_transcribe VAD_FLUSH] len=82560 → FINAL_TRANSCRIPT: "[Birds chirping]"
+[VOX DIAG audio_samples CHUNK] len=960 min=-0.0097 max=0.0088 mean_abs=0.00251 (>=0.005 = ca parle; <0.001 = micro probablement muet)
+[VOX DIAG audio_samples VAD_FLUSH] len=8640 min=-0.1014 max=0.0936 mean_abs=0.01715
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.890, ts =    [_BEG_],  0.890, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.337, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =  37592, p =  0.962, ts =        [?],  0.059, result_len =    0 'BLANK'
+whisper_full_with_state: id =   3, decoder = 0, token =     62, p =  0.997, ts =        [?],  0.021, result_len =    0 '_'
+whisper_full_with_state: id =   4, decoder = 0, token =  29937, p =  0.998, ts =        [?],  0.036, result_len =    0 'AUDIO'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.999, ts =    [_BEG_],  0.111, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50864, p =  0.081, ts =        [?],  0.081, result_len =    7 '[_TT_500]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.53825, result_len =   7, avg_logprobs = -0.53825, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 53, seek_delta = 53
+[VOX DIAG whisper_transcribe VAD_FLUSH] len=8640 → FINAL_TRANSCRIPT: "[BLANK_AUDIO]"
+[VOX DIAG audio_samples CHUNK] len=960 min=-0.0022 max=0.0026 mean_abs=0.00069 (>=0.005 = ca parle; <0.001 = micro probablement muet)
+[VOX DIAG audio_samples STOP_FLUSH] len=1920 min=-0.0029 max=0.0027 mean_abs=0.00071 (>=0.005 = ca parle probablement)
+whisper_backend_init_gpu: no GPU found
+whisper_init_state: kv self size  =    6.29 MB
+whisper_init_state: kv cross size =   18.87 MB
+whisper_init_state: kv pad  size  =    3.15 MB
+whisper_init_state: compute buffer (conv)   =   16.28 MB
+whisper_init_state: compute buffer (encode) =   85.88 MB
+whisper_init_state: compute buffer (cross)  =    4.66 MB
+whisper_init_state: compute buffer (decode) =   96.37 MB
+
+whisper_full_with_state: strategy = 0, decoding with 1 decoders, temperature = 0.00
+
+
+whisper_full_with_state: prompt[0] = [_SOT_]
+whisper_full_with_state: prompt[1] = [_LANG_en]
+whisper_full_with_state: prompt[2] = [_TRANSCRIBE_]
+
+
+whisper_full_with_state: id =   0, decoder = 0, token =  50364, p =  0.954, ts =    [_BEG_],  0.954, result_len =    0 '[_BEG_]'
+whisper_full_with_state: id =   1, decoder = 0, token =    542, p =  0.326, ts =        [?],  0.000, result_len =    0 ' ['
+whisper_full_with_state: id =   2, decoder = 0, token =  37592, p =  0.678, ts =        [?],  0.044, result_len =    0 'BLANK'
+whisper_full_with_state: id =   3, decoder = 0, token =     62, p =  0.997, ts =        [?],  0.022, result_len =    0 '_'
+whisper_full_with_state: id =   4, decoder = 0, token =  29937, p =  0.997, ts =        [?],  0.026, result_len =    0 'AUDIO'
+whisper_full_with_state: id =   5, decoder = 0, token =     60, p =  0.998, ts =    [_BEG_],  0.141, result_len =    0 ']'
+whisper_full_with_state: id =   6, decoder = 0, token =  50864, p =  0.054, ts =        [?],  0.054, result_len =    7 '[_TT_500]'
+whisper_full_with_state: decoder 0 completed
+whisper_full_with_state: decoder  0: score = -0.63993, result_len =   7, avg_logprobs = -0.63993, entropy =  1.94591
+whisper_full_with_state: best decoder = 0
+single timestamp ending - skip entire chunk
+seek = 11, seek_delta = 11
+[VOX DIAG whisper_transcribe STOP_FLUSH] len=1920 → FINAL_TRANSCRIPT: "[BLANK_AUDIO]"

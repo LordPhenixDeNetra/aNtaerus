@@ -8,10 +8,12 @@ use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextPar
 pub struct SpeechToText {
     #[cfg(any(feature = "voice", feature = "voice_stt"))]
     context: WhisperContext,
+    #[cfg(any(feature = "voice", feature = "voice_stt"))]
+    language: Option<String>,
 }
 
 impl SpeechToText {
-    pub fn from_model_path(model_path: &Path) -> Result<Self, AudioError> {
+    pub fn from_model_path(model_path: &Path, language: Option<String>) -> Result<Self, AudioError> {
         #[cfg(any(feature = "voice", feature = "voice_stt"))]
         {
             let context = WhisperContext::new_with_params(
@@ -19,12 +21,12 @@ impl SpeechToText {
                 WhisperContextParameters::default(),
             )
             .map_err(|err| AudioError::Other(err.to_string()))?;
-            return Ok(Self { context });
+            return Ok(Self { context, language });
         }
 
         #[cfg(not(any(feature = "voice", feature = "voice_stt")))]
         {
-            let _ = model_path;
+            let _ = (model_path, language);
             Err(AudioError::VoiceFeatureDisabled)
         }
     }
@@ -41,6 +43,18 @@ impl SpeechToText {
             params.set_print_special(false);
             params.set_print_progress(false);
             params.set_print_timestamps(false);
+            let normalized_lang: Option<String> = self.language.as_deref().and_then(|lang| {
+                if lang.is_empty() {
+                    None
+                } else if lang.len() == 2 {
+                    Some(lang.to_ascii_lowercase())
+                } else {
+                    Some(lang.chars().take(2).collect::<String>().to_ascii_lowercase())
+                }
+            });
+            if let Some(lang_code) = normalized_lang.as_deref() {
+                params.set_language(Some(lang_code));
+            }
 
             state
                 .full(params, samples)

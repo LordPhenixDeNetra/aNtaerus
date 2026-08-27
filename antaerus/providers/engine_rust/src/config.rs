@@ -15,6 +15,7 @@ pub struct Settings {
     pub audio_output_sample_rate: Option<u32>,
     pub vad_model_path: Option<PathBuf>,
     pub whisper_model_path: Option<PathBuf>,
+    pub whisper_language: Option<String>,
     pub piper_model_path: Option<PathBuf>,
     pub piper_config_path: Option<PathBuf>,
     pub espeak_data_path: Option<PathBuf>,
@@ -77,6 +78,9 @@ impl Settings {
             whisper_model_path: env::var("ANTAERUS_ENGINE_WHISPER_MODEL_PATH")
                 .ok()
                 .map(PathBuf::from),
+            whisper_language: env::var("ANTAERUS_ENGINE_WHISPER_LANGUAGE")
+                .ok()
+                .filter(|v| !v.trim().is_empty()),
             piper_model_path: env::var("ANTAERUS_ENGINE_PIPER_MODEL_PATH").ok().map(PathBuf::from),
             piper_config_path: env::var("ANTAERUS_ENGINE_PIPER_CONFIG_PATH")
                 .ok()

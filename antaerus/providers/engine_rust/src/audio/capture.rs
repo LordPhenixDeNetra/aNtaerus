@@ -23,7 +23,6 @@ pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
     {
         use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
         use cpal::{Device, SampleFormat, StreamConfig};
-        use num_traits::cast::ToPrimitive;
 
         let (sender, receiver) = mpsc::channel::<Vec<f32>>(8);
         let host = cpal::default_host();
@@ -55,8 +54,9 @@ pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
                 .build_input_stream(
                     &config,
                     move |data: &[i16], _| {
+                        let max = i16::MAX as f32 + 1.0;
                         let mut out = Vec::with_capacity(data.len());
-                        out.extend(data.iter().filter_map(ToPrimitive::to_f32));
+                        out.extend(data.iter().map(|&s| s as f32 / max));
                         let _ = sender.try_send(out);
                     },
                     err_fn,
@@ -67,8 +67,9 @@ pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
                 .build_input_stream(
                     &config,
                     move |data: &[u16], _| {
+                        let half = u16::MAX as f32 * 0.5 + 0.5;
                         let mut out = Vec::with_capacity(data.len());
-                        out.extend(data.iter().filter_map(ToPrimitive::to_f32));
+                        out.extend(data.iter().map(|&s| (s as f32 - half) / half));
                         let _ = sender.try_send(out);
                     },
                     err_fn,

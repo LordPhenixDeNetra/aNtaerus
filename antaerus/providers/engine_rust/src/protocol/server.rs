@@ -143,7 +143,7 @@ SOLUTION 1 SEUL COMMANDE POUR DEBUG:
             }
 
             if voice_ready {
-                match SpeechToText::from_model_path(whisper_model_path.as_path()) {
+                match SpeechToText::from_model_path(whisper_model_path.as_path(), self.engine.settings.whisper_language.clone()) {
                     Ok(s) => stt = Some(s),
                     Err(err) => {
                         voice_ready = false;
@@ -156,7 +156,7 @@ SOLUTION 1 SEUL COMMANDE POUR DEBUG:
             }
 
             if voice_ready {
-                match VadDetector::new(vad_model_path.as_deref(), 0.01) {
+                match VadDetector::new(vad_model_path.as_deref(), 0.022) {
                     Ok(v) => vad = Some(v),
                     Err(err) => {
                         voice_ready = false;
@@ -183,6 +183,7 @@ SOLUTION 1 SEUL COMMANDE POUR DEBUG:
 
         let mut speaking = false;
         let mut buffer = Vec::<f32>::new();
+        let mut last_diag_log = std::time::Instant::now();
 
         loop {
             if voice_ready {
@@ -192,7 +193,47 @@ SOLUTION 1 SEUL COMMANDE POUR DEBUG:
 
                 tokio::select! {
                     _ = &mut stop => {
-                        let _ = sender.send(Ok(system_event(session_id.clone(), "info", "voice session stopped".to_string()))).await;
+                        if !buffer.is_empty() {
+                            let mean_abs = buffer.iter().map(|v| v.abs()).sum::<f32>() / buffer.len() as f32;
+                            let min = buffer.iter().copied().fold(f32::MAX, f32::min);
+                            let max = buffer.iter().copied().fold(f32::MIN, f32::max);
+                            eprintln!("[VOX DIAG audio_samples STOP_FLUSH] len={} min={:.4} max={:.4} mean_abs={:.5} (>=0.005 = ca parle probablement)", buffer.len(), min, max, mean_abs);
+                            let text = stt_ref.transcribe_16khz_mono(&buffer).unwrap_or_else(|_| String::new());
+                            eprintln!("[VOX DIAG whisper_transcribe STOP_FLUSH] len={} → FINAL_TRANSCRIPT: {:?}", buffer.len(), text);
+                            let trimmed = text.trim();
+                            if !trimmed.is_empty() {
+                                let previous_wake_state = wake_word_gate.state();
+                                let decision = wake_word_gate.evaluate(trimmed);
+                                let send_clean = |cleaned_text: String| {
+                                    let sid = session_id.clone();
+                                    let snd = sender.clone();
+                                    Box::pin(async move {
+                                        let _ = snd.send(Ok(transcript_event(sid, cleaned_text, true))).await;
+                                    })
+                                };
+                                match &decision {
+                                    WakeWordDecision::Ignored => {
+                                        send_clean(trimmed.to_string()).await;
+                                    }
+                                    WakeWordDecision::ArmedNoCommand => {
+                                        if wake_word_gate.state() != previous_wake_state {
+                                            let _ = sender.send(Ok(wake_word_event(session_id.clone(), wake_word_gate.state().as_str()))).await;
+                                        }
+                                    }
+                                    WakeWordDecision::ArmedWithCommand(cleaned_text) => {
+                                        if wake_word_gate.state() != previous_wake_state {
+                                            let _ = sender.send(Ok(wake_word_event(session_id.clone(), wake_word_gate.state().as_str()))).await;
+                                        }
+                                        send_clean(cleaned_text.clone()).await;
+                                    }
+                                    WakeWordDecision::PassThrough(cleaned_text) => {
+                                        send_clean(cleaned_text.clone()).await;
+                                    }
+                                }
+                            }
+                            buffer.clear();
+                        }
+                        let _ = sender.send(Ok(system_event(session_id.clone(), "info", "voice session stopped (audio flushed to chat)".to_string()))).await;
                         break;
                     }
                     chunk = receiver_ref.recv() => {
@@ -202,6 +243,16 @@ SOLUTION 1 SEUL COMMANDE POUR DEBUG:
                         };
 
                         let chunk_16k = resample_linear_mono(&chunk, input_rate, 16_000);
+                        if last_diag_log.elapsed() > std::time::Duration::from_secs(3) {
+                            last_diag_log = std::time::Instant::now();
+                            if !chunk_16k.is_empty() {
+                                let mean_abs = chunk_16k.iter().map(|v| v.abs()).sum::<f32>() / chunk_16k.len() as f32;
+                                let min = chunk_16k.iter().copied().fold(f32::MAX, f32::min);
+                                let max = chunk_16k.iter().copied().fold(f32::MIN, f32::max);
+                                eprintln!("[VOX DIAG audio_samples CHUNK] len={} min={:.4} max={:.4} mean_abs={:.5} (>=0.005 = ca parle; <0.001 = micro probablement muet)", chunk_16k.len(), min, max, mean_abs);
+                            }
+                        }
+
                         let next_speaking = match vad_ref.push_samples(&chunk_16k) {
                             Ok(state) => state,
                             Err(err) => {
@@ -211,61 +262,11 @@ SOLUTION 1 SEUL COMMANDE POUR DEBUG:
                             }
                         };
 
+                        buffer.extend_from_slice(&chunk_16k);
+
                         if next_speaking != speaking {
                             speaking = next_speaking;
                             let _ = sender.send(Ok(vad_event(session_id.clone(), speaking))).await;
-
-                            if !speaking && !buffer.is_empty() {
-                                let text = stt_ref.transcribe_16khz_mono(&buffer).unwrap_or_else(|_| String::new());
-                                let trimmed = text.trim();
-                                if !trimmed.is_empty() {
-                                    let previous_wake_state = wake_word_gate.state();
-                                    match wake_word_gate.evaluate(trimmed) {
-                                        WakeWordDecision::Ignored => {}
-                                        WakeWordDecision::ArmedNoCommand => {
-                                            if wake_word_gate.state() != previous_wake_state {
-                                                let _ = sender
-                                                    .send(Ok(wake_word_event(
-                                                        session_id.clone(),
-                                                        wake_word_gate.state().as_str(),
-                                                    )))
-                                                    .await;
-                                            }
-                                        }
-                                        WakeWordDecision::ArmedWithCommand(cleaned_text) => {
-                                            if wake_word_gate.state() != previous_wake_state {
-                                                let _ = sender
-                                                    .send(Ok(wake_word_event(
-                                                        session_id.clone(),
-                                                        wake_word_gate.state().as_str(),
-                                                    )))
-                                                    .await;
-                                            }
-                                            let _ = sender
-                                                .send(Ok(transcript_event(
-                                                    session_id.clone(),
-                                                    cleaned_text,
-                                                    true,
-                                                )))
-                                                .await;
-                                        }
-                                        WakeWordDecision::PassThrough(cleaned_text) => {
-                                            let _ = sender
-                                                .send(Ok(transcript_event(
-                                                    session_id.clone(),
-                                                    cleaned_text,
-                                                    true,
-                                                )))
-                                                .await;
-                                        }
-                                    }
-                                }
-                                buffer.clear();
-                            }
-                        }
-
-                        if speaking {
-                            buffer.extend_from_slice(&chunk_16k);
                         }
                     }
                 }
