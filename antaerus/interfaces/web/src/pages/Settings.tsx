@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   FolderOpen,
+  Home,
   Plus,
   RefreshCw,
   Shield,
@@ -189,6 +191,19 @@ export default function Settings() {
   return (
     <main className="min-h-screen px-6 py-10 text-slate-100">
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-slate-300 hover:bg-white/10"
+          >
+            <Home className="h-3.5 w-3.5" />
+            {fr ? "Accueil" : "Home"}
+          </Link>
+          <span className="text-slate-600">/</span>
+          <span className="font-mono uppercase tracking-[0.2em] text-slate-400">
+            {fr ? "Paramètres" : "Settings"}
+          </span>
+        </div>
         <header className="rounded-[32px] border border-white/10 bg-slate-950/70 p-8 shadow-2xl backdrop-blur">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>

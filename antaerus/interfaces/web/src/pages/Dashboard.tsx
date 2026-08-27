@@ -6,6 +6,7 @@ import {
   Database,
   ExternalLink,
   FileText,
+  FolderOpen,
   GitBranch,
   LineChart,
   Network,
@@ -70,6 +71,15 @@ const cards: CardDef[] = [
     tag: "Setup local",
     description:
       "URL du gateway, clefs API, mode voix, langue par defaut. Persiste dans localStorage.",
+  },
+  {
+    to: "/settings",
+    accent: "border-slate-200/20 shadow-slate-950/20 text-slate-200",
+    icon: FolderOpen,
+    title: "Parametres",
+    tag: "Securite · Dossiers autorises",
+    description:
+      "Dossiers autorises de la whitelist filesystem (outils), etat des outils declares et sources par couche (yaml/overlay/env/SQL).",
   },
   {
     to: "/memory",

@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Mic,
   Network,
+  Settings2,
   Shield,
   Sparkles,
   Terminal,
@@ -56,6 +57,7 @@ const TOP_NAV: NavIcon[] = [
   { to: "/analytics", icon: BarChart3, label: "Analytics" },
   { to: "/system-health", icon: Shield, label: "Health" },
   { to: "/skill-lab", icon: Sparkles, label: "Skill Lab", tone: "text-cyan-300" },
+  { to: "/settings", icon: Settings2, label: "Settings", tone: "text-slate-200" },
 ];
 
 const SERVICES_PILL = [
