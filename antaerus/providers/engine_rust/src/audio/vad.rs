@@ -13,7 +13,7 @@ pub struct VadDetector {
     session: Option<Session>,
 
     #[cfg(any(feature = "voice", feature = "voice_stt"))]
-    options: Option<SpeechOptions>,
+    _options: Option<SpeechOptions>,
 
     #[cfg(any(feature = "voice", feature = "voice_stt"))]
     stream: Option<StreamState>,
@@ -36,7 +36,7 @@ impl VadDetector {
                     threshold,
                     speaking: false,
                     session: Some(session),
-                    options: Some(options),
+                    _options: Some(options),
                     stream: Some(stream),
                     segmenter: Some(segmenter),
                 });
@@ -49,7 +49,7 @@ impl VadDetector {
             #[cfg(any(feature = "voice", feature = "voice_stt"))]
             session: None,
             #[cfg(any(feature = "voice", feature = "voice_stt"))]
-            options: None,
+            _options: None,
             #[cfg(any(feature = "voice", feature = "voice_stt"))]
             stream: None,
             #[cfg(any(feature = "voice", feature = "voice_stt"))]

@@ -22,7 +22,7 @@ pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
     #[cfg(any(feature = "voice", feature = "voice_stt"))]
     {
         use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-        use cpal::{Device, Sample, SampleFormat, StreamConfig};
+        use cpal::{Device, SampleFormat, StreamConfig};
         use num_traits::cast::ToPrimitive;
 
         let (sender, receiver) = mpsc::channel::<Vec<f32>>(8);
