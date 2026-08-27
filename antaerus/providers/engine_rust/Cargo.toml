@@ -23,6 +23,7 @@ wat-compile = ["dep:wat"]
 [dependencies]
 cap-std = "3"
 cpal = { version = "0.15", optional = true }
+dotenvy = "0.15"
 dunce = "1"
 num-traits = "0.2"
 piper1-rs = { version = "0.1", optional = true }
