@@ -1,0 +1,9 @@
+filesystem:
+  allowed_roots:
+  - N:\OneDrive - Université Cheikh Anta DIOP de DAKAR\PycharmProjects\aNtaerus\antaerus\docs
+  - N:\OneDrive - Université Cheikh Anta DIOP de DAKAR\PycharmProjects\aNtaerus\antaerus\memory_data
+  - N:\OneDrive - Université Cheikh Anta DIOP de DAKAR\PycharmProjects\aNtaerus\antaerus\providers\brain_python
+meta:
+  generator: antaerus_brain
+  id: c99887ca-af38-4626-9e02-4b75f4e66c41
+  updated_at: '2026-08-27T02:13:33+00:00'

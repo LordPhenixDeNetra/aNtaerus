@@ -130,7 +130,7 @@ def _unique_paths(paths: list[str], sandbox_root: Path) -> list[str]:
 def _sandbox_root() -> Path:
     from antaerus_brain.config import get_settings
 
-    return get_settings().engine_tools_sandbox_root
+    return get_settings().tools_sandbox_root
 
 
 def _overlay_path_for(config_path: Path) -> Path:

@@ -271,7 +271,7 @@ async def put_filesystem_allowed_roots(
     """SET NIV 4 (SQL user_preferences) = complete list of user-added paths.
     Validates each path exists. Then re-fuses all layers and returns the final merged list."""
     settings = get_settings()
-    sandbox_root = settings.engine_tools_sandbox_root
+    sandbox_root = settings.tools_sandbox_root
 
     cleaned: list[str] = []
     seen: set[str] = set()
@@ -311,7 +311,7 @@ async def post_filesystem_allowed_root(
     """ADD a single directory to NIV 4 SQL (user_preferences).
     Validates path + saves to SQL then refreshes overlay for Rust engine."""
     settings = get_settings()
-    sandbox_root = settings.engine_tools_sandbox_root
+    sandbox_root = settings.tools_sandbox_root
     norm = _resolve_path_existing_dir(payload.path, sandbox_root)
 
     current = await state.get_json_pref(
@@ -347,7 +347,7 @@ async def delete_filesystem_allowed_root(
 ) -> _DeleteFilesystemAllowedRootResponse:
     """REMOVE a path from user_preferences SQL NIV4. Normalizes + compares."""
     settings = get_settings()
-    sandbox_root = settings.engine_tools_sandbox_root
+    sandbox_root = settings.tools_sandbox_root
     to_remove = _resolve_path_existing_dir(payload.path, sandbox_root)
 
     current = await state.get_json_pref(
@@ -392,7 +392,7 @@ async def validate_filesystem_allowed_root(
 ) -> dict:
     """Helper endpoint used by UI before POST /filesystem/allowed-roots."""
     settings = get_settings()
-    sandbox_root = settings.engine_tools_sandbox_root
+    sandbox_root = settings.tools_sandbox_root
     import os
 
     candidate = Path(os.path.expandvars(os.path.expanduser(path)))
