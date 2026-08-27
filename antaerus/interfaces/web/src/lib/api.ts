@@ -1324,6 +1324,20 @@ export type FilesystemAllowedRootValidateResponse = {
   readable: boolean;
 };
 
+export type FilesystemLsDirsResponse = {
+  normalized: string;
+  children: string[];
+};
+
+export type FilesystemHomeResponse = {
+  home: string;
+  desktop?: string;
+  documents?: string;
+  downloads?: string;
+  cwd: string;
+  drives: string[];
+};
+
 export type ToolsSummaryResponse = {
   tools: ToolsListResponse;
   filesystem: FilesystemAllowedRootsResponse;
@@ -1421,4 +1435,26 @@ export async function setFilesystemAllowedRoots(
     throw new Error(`Impossible de sauvegarder allowed_roots: ${response.status} ${text}`);
   }
   return response.json() as Promise<FilesystemAllowedRootsResponse>;
+}
+
+export async function fetchFilesystemHome(): Promise<FilesystemHomeResponse> {
+  const response = await fetch(apiURL("/api/v1/tools/filesystem/home"));
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de récupérer home/drives: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<FilesystemHomeResponse>;
+}
+
+export async function fetchFilesystemLsDirs(
+  path: string,
+): Promise<FilesystemLsDirsResponse> {
+  const response = await fetch(
+    apiURL("/api/v1/tools/filesystem/lsdirs", { path }),
+  );
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Impossible de lister le dossier: ${response.status} ${text}`);
+  }
+  return response.json() as Promise<FilesystemLsDirsResponse>;
 }

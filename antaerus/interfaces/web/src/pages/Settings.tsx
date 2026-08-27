@@ -1,22 +1,30 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  ChevronRight,
   FolderOpen,
+  FolderSearch,
+  HardDrive,
   Home,
+  Monitor,
   Plus,
   RefreshCw,
   Shield,
   ShieldAlert,
   ShieldCheck,
   Trash2,
+  X,
 } from "lucide-react";
 import {
   addFilesystemAllowedRoot,
   fetchFilesystemAllowedRoots,
+  fetchFilesystemHome,
+  fetchFilesystemLsDirs,
   fetchToolsSummary,
   removeFilesystemAllowedRoot,
   validateFilesystemAllowedRoot,
   type FilesystemAllowedRootsResponse,
+  type FilesystemHomeResponse,
   type ToolsSummaryResponse,
 } from "@/lib/api";
 import { useAppStore } from "@/store/useAppStore";
@@ -55,6 +63,92 @@ export default function Settings() {
   const [inputStatus, setInputStatus] = useState<PathStatus>({ kind: "idle" });
   const [addInProgress, setAddInProgress] = useState(false);
   const [flash, setFlash] = useState<{ level: "ok" | "err"; message: string } | null>(null);
+
+  const [homeShortcuts, setHomeShortcuts] = useState<FilesystemHomeResponse | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerPath, setPickerPath] = useState("");
+  const [pickerChildren, setPickerChildren] = useState<string[]>([]);
+  const [pickerNormalized, setPickerNormalized] = useState("");
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [pickerError, setPickerError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        setHomeShortcuts(await fetchFilesystemHome());
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, []);
+
+  function applyPickerPath(p: string) {
+    setInputPath(p);
+    debouncedValidate(p);
+    setPickerOpen(false);
+  }
+
+  async function openPicker(initial?: string) {
+    setPickerOpen(true);
+    const start = initial ?? homeShortcuts?.home ?? "";
+    setPickerPath(start);
+    setPickerError(null);
+    setPickerLoading(true);
+    setPickerChildren([]);
+    setPickerNormalized(start);
+    try {
+      const r = await fetchFilesystemLsDirs(start);
+      setPickerChildren(r.children);
+      setPickerNormalized(r.normalized);
+    } catch (e) {
+      setPickerError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPickerLoading(false);
+    }
+  }
+
+  async function pickerEnter(folder: string) {
+    const sep = /^[a-zA-Z]:\\/.test(pickerNormalized) ? "\\" : "/";
+    const base = pickerNormalized.endsWith(sep) ? pickerNormalized.slice(0, -1) : pickerNormalized;
+    const next = base ? `${base}${sep}${folder}` : folder;
+    setPickerPath(next);
+    setPickerLoading(true);
+    setPickerError(null);
+    try {
+      const r = await fetchFilesystemLsDirs(next);
+      setPickerChildren(r.children);
+      setPickerNormalized(r.normalized);
+    } catch (e) {
+      setPickerError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPickerLoading(false);
+    }
+  }
+
+  async function pickerUp() {
+    if (!pickerNormalized) return;
+    const sep = /^[a-zA-Z]:\\/.test(pickerNormalized) ? "\\" : "/";
+    const parts = pickerNormalized.split(sep).filter(Boolean);
+    if (parts.length <= 1) {
+      if (/^[a-zA-Z]:\\?$/.test(pickerNormalized)) return;
+    }
+    parts.pop();
+    let parent = parts.join(sep);
+    if (/^[a-zA-Z]$/.test(parent)) parent = `${parent}:${sep}`;
+    else if (parent && sep === "/") parent = `/${parent}`;
+    setPickerPath(parent || sep);
+    setPickerLoading(true);
+    setPickerError(null);
+    try {
+      const r = await fetchFilesystemLsDirs(parent || sep);
+      setPickerChildren(r.children);
+      setPickerNormalized(r.normalized);
+    } catch (e) {
+      setPickerError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPickerLoading(false);
+    }
+  }
 
   async function loadEverything() {
     setLoading(true);
@@ -289,9 +383,68 @@ export default function Settings() {
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <label className="block text-xs font-medium uppercase tracking-widest text-slate-400">
-              {fr ? "Ajouter un dossier" : "Add a folder"}
-            </label>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label className="block text-xs font-medium uppercase tracking-widest text-slate-400">
+                {fr ? "Ajouter un dossier" : "Add a folder"}
+              </label>
+              <button
+                type="button"
+                onClick={() => void openPicker()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-100 hover:bg-sky-500/20"
+              >
+                <FolderSearch className="h-3.5 w-3.5" />
+                {fr ? "Parcourir…" : "Browse…"}
+              </button>
+            </div>
+            {homeShortcuts ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <QuickPathChip
+                  icon={<Home className="h-3.5 w-3.5" />}
+                  label={fr ? "Accueil" : "Home"}
+                  path={homeShortcuts.home}
+                  onClick={(p) => applyPickerPath(p)}
+                />
+                {homeShortcuts.desktop ? (
+                  <QuickPathChip
+                    icon={<Monitor className="h-3.5 w-3.5" />}
+                    label={fr ? "Bureau" : "Desktop"}
+                    path={homeShortcuts.desktop}
+                    onClick={(p) => applyPickerPath(p)}
+                  />
+                ) : null}
+                {homeShortcuts.documents ? (
+                  <QuickPathChip
+                    icon={<FolderOpen className="h-3.5 w-3.5" />}
+                    label={fr ? "Documents" : "Documents"}
+                    path={homeShortcuts.documents}
+                    onClick={(p) => applyPickerPath(p)}
+                  />
+                ) : null}
+                {homeShortcuts.downloads ? (
+                  <QuickPathChip
+                    icon={<FolderOpen className="h-3.5 w-3.5" />}
+                    label={fr ? "Téléchargements" : "Downloads"}
+                    path={homeShortcuts.downloads}
+                    onClick={(p) => applyPickerPath(p)}
+                  />
+                ) : null}
+                <QuickPathChip
+                  icon={<FolderOpen className="h-3.5 w-3.5" />}
+                  label={fr ? "Projet" : "Project"}
+                  path={homeShortcuts.cwd}
+                  onClick={(p) => applyPickerPath(p)}
+                />
+                {homeShortcuts.drives.map((d) => (
+                  <QuickPathChip
+                    key={d}
+                    icon={<HardDrive className="h-3.5 w-3.5" />}
+                    label={d}
+                    path={d}
+                    onClick={(p) => applyPickerPath(p)}
+                  />
+                ))}
+              </div>
+            ) : null}
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
               <div className="flex-1">
                 <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-slate-950/70 px-3 py-2 focus-within:border-emerald-400/60">
@@ -374,8 +527,8 @@ export default function Settings() {
                   ) : (
                     <span className="text-slate-500">
                       {fr
-                        ? "La validation est automatique après 350 ms d'inactivité."
-                        : "Auto-validates 350 ms after you stop typing."}
+                        ? "Raccourcis ci-dessus, Parcourir… ou saisie libre auto-valide 350 ms après inactivité."
+                        : "Shortcuts above, Browse… or free typing auto-validates 350 ms after inactivity."}
                     </span>
                   )}
                 </div>
@@ -395,6 +548,81 @@ export default function Settings() {
               </button>
             </div>
           </div>
+
+          {pickerOpen ? (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-widest text-slate-200">
+                    {fr ? "Parcourir les dossiers" : "Browse folders"}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen(false)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-slate-400 hover:bg-white/10 hover:text-slate-100"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    {fr ? "Fermer" : "Close"}
+                  </button>
+                </div>
+                <div className="space-y-3 p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void pickerUp()}
+                      className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-slate-300 hover:bg-white/10"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+                      {fr ? "Remonter" : "Up"}
+                    </button>
+                    <code className="flex-1 break-all rounded-md bg-black/40 px-2 py-1 font-mono text-xs text-slate-200">
+                      {pickerNormalized || pickerPath || "~"}
+                    </code>
+                    <button
+                      type="button"
+                      disabled={pickerLoading}
+                      onClick={() => applyPickerPath(pickerNormalized || pickerPath)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-100 hover:bg-emerald-500/25 disabled:opacity-60"
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5" />
+                      {fr ? "Utiliser ce dossier" : "Use this folder"}
+                    </button>
+                  </div>
+                  {pickerLoading ? (
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center text-sm text-slate-400">
+                      <RefreshCw className="mx-auto mb-2 h-5 w-5 animate-spin" />
+                      {fr ? "Chargement…" : "Loading…"}
+                    </div>
+                  ) : pickerError ? (
+                    <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-200">
+                      {pickerError}
+                    </div>
+                  ) : pickerChildren.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-white/5 p-6 text-center text-xs text-slate-400">
+                      <FolderOpen className="mx-auto mb-2 h-5 w-5 text-slate-500" />
+                      {fr ? "Aucun sous-dossier lisible." : "No readable subdirectories."}
+                    </div>
+                  ) : (
+                    <ul className="max-h-[22rem] divide-y divide-white/5 overflow-auto rounded-xl border border-white/10 bg-slate-900/60">
+                      {pickerChildren.map((name) => (
+                        <li key={name}>
+                          <button
+                            type="button"
+                            onClick={() => void pickerEnter(name)}
+                            className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm text-slate-200 hover:bg-white/5"
+                          >
+                            <FolderOpen className="h-4 w-4 text-slate-400" />
+                            <span className="flex-1 truncate">{name}</span>
+                            <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -572,5 +800,29 @@ function FileCodeIcon() {
       <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
       <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
     </svg>
+  );
+}
+
+function QuickPathChip({
+  icon,
+  label,
+  path,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  path: string;
+  onClick: (path: string) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(path)}
+      title={path}
+      className="inline-flex max-w-xs items-center gap-1.5 rounded-lg border border-white/10 bg-slate-950/60 px-2.5 py-1.5 text-xs text-slate-200 hover:border-sky-400/40 hover:bg-sky-500/10 hover:text-sky-100"
+    >
+      {icon}
+      <span className="truncate">{label}</span>
+    </button>
   );
 }

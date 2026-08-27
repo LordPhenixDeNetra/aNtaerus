@@ -72,6 +72,20 @@ class _DeleteFilesystemAllowedRootResponse(BaseModel):
     overlay_written: bool
 
 
+class _FilesystemLsDirsResponse(BaseModel):
+    normalized: str
+    children: list[str]
+
+
+class _FilesystemHomeResponse(BaseModel):
+    home: str
+    desktop: str | None = None
+    documents: str | None = None
+    downloads: str | None = None
+    cwd: str
+    drives: list[str] = Field(default_factory=list)
+
+
 class _ToolsConfigSummaryResponse(BaseModel):
     """Summary of tools.yaml merged state (useful for Settings panel)."""
 
@@ -409,3 +423,115 @@ async def validate_filesystem_allowed_root(
         "is_dir": resolved.is_dir() if resolved.exists() else False,
         "readable": os.access(resolved, os.R_OK) if resolved.exists() else False,
     }
+
+
+@router.get(
+    "/filesystem/lsdirs",
+    response_model=_FilesystemLsDirsResponse,
+    tags=["tools", "filesystem"],
+)
+async def filesystem_lsdirs(
+    path: Annotated[
+        str,
+        Query(
+            min_length=0,
+            description="Absolute or relative parent directory to list subdirs. Empty = home.",
+        ),
+    ] = "",
+) -> _FilesystemLsDirsResponse:
+    """List direct readable subdirectories of `path` on the SERVER filesystem.
+    Used by Settings modal "Parcourir..." (Browse) for clickable picker."""
+    import os
+
+    settings = get_settings()
+    sandbox_root = settings.tools_sandbox_root
+
+    if not path.strip():
+        root_dir = Path(os.path.expanduser("~"))
+    else:
+        candidate = Path(os.path.expandvars(os.path.expanduser(path.strip())))
+        if not candidate.is_absolute():
+            candidate = sandbox_root / candidate
+        root_dir = candidate
+
+    try:
+        resolved = root_dir.resolve()
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=422, detail=f"Invalid path: {exc}") from exc
+    if not resolved.exists() or not resolved.is_dir():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Directory not found on server: {resolved}",
+        )
+    if not os.access(resolved, os.R_OK):
+        raise HTTPException(status_code=403, detail=f"Unreadable directory: {resolved}")
+
+    children: list[str] = []
+    try:
+        for entry in sorted(resolved.iterdir(), key=lambda e: e.name.lower()):
+            try:
+                if entry.is_dir() and not entry.name.startswith("."):
+                    if os.access(entry, os.R_OK):
+                        children.append(entry.name)
+            except OSError:
+                continue
+    except PermissionError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
+    except OSError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return _FilesystemLsDirsResponse(normalized=str(resolved), children=children)
+
+
+@router.get(
+    "/filesystem/home",
+    response_model=_FilesystemHomeResponse,
+    tags=["tools", "filesystem"],
+)
+async def filesystem_home() -> _FilesystemHomeResponse:
+    """Return common user directories + Windows drives for the Settings folder picker shortcuts."""
+    import os
+
+    home = os.path.expanduser("~")
+    home_p = Path(home)
+
+    def _if_exists(p: Path) -> str | None:
+        try:
+            r = p.resolve()
+            if r.exists() and r.is_dir() and os.access(r, os.R_OK):
+                return str(r)
+        except OSError:
+            return None
+        return None
+
+    desktop = _if_exists(home_p / "Desktop") or _if_exists(home_p / "Bureau")
+    documents = _if_exists(home_p / "Documents")
+    downloads = _if_exists(home_p / "Downloads") or _if_exists(home_p / "Téléchargements")
+    cwd = str(Path.cwd())
+
+    drives: list[str] = []
+    import platform
+
+    if platform.system() == "Windows":
+        try:
+            import ctypes
+            import string
+
+            kernel32 = ctypes.windll.kernel32
+            bitmask = kernel32.GetLogicalDrives()
+            for i, letter in enumerate(string.ascii_uppercase):
+                if bitmask & (1 << i):
+                    drive = f"{letter}:\\"
+                    drives.append(drive)
+        except Exception:  # noqa: BLE001
+            drives = [f"{l}:\\" for l in "CDEFGH"]
+            drives = [d for d in drives if os.path.isdir(d)]
+
+    return _FilesystemHomeResponse(
+        home=str(home_p.resolve()),
+        desktop=desktop,
+        documents=documents,
+        downloads=downloads,
+        cwd=cwd,
+        drives=drives,
+    )
