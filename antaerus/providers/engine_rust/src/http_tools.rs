@@ -8,17 +8,26 @@ use crate::{
     config::Settings,
     fs::{
         reader::{read_text_file, FileReaderError},
-        sandbox::FilesystemSandbox,
+        sandbox::{FilesystemSandbox, FilesystemSandboxError, ListedDirectory},
     },
 };
 
 #[derive(Debug, Deserialize)]
 pub struct FilesystemReadRequest {
+    #[serde(default)]
+    pub operation: String,
     pub path: String,
     #[serde(default = "default_encoding")]
     pub encoding: String,
     #[serde(default)]
     pub max_bytes: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FilesystemListDirRequest {
+    #[serde(default)]
+    pub operation: String,
+    pub path: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -86,6 +95,40 @@ pub async fn filesystem_read(
     }
 }
 
+pub async fn filesystem_list_dir(
+    State(settings): State<Settings>,
+    Json(payload): Json<FilesystemListDirRequest>,
+) -> impl IntoResponse {
+    let settings_for_task = settings.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        let sandbox = FilesystemSandbox::from_settings(&settings_for_task)?;
+        let listing: ListedDirectory = sandbox.list_directory(payload.path.as_str())?;
+        Ok::<ToolHttpResponse, FilesystemSandboxError>(ToolHttpResponse {
+            ok: true,
+            tool: "filesystem".to_string(),
+            status: "ok".to_string(),
+            result: Some(serde_json::to_value(&listing).unwrap_or(serde_json::json!(null))),
+            error: None,
+            meta: serde_json::Map::new(),
+        })
+    })
+    .await;
+
+    match result {
+        Ok(Ok(response)) => (StatusCode::OK, Json(response)).into_response(),
+        Ok(Err(error)) => map_filesystem_list_error(error).into_response(),
+        Err(join_error) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(error_response(
+                "filesystem",
+                "error",
+                format!("filesystem list_dir task failed: {join_error}"),
+            )),
+        )
+            .into_response(),
+    }
+}
+
 pub async fn cli_execute(
     State(settings): State<Settings>,
     Json(payload): Json<CliExecuteRequest>,
@@ -140,24 +183,7 @@ enum FilesystemOrReaderError {
 
 fn map_filesystem_error(error: FilesystemOrReaderError) -> (StatusCode, Json<ToolHttpResponse>) {
     let response = match error {
-        FilesystemOrReaderError::Sandbox(sandbox_error) => match sandbox_error {
-            crate::fs::sandbox::FilesystemSandboxError::Disabled => {
-                error_response("filesystem", "denied", sandbox_error.to_string())
-            }
-            crate::fs::sandbox::FilesystemSandboxError::NotConfigured(_) => {
-                error_response("filesystem", "not_configured", sandbox_error.to_string())
-            }
-            crate::fs::sandbox::FilesystemSandboxError::PathNotAllowed(_) => {
-                error_response("filesystem", "denied", sandbox_error.to_string())
-            }
-            crate::fs::sandbox::FilesystemSandboxError::FileNotFound(_) => {
-                error_response("filesystem", "error", sandbox_error.to_string())
-            }
-            crate::fs::sandbox::FilesystemSandboxError::ResolvePath { .. }
-            | crate::fs::sandbox::FilesystemSandboxError::OpenAllowedRoot { .. } => {
-                error_response("filesystem", "error", sandbox_error.to_string())
-            }
-        },
+        FilesystemOrReaderError::Sandbox(sandbox_error) => map_sandbox_fs_error(sandbox_error),
         FilesystemOrReaderError::Reader(reader_error) => match reader_error {
             FileReaderError::Sandbox(sandbox_error) => {
                 return map_filesystem_error(FilesystemOrReaderError::Sandbox(sandbox_error));
@@ -168,6 +194,34 @@ fn map_filesystem_error(error: FilesystemOrReaderError) -> (StatusCode, Json<Too
         },
     };
     (StatusCode::BAD_REQUEST, Json(response))
+}
+
+fn map_filesystem_list_error(error: FilesystemSandboxError) -> (StatusCode, Json<ToolHttpResponse>) {
+    let response = map_sandbox_fs_error(error);
+    (StatusCode::BAD_REQUEST, Json(response))
+}
+
+fn map_sandbox_fs_error(sandbox_error: FilesystemSandboxError) -> ToolHttpResponse {
+    match sandbox_error {
+        FilesystemSandboxError::Disabled => {
+            error_response("filesystem", "denied", sandbox_error.to_string())
+        }
+        FilesystemSandboxError::NotConfigured(_) => {
+            error_response("filesystem", "not_configured", sandbox_error.to_string())
+        }
+        FilesystemSandboxError::PathNotAllowed(_) => {
+            error_response("filesystem", "denied", sandbox_error.to_string())
+        }
+        FilesystemSandboxError::FileNotFound(_) => {
+            error_response("filesystem", "error", sandbox_error.to_string())
+        }
+        FilesystemSandboxError::ResolvePath { .. }
+        | FilesystemSandboxError::OpenAllowedRoot { .. }
+        | FilesystemSandboxError::ReadDir { .. }
+        | FilesystemSandboxError::ReadDirEntry { .. } => {
+            error_response("filesystem", "error", sandbox_error.to_string())
+        }
+    }
 }
 
 fn map_cli_error(error: CliSandboxError) -> (StatusCode, Json<ToolHttpResponse>) {

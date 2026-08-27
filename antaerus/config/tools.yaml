@@ -57,4 +57,13 @@ cli:
     - wmplayer.exe
     - msedge
     - msedge.exe
+    - cmd
+    - cmd.exe
+    - powershell
+    - powershell.exe
+    - pwsh
+    - pwsh.exe
+    - start
+    - rundll32
+    - rundll32.exe
   timeout_seconds: 10
