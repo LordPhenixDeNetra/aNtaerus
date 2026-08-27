@@ -37,13 +37,13 @@ func TestServeToolsURLRewritingFreshPerCall(t *testing.T) {
 
 	type trial struct{ inPath, wantUpstream string }
 	cases := []trial{
-		{inPath: "/api/v1/tools", wantUpstream: "/"},
-		{inPath: "/api/v1/tools/summary", wantUpstream: "/summary"},
-		{inPath: "/api/v1/tools/filesystem/allowed-roots", wantUpstream: "/filesystem/allowed-roots"},
-		{inPath: "/api/v1/tools/execute", wantUpstream: "/execute"},
+		{inPath: "/api/v1/tools", wantUpstream: "/tools"},
+		{inPath: "/api/v1/tools/summary", wantUpstream: "/tools/summary"},
+		{inPath: "/api/v1/tools/filesystem/allowed-roots", wantUpstream: "/tools/filesystem/allowed-roots"},
+		{inPath: "/api/v1/tools/execute", wantUpstream: "/tools/execute"},
 		// For query: httputil.ReverseProxy forwards RawQuery URL-encoded
 		// (correct), so we check RawQuery (path parameter is encoded) matches.
-		{inPath: "/api/v1/tools/filesystem/allowed-roots/validate?path=.%2Fdocs", wantUpstream: "/filesystem/allowed-roots/validate?path=.%2Fdocs"},
+		{inPath: "/api/v1/tools/filesystem/allowed-roots/validate?path=.%2Fdocs", wantUpstream: "/tools/filesystem/allowed-roots/validate?path=.%2Fdocs"},
 	}
 	for i, c := range cases {
 		req, err := http.NewRequest("GET", gw.URL+c.inPath, nil)

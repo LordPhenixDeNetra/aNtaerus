@@ -104,7 +104,7 @@ func (h *BrainProxyHandlers) serveForPrefix(
 		},
 	}
 	rp.Director = func(req *http.Request) {
-		upstreamPath := strings.TrimPrefix(path, gwPrefix)
+		upstreamPath := strings.TrimPrefix(path, "/api/v1")
 		if upstreamPath == "" || !strings.HasPrefix(upstreamPath, "/") {
 			upstreamPath = "/" + upstreamPath
 		}
