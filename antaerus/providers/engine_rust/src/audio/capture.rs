@@ -5,21 +5,25 @@ use super::AudioError;
 pub type PcmStreamReceiver = mpsc::Receiver<Vec<f32>>;
 
 pub struct CaptureHandle {
-    receiver: PcmStreamReceiver,
+    receiver: Option<PcmStreamReceiver>,
     #[cfg(any(feature = "voice", feature = "voice_stt"))]
     _stream: cpal::Stream,
 }
 
 impl CaptureHandle {
-    pub fn receiver(self) -> PcmStreamReceiver {
+    pub fn take_receiver(&mut self) -> PcmStreamReceiver {
         self.receiver
+            .take()
+            .expect("take_receiver() called multiple times on CaptureHandle; receiver is a one-shot tokio mpsc::Receiver")
     }
 }
 
 pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
     #[cfg(any(feature = "voice", feature = "voice_stt"))]
     {
-        use cpal::{Device, HostTrait, Sample, SampleFormat, StreamConfig};
+        use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+        use cpal::{Device, Sample, SampleFormat, StreamConfig};
+        use num_traits::cast::ToPrimitive;
 
         let (sender, receiver) = mpsc::channel::<Vec<f32>>(8);
         let host = cpal::default_host();
@@ -52,7 +56,7 @@ pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
                     &config,
                     move |data: &[i16], _| {
                         let mut out = Vec::with_capacity(data.len());
-                        out.extend(data.iter().map(|value| value.to_f32()));
+                        out.extend(data.iter().filter_map(ToPrimitive::to_f32));
                         let _ = sender.try_send(out);
                     },
                     err_fn,
@@ -64,7 +68,7 @@ pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
                     &config,
                     move |data: &[u16], _| {
                         let mut out = Vec::with_capacity(data.len());
-                        out.extend(data.iter().map(|value| value.to_f32()));
+                        out.extend(data.iter().filter_map(ToPrimitive::to_f32));
                         let _ = sender.try_send(out);
                     },
                     err_fn,
@@ -79,7 +83,7 @@ pub fn start_microphone_capture() -> Result<CaptureHandle, AudioError> {
             .map_err(|err| AudioError::Other(err.to_string()))?;
 
         Ok(CaptureHandle {
-            receiver,
+            receiver: Some(receiver),
             _stream: stream,
         })
     }

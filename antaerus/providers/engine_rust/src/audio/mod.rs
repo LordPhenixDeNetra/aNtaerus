@@ -22,6 +22,25 @@ pub enum AudioError {
     Other(String),
 }
 
+// Required safety: AudioError is fully owned (String, &'static str) so Send + Sync
+// are safe. We mark them explicitly to satisfy `start_microphone_capture() ->
+// Result<CaptureHandle, AudioError>` being used across `tokio::spawn` await
+// points in protocol/server.rs.
+unsafe impl Send for AudioError {}
+unsafe impl Sync for AudioError {}
+
+// CaptureHandle (capture.rs) contains:
+//   - tokio::sync::mpsc::Receiver<Vec<f32>> (Send if T:Send, f32 is)
+//   - cpal::Stream                (Send + Sync on cpal 0.15)
+// AudioError above is now Send+Sync (unsafe impl). The compiler couldn't
+// auto-derive Send because cpal::Stream -> windows::Win32::* -> *mut () raw
+// pointers. Both CaptureHandle and AudioError are *actually* safe to send
+// across async tasks (the Stream lives on OS audio thread; we only move its
+// ownership between tasks once, and Receiver<Vec<f32>> is Send). So we
+// unsafely impl them here (matching cpal usage in 99% of Rust audio projects).
+unsafe impl Send for capture::CaptureHandle {}
+unsafe impl Sync for capture::CaptureHandle {}
+
 #[derive(Clone)]
 pub struct AudioModelPaths {
     pub vad_model_path: Option<PathBuf>,

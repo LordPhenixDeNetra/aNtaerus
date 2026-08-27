@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use crate::{
     config::Settings,
-    tools_config::{load_tools_config_or_default, FilesystemToolConfig},
+    tools_config::{load_tools_config_or_default_with_sandbox, FilesystemToolConfig},
 };
 
 #[derive(Debug, Clone)]

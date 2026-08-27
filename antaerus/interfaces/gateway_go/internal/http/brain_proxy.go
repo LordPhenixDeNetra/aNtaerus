@@ -10,14 +10,16 @@ import (
 )
 
 type BrainProxyHandlers struct {
-	// Reverse proxy that forwards requests with:
-	//   - /api/v1/PREFIX -> /PREFIX on the brain.
-	// Headers (Authorization, Content-Type, Accept, etc.) + body are forwarded as-is.
-	// Status codes + response bodies are streamed back.
+	// Deprecated but kept for back-compat / unused now: previous cache of
+	// per-prefix ReverseProxy. We never populate it anymore; the cached part
+	// is `_prefixInfra` below (target URL + transport reuse).
 	byPrefix map[string]*httputil.ReverseProxy
 	// Per-prefix timeout (for net.Dial context + client.Transport).
 	perPrefixTimeout map[string]time.Duration
 	brainBaseURL     string
+	// Cached target URL + Transport per prefix. Transport keeps idle connections
+	// and TLS handshakes alive across calls.
+	_prefixInfra map[string]prefixInfra
 }
 
 // NewBrainProxyHandlers creates a generic reverse proxy that maps
@@ -58,85 +60,116 @@ func (h *BrainProxyHandlers) ServeTools(writer http.ResponseWriter, request *htt
 	h.serveForPrefix("tools", writer, request)
 }
 
-// serveForPrefix dynamically builds a ReverseProxy for the requested prefix
-// and forwards the request. We use httputil.ReverseProxy + custom Director
-// to rewrite the path by stripping "/api/v1/<prefix>".
+// serveForPrefix forwards /api/v1/<prefix>/* -> brain /<prefix>/*.
+//
+// We intentionally DO NOT cache ReverseProxy.Director by prefix, because
+// httputil.ReverseProxy.Director is a closure field on the cached struct,
+// and would capture the request of the FIRST invocation only, leading to
+// a STALE /wrong URL rewrite for subsequent different paths (404 on all
+// but first route hit). See go test TestServeToolsURLRewritingFreshPerCall
+// which reproduces that exact bug.
+//
+// Instead we build a small per-request ReverseProxy (cheap -- it's just a
+// struct). Transport is cached by prefix so keepalive/idle connections are
+// still reused across calls.
 func (h *BrainProxyHandlers) serveForPrefix(
 	prefix string,
 	writer http.ResponseWriter,
 	request *http.Request,
 ) {
 	gwPrefix := "/api/v1/" + prefix
-
-	// 1) Validate prefix and compute rewritten upstream path
 	path := request.URL.Path
 	if !strings.HasPrefix(path, gwPrefix) {
 		http.Error(writer, fmt.Sprintf("expected path prefix %s, got %s", gwPrefix, path), http.StatusBadRequest)
 		return
 	}
-	upstreamPath := strings.TrimPrefix(path, gwPrefix)
-	if upstreamPath == "" || !strings.HasPrefix(upstreamPath, "/") {
-		upstreamPath = "/" + upstreamPath
+
+	// 1) Ensure per-prefix cached transport + parsed target exist.
+	target, transport, ok := h.lazyPrefixInfra(prefix, writer)
+	if !ok {
+		return
 	}
 
-	// 2) Create / cache reverse proxy for this prefix
-	if _, ok := h.byPrefix[prefix]; !ok {
-		target, _ := url.Parse(h.brainBaseURL)
-		if target == nil {
-			http.Error(writer, "invalid brain base url", http.StatusInternalServerError)
-			return
-		}
-		timeout, ok := h.perPrefixTimeout[prefix]
-		if !ok || timeout <= 0 {
-			timeout = 30 * time.Second
-		}
-		transport := &http.Transport{
-			Proxy:                 http.ProxyFromEnvironment,
-			ForceAttemptHTTP2:     true,
-			MaxIdleConns:          16,
-			IdleConnTimeout:       60 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-		}
-		client := &http.Client{
-			Timeout:   timeout,
-			Transport: transport,
-		}
-		rp := httputil.NewSingleHostReverseProxy(target)
-		rp.Transport = client.Transport
-		originalDirector := rp.Director
-		rp.Director = func(req *http.Request) {
-			originalDirector(req)
-			req.URL.Path = upstreamPath
-			// Carry the query string as-is.
-			req.URL.RawQuery = request.URL.RawQuery
-			// Preserve host for forwarding.
-			req.Host = target.Host
-			if req.Header == nil {
-				req.Header = http.Header{}
-			}
-			// X-Forwarded-For chain.
-			if prior, ok := request.Header["X-Forwarded-For"]; ok {
-				req.Header.Set("X-Forwarded-For", strings.Join(prior, ", ")+", "+request.RemoteAddr)
-			} else {
-				req.Header.Set("X-Forwarded-For", request.RemoteAddr)
-			}
-			if request.TLS != nil {
-				req.Header.Set("X-Forwarded-Proto", "https")
-			} else {
-				req.Header.Set("X-Forwarded-Proto", "http")
-			}
-		}
-		rp.ErrorHandler = func(rw http.ResponseWriter, r *http.Request, err error) {
+	// 2) Build a fresh single-request ReverseProxy, with Director referencing
+	//    the *current* `request` (outer param) and *current* `path`.
+	//    This is 100% stateless and cheap (~6 struct fields).
+	rp := &httputil.ReverseProxy{
+		Transport: transport,
+		ErrorHandler: func(rw http.ResponseWriter, r *http.Request, err error) {
 			http.Error(
 				rw,
 				fmt.Sprintf("brain %s proxy error: %v", prefix, err),
 				http.StatusBadGateway,
 			)
+		},
+	}
+	rp.Director = func(req *http.Request) {
+		upstreamPath := strings.TrimPrefix(path, gwPrefix)
+		if upstreamPath == "" || !strings.HasPrefix(upstreamPath, "/") {
+			upstreamPath = "/" + upstreamPath
 		}
-		h.byPrefix[prefix] = rp
+		req.URL.Scheme = target.Scheme
+		req.URL.Host = target.Host
+		req.URL.Path = upstreamPath
+		req.URL.RawQuery = request.URL.RawQuery
+		req.Host = target.Host
+		if req.Header == nil {
+			req.Header = http.Header{}
+		}
+		// X-Forwarded-For chain
+		if prior, ok := request.Header["X-Forwarded-For"]; ok {
+			req.Header.Set("X-Forwarded-For", strings.Join(prior, ", ")+", "+request.RemoteAddr)
+		} else {
+			req.Header.Set("X-Forwarded-For", request.RemoteAddr)
+		}
+		if request.TLS != nil {
+			req.Header.Set("X-Forwarded-Proto", "https")
+		} else {
+			req.Header.Set("X-Forwarded-Proto", "http")
+		}
+		// Drop hop-by-hop headers per RFC 7230
+		for _, h := range []string{"Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "TE", "Trailers", "Transfer-Encoding", "Upgrade"} {
+			req.Header.Del(h)
+		}
 	}
 
-	// 3) Forward
-	h.byPrefix[prefix].ServeHTTP(writer, request)
+	// 3) Forward once
+	rp.ServeHTTP(writer, request)
+}
+
+type prefixInfra struct {
+	target    *url.URL
+	transport *http.Transport
+}
+
+// lazyPrefixInfra returns parsed target + cached transport for this prefix.
+// Returns ok==false if brainBaseURL is invalid (writes 500 on writer).
+func (h *BrainProxyHandlers) lazyPrefixInfra(
+	prefix string,
+	writer http.ResponseWriter,
+) (*url.URL, *http.Transport, bool) {
+	inf, ok := h._prefixInfra[prefix]
+	if ok {
+		return inf.target, inf.transport, true
+	}
+	// Build & cache
+	target, _ := url.Parse(h.brainBaseURL)
+	if target == nil {
+		http.Error(writer, "invalid brain base url", http.StatusInternalServerError)
+		return nil, nil, false
+	}
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          16,
+		IdleConnTimeout:       60 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+	inf = prefixInfra{target: target, transport: transport}
+	if h._prefixInfra == nil {
+		h._prefixInfra = map[string]prefixInfra{}
+	}
+	h._prefixInfra[prefix] = inf
+	return inf.target, inf.transport, true
 }

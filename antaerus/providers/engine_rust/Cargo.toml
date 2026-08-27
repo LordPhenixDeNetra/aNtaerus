@@ -23,6 +23,8 @@ wat-compile = ["dep:wat"]
 [dependencies]
 cap-std = "3"
 cpal = { version = "0.15", optional = true }
+dunce = "1"
+num-traits = "0.2"
 piper1-rs = { version = "0.1", optional = true }
 silero = { version = "0.4", optional = true }
 serde_yaml = "0.9"

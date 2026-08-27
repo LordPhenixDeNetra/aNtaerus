@@ -10,7 +10,7 @@ use wait_timeout::ChildExt;
 
 use crate::{
     config::Settings,
-    tools_config::{load_tools_config_or_default, CliToolConfig},
+    tools_config::{load_tools_config_or_default_with_sandbox, CliToolConfig},
 };
 
 #[derive(Debug, Clone)]

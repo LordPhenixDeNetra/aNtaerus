@@ -6,7 +6,7 @@ use tonic::{Request, Response, Status};
 
 use crate::{
     audio::{
-        capture::start_microphone_capture,
+        capture::{start_microphone_capture, CaptureHandle},
         mixer::{Mixer, NullSink},
         resampler::resample_linear_mono,
         stt::SpeechToText,
@@ -75,10 +75,12 @@ impl AudioRuntimeService {
             )))
             .await;
 
+        let mut voice_ready = true;
+
         if !cfg!(any(feature = "voice", feature = "voice_stt")) {
-            // === DEBUG INSTRUMENTATION voice-feature-disabled-bug: message tres verbeux pour UI ===
+            voice_ready = false;
             let diag = format!(
-                "[DIAG voice-feature-disabled-bug v2 / server.rs:L{}] cfg(voice|voice_stt)=FALSE. 
+                "[DIAG voice-feature-disabled-bug v3 / server.rs:L{}] cfg(voice|voice_stt)=FALSE. 
 Build cargo n'a AUCUNE feature STT active. Features compile-time:
   feature voice ......... {}
   feature voice_stt ..... {}
@@ -87,7 +89,6 @@ Build cargo n'a AUCUNE feature STT active. Features compile-time:
 RAPPEL Cargo.toml reorganise: features voice = STT micro; voice_stt = alias STT; piper_tts = TTS optionnel.
 SOLUTION 1 SEUL COMMANDE POUR DEBUG:
   cd N:\\...\\antaerus\\scripts; .\\stop-all.ps1
-  Remove-Item -Recurse -Force C:\\b\\er
   Set-Location ..\\providers\\engine_rust
   cargo run --features voice",
                 line!(),
@@ -97,160 +98,182 @@ SOLUTION 1 SEUL COMMANDE POUR DEBUG:
                 cfg!(feature = "wasm-runtime"),
             );
             let _ = sender
-                .send(Ok(system_event(
-                    session_id,
-                    "error",
-                    diag,
-                )))
+                .send(Ok(system_event(session_id.clone(), "warning", diag)))
                 .await;
-            return;
         }
 
-        if self.engine.settings.whisper_model_path.is_none() {
+        if voice_ready && self.engine.settings.whisper_model_path.is_none() {
+            voice_ready = false;
             let _ = sender
                 .send(Ok(system_event(
-                    session_id,
-                    "error",
-                    "missing ANTAERUS_ENGINE_WHISPER_MODEL_PATH".to_string(),
+                    session_id.clone(),
+                    "warning",
+                    "[voice standby] missing ANTAERUS_ENGINE_WHISPER_MODEL_PATH; set it in antaerus/.env under providers/engine_rust to enable microphone STT. Text WS chat mode remains fully available.".to_string(),
                 )))
                 .await;
-            return;
         }
 
-        let whisper_model_path = self.engine.settings.whisper_model_path.clone().unwrap();
-        let vad_model_path = self.engine.settings.vad_model_path.clone();
-        let input_rate = self
-            .engine
-            .settings
-            .audio_input_sample_rate
-            .unwrap_or(16_000);
+        let mut _capture_handle_guard: Option<CaptureHandle> = None;
+        let mut receiver: Option<tokio::sync::mpsc::Receiver<Vec<f32>>> = None;
+        let mut stt: Option<SpeechToText> = None;
+        let mut vad: Option<VadDetector> = None;
+        let input_rate: u32;
 
-        let capture = match start_microphone_capture() {
-            Ok(capture) => capture,
-            Err(err) => {
-                let message = format!("capture error: {err}");
+        if voice_ready {
+            let whisper_model_path = self.engine.settings.whisper_model_path.clone().unwrap();
+            let vad_model_path = self.engine.settings.vad_model_path.clone();
+            input_rate = self
+                .engine
+                .settings
+                .audio_input_sample_rate
+                .unwrap_or(16_000);
+
+            match start_microphone_capture() {
+                Ok(mut capture) => {
+                    receiver = Some(capture.take_receiver());
+                    _capture_handle_guard = Some(capture);
+                }
+                Err(err) => {
+                    voice_ready = false;
+                    let message = format!("[voice standby] capture error: {err}. Text WS chat mode remains fully available.");
+                    let _ = sender
+                        .send(Ok(system_event(session_id.clone(), "warning", message)))
+                        .await;
+                }
+            }
+
+            if voice_ready {
+                match SpeechToText::from_model_path(whisper_model_path.as_path()) {
+                    Ok(s) => stt = Some(s),
+                    Err(err) => {
+                        voice_ready = false;
+                        let message = format!("[voice standby] stt init error: {err}. Text WS chat mode remains fully available.");
+                        let _ = sender
+                            .send(Ok(system_event(session_id.clone(), "warning", message)))
+                            .await;
+                    }
+                }
+            }
+
+            if voice_ready {
+                match VadDetector::new(vad_model_path.as_deref(), 0.01) {
+                    Ok(v) => vad = Some(v),
+                    Err(err) => {
+                        voice_ready = false;
+                        let message = format!("[voice standby] vad init error: {err}. Text WS chat mode remains fully available.");
+                        let _ = sender
+                            .send(Ok(system_event(session_id.clone(), "warning", message)))
+                            .await;
+                    }
+                }
+            }
+
+            if voice_ready {
                 let _ = sender
                     .send(Ok(system_event(
-                        session_id,
-                        "error",
-                        message,
+                        session_id.clone(),
+                        "info",
+                        "voice pipeline ready: microphone + whisper + vad OK".to_string(),
                     )))
                     .await;
-                return;
             }
-        };
-
-        let mut receiver = capture.receiver();
-        let stt = match SpeechToText::from_model_path(whisper_model_path.as_path()) {
-            Ok(stt) => stt,
-            Err(err) => {
-                let message = format!("stt init error: {err}");
-                let _ = sender
-                    .send(Ok(system_event(
-                        session_id,
-                        "error",
-                        message,
-                    )))
-                    .await;
-                return;
-            }
-        };
-
-        let mut vad = match VadDetector::new(vad_model_path.as_deref(), 0.01) {
-            Ok(vad) => vad,
-            Err(err) => {
-                let message = format!("vad init error: {err}");
-                let _ = sender
-                    .send(Ok(system_event(
-                        session_id,
-                        "error",
-                        message,
-                    )))
-                    .await;
-                return;
-            }
-        };
+        } else {
+            input_rate = 16_000;
+        }
 
         let mut speaking = false;
         let mut buffer = Vec::<f32>::new();
 
         loop {
-            tokio::select! {
-                _ = &mut stop => {
-                    let _ = sender.send(Ok(system_event(session_id.clone(), "info", "voice session stopped".to_string()))).await;
-                    break;
-                }
-                chunk = receiver.recv() => {
-                    let Some(chunk) = chunk else {
-                        let _ = sender.send(Ok(system_event(session_id.clone(), "error", "capture ended".to_string()))).await;
+            if voice_ready {
+                let receiver_ref = receiver.as_mut().unwrap();
+                let stt_ref = stt.as_mut().unwrap();
+                let vad_ref = vad.as_mut().unwrap();
+
+                tokio::select! {
+                    _ = &mut stop => {
+                        let _ = sender.send(Ok(system_event(session_id.clone(), "info", "voice session stopped".to_string()))).await;
                         break;
-                    };
-
-                    let chunk_16k = resample_linear_mono(&chunk, input_rate, 16_000);
-                    let next_speaking = match vad.push_samples(&chunk_16k) {
-                        Ok(state) => state,
-                        Err(err) => {
-                            let message = format!("vad error: {err}");
-                            let _ = sender.send(Ok(system_event(session_id.clone(), "error", message))).await;
+                    }
+                    chunk = receiver_ref.recv() => {
+                        let Some(chunk) = chunk else {
+                            let _ = sender.send(Ok(system_event(session_id.clone(), "warning", "capture ended".to_string()))).await;
                             break;
-                        }
-                    };
+                        };
 
-                    if next_speaking != speaking {
-                        speaking = next_speaking;
-                        let _ = sender.send(Ok(vad_event(session_id.clone(), speaking))).await;
+                        let chunk_16k = resample_linear_mono(&chunk, input_rate, 16_000);
+                        let next_speaking = match vad_ref.push_samples(&chunk_16k) {
+                            Ok(state) => state,
+                            Err(err) => {
+                                let message = format!("vad error: {err}");
+                                let _ = sender.send(Ok(system_event(session_id.clone(), "warning", message))).await;
+                                continue;
+                            }
+                        };
 
-                        if !speaking && !buffer.is_empty() {
-                            let text = stt.transcribe_16khz_mono(&buffer).unwrap_or_else(|_| String::new());
-                            let trimmed = text.trim();
-                            if !trimmed.is_empty() {
-                                let previous_wake_state = wake_word_gate.state();
-                                match wake_word_gate.evaluate(trimmed) {
-                                    WakeWordDecision::Ignored => {}
-                                    WakeWordDecision::ArmedNoCommand => {
-                                        if wake_word_gate.state() != previous_wake_state {
+                        if next_speaking != speaking {
+                            speaking = next_speaking;
+                            let _ = sender.send(Ok(vad_event(session_id.clone(), speaking))).await;
+
+                            if !speaking && !buffer.is_empty() {
+                                let text = stt_ref.transcribe_16khz_mono(&buffer).unwrap_or_else(|_| String::new());
+                                let trimmed = text.trim();
+                                if !trimmed.is_empty() {
+                                    let previous_wake_state = wake_word_gate.state();
+                                    match wake_word_gate.evaluate(trimmed) {
+                                        WakeWordDecision::Ignored => {}
+                                        WakeWordDecision::ArmedNoCommand => {
+                                            if wake_word_gate.state() != previous_wake_state {
+                                                let _ = sender
+                                                    .send(Ok(wake_word_event(
+                                                        session_id.clone(),
+                                                        wake_word_gate.state().as_str(),
+                                                    )))
+                                                    .await;
+                                            }
+                                        }
+                                        WakeWordDecision::ArmedWithCommand(cleaned_text) => {
+                                            if wake_word_gate.state() != previous_wake_state {
+                                                let _ = sender
+                                                    .send(Ok(wake_word_event(
+                                                        session_id.clone(),
+                                                        wake_word_gate.state().as_str(),
+                                                    )))
+                                                    .await;
+                                            }
                                             let _ = sender
-                                                .send(Ok(wake_word_event(
+                                                .send(Ok(transcript_event(
                                                     session_id.clone(),
-                                                    wake_word_gate.state().as_str(),
+                                                    cleaned_text,
+                                                    true,
                                                 )))
                                                 .await;
                                         }
-                                    }
-                                    WakeWordDecision::ArmedWithCommand(cleaned_text) => {
-                                        if wake_word_gate.state() != previous_wake_state {
+                                        WakeWordDecision::PassThrough(cleaned_text) => {
                                             let _ = sender
-                                                .send(Ok(wake_word_event(
+                                                .send(Ok(transcript_event(
                                                     session_id.clone(),
-                                                    wake_word_gate.state().as_str(),
+                                                    cleaned_text,
+                                                    true,
                                                 )))
                                                 .await;
                                         }
-                                        let _ = sender
-                                            .send(Ok(transcript_event(
-                                                session_id.clone(),
-                                                cleaned_text,
-                                                true,
-                                            )))
-                                            .await;
-                                    }
-                                    WakeWordDecision::PassThrough(cleaned_text) => {
-                                        let _ = sender
-                                            .send(Ok(transcript_event(
-                                                session_id.clone(),
-                                                cleaned_text,
-                                                true,
-                                            )))
-                                            .await;
                                     }
                                 }
+                                buffer.clear();
                             }
-                            buffer.clear();
+                        }
+
+                        if speaking {
+                            buffer.extend_from_slice(&chunk_16k);
                         }
                     }
-
-                    if speaking {
-                        buffer.extend_from_slice(&chunk_16k);
+                }
+            } else {
+                match &mut stop.await {
+                    Ok(()) | Err(_) => {
+                        let _ = sender.send(Ok(system_event(session_id.clone(), "info", "voice standby session stopped".to_string()))).await;
+                        break;
                     }
                 }
             }
